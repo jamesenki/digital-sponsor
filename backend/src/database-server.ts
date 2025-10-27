@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { Pool } from 'pg'
 import { createClient } from 'redis'
+import literatureSearchRoutes from './routes/literature-search'
 
 // Load environment variables
 dotenv.config()
@@ -53,6 +54,9 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`)
   next()
 })
+
+// Mount routes
+app.use('/api/literature', literatureSearchRoutes)
 
 // Database connection status
 let dbConnected = false

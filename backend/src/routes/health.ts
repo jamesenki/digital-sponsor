@@ -40,9 +40,9 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
     overall: 'healthy',
     components: {
       api: { status: 'healthy', responseTime: 0 },
-      database: { status: 'unknown', responseTime: 0 },
-      redis: { status: 'unknown', responseTime: 0 },
-      chroma: { status: 'unknown', responseTime: 0 }
+      database: { status: 'unknown', responseTime: 0, error: undefined as string | undefined },
+      redis: { status: 'unknown', responseTime: 0, error: undefined as string | undefined },
+      chroma: { status: 'unknown', responseTime: 0, error: undefined as string | undefined }
     },
     compliance: {
       aa_traditions: true,
@@ -58,7 +58,8 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
     await config.database.query('SELECT 1')
     checks.components.database = {
       status: 'healthy',
-      responseTime: Date.now() - start
+      responseTime: Date.now() - start,
+      error: undefined
     }
   } catch (error) {
     checks.components.database = {
@@ -76,7 +77,8 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
     await config.redis.get('health:check')
     checks.components.redis = {
       status: 'healthy',
-      responseTime: Date.now() - start
+      responseTime: Date.now() - start,
+      error: undefined
     }
   } catch (error) {
     checks.components.redis = {
@@ -93,7 +95,8 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
     await config.chroma.connect()
     checks.components.chroma = {
       status: 'healthy',
-      responseTime: Date.now() - start
+      responseTime: Date.now() - start,
+      error: undefined
     }
   } catch (error) {
     checks.components.chroma = {
