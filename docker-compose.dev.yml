@@ -1,0 +1,173 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: digital-sponsor-postgres
+    environment:
+      POSTGRES_USER: digital_sponsor
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: digital_sponsor_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - digital-sponsor-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U digital_sponsor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: digital-sponsor-redis
+    command: redis-server --appendonly yes --requirepass password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - digital-sponsor-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Chroma Vector Database
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: digital-sponsor-chroma
+    environment:
+      - CHROMA_HOST_ADDR=0.0.0.0
+      - CHROMA_HOST_PORT=8000
+      - CHROMA_PERSIST_DIRECTORY=/chroma/chroma
+      - CHROMA_SERVER_AUTHN_CREDENTIALS_FILE=/chroma/config/credentials.txt
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+      - ./config/chroma:/chroma/config
+    networks:
+      - digital-sponsor-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Development Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: digital-sponsor-frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_CHROMA_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - digital-sponsor-network
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+  # Development Backend (Node.js)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: digital-sponsor-backend
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://digital_sponsor:password@postgres:5432/digital_sponsor_dev
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - JWT_SECRET=dev-jwt-secret
+      - SESSION_SECRET=dev-session-secret
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - digital-sponsor-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+
+  # AI Service (Python/FastAPI)
+  ai-service:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile.dev
+    container_name: digital-sponsor-ai
+    environment:
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai:/app
+      - ./literature:/app/literature
+    networks:
+      - digital-sponsor-network
+    depends_on:
+      chroma:
+        condition: service_healthy
+
+  # Nginx Reverse Proxy (Development)
+  nginx:
+    image: nginx:alpine
+    container_name: digital-sponsor-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/nginx/dev.conf:/etc/nginx/nginx.conf
+    networks:
+      - digital-sponsor-network
+    depends_on:
+      - frontend
+      - backend
+      - ai-service
+
+  # Development Tools Container
+  tools:
+    image: node:18-alpine
+    container_name: digital-sponsor-tools
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    command: tail -f /dev/null
+    networks:
+      - digital-sponsor-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  chroma_data:
+    driver: local
+
+networks:
+  digital-sponsor-network:
+    driver: bridge
