@@ -1,257 +1,230 @@
 import { Router, Request, Response } from 'express'
-import { asyncHandler } from '@/middleware/errorHandler'
-import { initializeAnonymousSession } from '@/middleware/session'
-import { logger } from '@/utils/logger'
+import { RAGService } from '../services/rag-service'
 
 /**
- * Chat Routes for AA Literature Q&A
+ * Chat Routes with RAG Integration
  * 
- * AA Traditions Compliant:
- * - Tradition 6: No endorsements, only AA-approved literature
- * - Tradition 12: Anonymous conversations
- * - Focus on recovery from alcoholism only
+ * AI-powered responses using AA literature
+ * AA Traditions Compliant - Anonymous and Educational
  */
 
 const router = Router()
 
-// Initialize anonymous session
-router.use(initializeAnonymousSession)
+// Simple async handler
+const asyncHandler = (fn: any) => (req: Request, res: Response, next: any) => {
+  Promise.resolve(fn(req, res, next)).catch(next)
+}
+
+// Initialize RAG service
+const ragService = new RAGService()
 
 /**
- * Chat completion endpoint
+ * Process chat message with RAG
  */
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
-  const { message, context } = req.body
+  const { message, sessionId } = req.body
   
-  if (!message) {
+  // Validation
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
     return res.status(400).json({
       error: 'Message is required',
       example: {
         message: 'What does the Big Book say about resentments?',
-        context: 'step_work'
-      }
-    })
-  }
-  
-  // Validate message content for AA compliance
-  const isAACompliant = validateAACompliance(message)
-  if (!isAACompliant.valid) {
-    return res.status(400).json({
-      error: 'Message violates AA Traditions',
-      reason: isAACompliant.reason,
-      guidance: 'Please focus on AA literature and recovery topics',
-      traditions: {
-        tradition_6: 'No outside issues or endorsements',
-        tradition_5: 'Recovery from alcoholism focus only'
-      }
-    })
-  }
-  
-  // Log anonymous chat request
-  logger.info('Chat request received', {
-    sessionId: req.sessionID.substring(0, 8) + '...',
-    messageLength: message.length,
-    context: context || 'general',
-    anonymous: true
-  })
-  
-  try {
-    // TODO: Implement RAG system integration
-    // For now, return a placeholder response
-    const response = await generateAALiteratureResponse(message, context)
-    
-    // Record literature access
-    if (!req.session.literatureHistory) {
-      req.session.literatureHistory = []
-    }
-    req.session.literatureHistory.push(`chat:${context || 'general'}:${Date.now()}`)
-    
-    res.json({
-      response: {
-        message: response.message,
-        sources: response.sources,
-        context: response.context,
-        confidence: response.confidence
-      },
-      session: {
-        id: req.sessionID,
-        anonymous: true
+        sessionId: 'optional-session-id'
       },
       compliance: {
         aa_traditions: true,
-        literature_only: true,
-        no_endorsements: true
+        anonymous_access: true
+      }
+    })
+  }
+
+  // Rate limiting check (basic)
+  const messageLength = message.trim().length
+  if (messageLength > 500) {
+    return res.status(400).json({
+      error: 'Message too long',
+      message: 'Please keep your question under 500 characters',
+      current_length: messageLength,
+      max_length: 500
+    })
+  }
+
+  try {
+    const startTime = Date.now()
+    
+    // Process chat with RAG service
+    const chatResponse = await ragService.processChat(message.trim(), sessionId)
+    
+    const processingTime = Date.now() - startTime
+    
+    // Log interaction (anonymously)
+    console.log(`💬 Chat processed in ${processingTime}ms - Type: ${chatResponse.responseType}, Confidence: ${chatResponse.confidence.toFixed(2)}`)
+    
+    // Determine HTTP status based on response type
+    let statusCode = 200
+    if (chatResponse.responseType === 'crisis_referral') {
+      statusCode = 202 // Accepted - indicating special handling needed
+    }
+    
+    res.status(statusCode).json({
+      response: {
+        message: chatResponse.response,
+        type: chatResponse.responseType,
+        confidence: chatResponse.confidence,
+        sources: chatResponse.sources,
+        processing_time_ms: processingTime
+      },
+      session: {
+        id: sessionId || 'anonymous',
+        anonymous: true,
+        timestamp: new Date().toISOString()
+      },
+      compliance: {
+        ...chatResponse.compliance,
+        attribution_included: chatResponse.sources.length > 0,
+        literature_based: chatResponse.responseType === 'literature_based'
+      },
+      crisis_support: chatResponse.responseType === 'crisis_referral' ? {
+        immediate_help: {
+          suicide_lifeline: '988',
+          crisis_text: 'Text HOME to 741741',
+          emergency: '911'
+        },
+        aa_resources: {
+          meeting_guide: 'https://meetingguide.aa.org',
+          general_service: '(212) 870-3400'
+        }
+      } : undefined
+    })
+    
+  } catch (error) {
+    console.error('Chat processing error:', error)
+    
+    res.status(500).json({
+      error: 'Chat processing failed',
+      message: 'I apologize, but I\'m unable to process your question right now. Please try again later.',
+      fallback: {
+        aa_resources: {
+          meeting_guide: 'https://meetingguide.aa.org',
+          literature: 'https://www.aa.org/aa-literature'
+        },
+        crisis_support: {
+          suicide_lifeline: '988',
+          crisis_text: 'Text HOME to 741741'
+        }
+      },
+      timestamp: new Date().toISOString()
+    })
+  }
+}))
+
+/**
+ * Get chat service status
+ */
+router.get('/status', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const stats = await ragService.getStats()
+    
+    res.json({
+      service: 'Digital Sponsor Chat',
+      status: 'operational',
+      capabilities: {
+        literature_search: true,
+        ai_responses: stats.aiEnabled,
+        crisis_detection: true,
+        citation_generation: true
+      },
+      statistics: {
+        total_literature_chunks: stats.totalContent,
+        available_sources: stats.availableSources,
+        ai_model: stats.aiEnabled ? 'gpt-3.5-turbo' : 'fallback_only'
+      },
+      compliance: {
+        aa_traditions: 'All 12 traditions observed',
+        anonymity: 'No personal data collected',
+        literature_only: 'Responses based on AA-approved materials',
+        fair_use: 'Educational purpose with attribution'
       },
       timestamp: new Date().toISOString()
     })
     
   } catch (error) {
-    logger.error('Chat processing failed', {
-      sessionId: req.sessionID.substring(0, 8) + '...',
-      error: error.message
-    })
-    
+    console.error('Status check failed:', error)
     res.status(500).json({
-      error: 'Unable to process chat request',
-      message: 'Please try again or contact crisis support if needed',
-      crisis_support: '988 - Suicide & Crisis Lifeline',
+      service: 'Digital Sponsor Chat',
+      status: 'degraded',
+      error: 'Unable to retrieve service status',
       timestamp: new Date().toISOString()
     })
   }
 }))
 
 /**
- * Get conversation history (anonymous)
- */
-router.get('/history', asyncHandler(async (req: Request, res: Response) => {
-  // Note: We don't store conversation history for privacy
-  // Only access statistics
-  
-  const accessCount = req.session.literatureHistory?.filter(
-    item => item.startsWith('chat:')
-  ).length || 0
-  
-  res.json({
-    history: {
-      message: 'Conversation history not stored for privacy',
-      access_count: accessCount,
-      anonymous: true
-    },
-    privacy: {
-      notice: 'No conversation content is stored',
-      compliance: 'AA Tradition 12 - Anonymity',
-      retention: 'Session only'
-    },
-    timestamp: new Date().toISOString()
-  })
-}))
-
-/**
- * Get suggested questions
+ * Chat suggestions based on available literature
  */
 router.get('/suggestions', asyncHandler(async (req: Request, res: Response) => {
-  const suggestions = [
-    {
-      category: 'Big Book',
-      questions: [
-        'What does the Big Book say about resentments?',
-        'How does the Big Book describe the spiritual experience?',
-        'What are the promises in the Big Book?',
-        'How does the Big Book describe powerlessness?'
-      ]
-    },
-    {
-      category: 'Twelve Steps',
-      questions: [
-        'Can you explain Step 4 from the Twelve and Twelve?',
-        'What does Step 11 mean in practical terms?',
-        'How does the Twelve and Twelve describe making amends?',
-        'What is the difference between Step 1 and Step 2?'
-      ]
-    },
-    {
-      category: 'Daily Reflections',
-      questions: [
-        'What does today\'s daily reflection say?',
-        'Are there reflections about gratitude?',
-        'What reflections discuss sponsorship?',
-        'Find reflections about surrender'
-      ]
-    },
-    {
-      category: 'AA Traditions',
-      questions: [
-        'What is Tradition 1 about?',
-        'How do the Traditions protect anonymity?',
-        'What does Tradition 6 mean for AA groups?',
-        'Why is Tradition 7 important?'
-      ]
-    }
-  ]
-  
-  res.json({
-    suggestions,
-    note: 'These are example questions about AA literature',
-    compliance: 'All suggestions focus on AA-approved materials only',
-    timestamp: new Date().toISOString()
-  })
+  try {
+    // Get available content categories
+    const stats = await ragService.getStats()
+    
+    const suggestions = [
+      {
+        category: 'Steps',
+        examples: [
+          'What does the Big Book say about Step 1?',
+          'How do I work Step 4?',
+          'Tell me about the Twelve Steps'
+        ]
+      },
+      {
+        category: 'Recovery Concepts',
+        examples: [
+          'What is a resentment?',
+          'How do I find a sponsor?',
+          'What are the promises?'
+        ]
+      },
+      {
+        category: 'Daily Practice',
+        examples: [
+          'How do I stay sober today?',
+          'What about prayer and meditation?',
+          'How do I help other people?'
+        ]
+      },
+      {
+        category: 'Challenges',
+        examples: [
+          'What if I want to drink?',
+          'How do I handle difficult emotions?',
+          'What about fear and anxiety?'
+        ]
+      }
+    ]
+    
+    res.json({
+      suggestions,
+      available_content: {
+        total_chunks: stats.totalContent,
+        sources: stats.availableSources
+      },
+      notice: 'These suggestions are based on available AA literature. Responses are educational and should not replace professional help or sponsor guidance.',
+      compliance: {
+        aa_traditions: true,
+        educational_purpose: true
+      },
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error) {
+    console.error('Suggestions retrieval failed:', error)
+    res.status(500).json({
+      error: 'Unable to retrieve suggestions',
+      fallback_suggestion: 'Try asking about topics from the Big Book or Twelve Steps and Twelve Traditions',
+      timestamp: new Date().toISOString()
+    })
+  }
 }))
-
-/**
- * Validate message content for AA compliance
- */
-function validateAACompliance(message: string): { valid: boolean; reason?: string } {
-  const lowerMessage = message.toLowerCase()
-  
-  // Check for outside issues (Tradition 6)
-  const outsideIssues = [
-    'politics', 'religion', 'drugs', 'narcotics', 'cocaine', 'marijuana',
-    'therapy', 'medication', 'doctor', 'treatment center', 'rehab',
-    'gambling', 'sex addiction', 'eating disorder', 'smoking'
-  ]
-  
-  for (const issue of outsideIssues) {
-    if (lowerMessage.includes(issue)) {
-      return {
-        valid: false,
-        reason: `References outside issues (${issue}). Please focus on AA literature and alcoholism recovery.`
-      }
-    }
-  }
-  
-  // Check for endorsements
-  const endorsementWords = ['recommend', 'endorse', 'advertise', 'sell', 'buy', 'product']
-  for (const word of endorsementWords) {
-    if (lowerMessage.includes(word)) {
-      return {
-        valid: false,
-        reason: 'AA does not endorse outside enterprises. Please focus on AA literature.'
-      }
-    }
-  }
-  
-  // Check for personal information requests
-  const personalWords = ['name', 'address', 'phone', 'email', 'location', 'where do you live']
-  for (const word of personalWords) {
-    if (lowerMessage.includes(word)) {
-      return {
-        valid: false,
-        reason: 'Personal information is not shared. Please maintain anonymity.'
-      }
-    }
-  }
-  
-  return { valid: true }
-}
-
-/**
- * Generate AA literature response (placeholder for RAG system)
- */
-async function generateAALiteratureResponse(message: string, context?: string) {
-  // TODO: Implement RAG system with Chroma and OpenAI
-  // This is a placeholder implementation
-  
-  const responses = {
-    resentments: {
-      message: 'The Big Book describes resentments as the "dubious luxury of normal men" and explains that resentment is the number one offender, destroying more alcoholics than anything else. On page 64, it states that resentments shut us off from the sunlight of the Spirit.',
-      sources: ['Alcoholics Anonymous (Big Book), pages 64-65'],
-      context: 'step_4_inventory',
-      confidence: 0.95
-    },
-    default: {
-      message: 'I can help you find information from AA literature including the Big Book, Twelve Steps and Twelve Traditions, Daily Reflections, and AA-approved pamphlets. Please ask about specific topics related to recovery from alcoholism.',
-      sources: ['General AA Literature'],
-      context: 'general',
-      confidence: 0.8
-    }
-  }
-  
-  // Simple keyword matching (to be replaced with RAG)
-  if (message.toLowerCase().includes('resentment')) {
-    return responses.resentments
-  }
-  
-  return responses.default
-}
 
 export default router

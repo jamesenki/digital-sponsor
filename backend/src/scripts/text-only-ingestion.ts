@@ -23,7 +23,7 @@ interface TextSection {
 
 class TextOnlyProcessor {
   private readonly TARGET_WORDS = 200 // words per chunk
-  private readonly MIN_WORDS = 50
+  private readonly MIN_WORDS = 20 // Reduced minimum for testing
   private readonly MAX_WORDS = 400
 
   /**

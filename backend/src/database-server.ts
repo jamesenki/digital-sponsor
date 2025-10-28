@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import { Pool } from 'pg'
 import { createClient } from 'redis'
 import literatureSearchRoutes from './routes/literature-search'
+import chatRoutes from './routes/chat'
 
 // Load environment variables
 dotenv.config()
@@ -57,6 +58,7 @@ app.use((req, res, next) => {
 
 // Mount routes
 app.use('/api/literature', literatureSearchRoutes)
+app.use('/api/chat', chatRoutes)
 
 // Database connection status
 let dbConnected = false
@@ -272,60 +274,7 @@ app.get('/api/literature/sources', async (req, res) => {
   }
 })
 
-// Enhanced chat endpoint (still placeholder but with session tracking)
-app.post('/api/chat', async (req, res) => {
-  const { message, sessionId } = req.body
-  
-  if (!message) {
-    return res.status(400).json({
-      error: 'Message is required',
-      example: {
-        message: 'What does the Big Book say about resentments?',
-        sessionId: 'optional-session-id'
-      }
-    })
-  }
-  
-  try {
-    // Log chat interaction (anonymously)
-    if (sessionId) {
-      const sessionHash = require('crypto').createHash('sha256').update(sessionId).digest('hex').substring(0, 16)
-      // Could log to analytics table here
-      console.log(`Chat interaction: ${sessionHash}`)
-    }
-    
-    // Simple response for now (will be replaced with RAG system)
-    const response = {
-      message: 'Thank you for your question about AA literature. This is a placeholder response that will be replaced with a comprehensive RAG system providing detailed answers from the Big Book, Twelve Steps and Twelve Traditions, and other AA-approved materials.',
-      sources: ['Placeholder - AA Literature Database'],
-      context: 'general',
-      confidence: 0.5,
-      processed_at: new Date().toISOString()
-    }
-    
-    res.json({
-      response,
-      session: {
-        id: sessionId || 'anonymous',
-        anonymous: true
-      },
-      compliance: {
-        aa_traditions: true,
-        literature_only: true,
-        no_endorsements: true
-      },
-      timestamp: new Date().toISOString()
-    })
-    
-  } catch (error) {
-    console.error('Chat processing failed:', error)
-    res.status(500).json({
-      error: 'Chat processing failed',
-      message: 'Please try again',
-      timestamp: new Date().toISOString()
-    })
-  }
-})
+// Note: Enhanced chat endpoint now handled by /api/chat routes
 
 // Crisis support endpoint (always available)
 app.get('/api/crisis', (req, res) => {
@@ -432,8 +381,10 @@ app.use('*', (req, res) => {
       'POST /api/sessions',
       'GET /api/sessions/:sessionId',
       'POST /api/chat',
+      'GET /api/chat/status',
+      'GET /api/chat/suggestions',
       'GET /api/literature/sources',
-      'GET /api/literature/search'
+      'POST /api/literature/search'
     ],
     timestamp: new Date().toISOString()
   })
