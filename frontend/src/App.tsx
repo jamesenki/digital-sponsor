@@ -20,6 +20,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 // Hooks
 import { useSession } from '@/hooks/useSession'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { usePWA } from '@/hooks/usePWA'
 
 /**
  * Digital Sponsor Main Application Component
@@ -44,6 +45,14 @@ function App(): JSX.Element {
   // Custom hooks
   const { session, createSession } = useSession()
   const isOnline = useOnlineStatus()
+  const { 
+    isInstalled, 
+    canInstall, 
+    updateAvailable, 
+    swRegistered,
+    installApp,
+    checkForUpdates 
+  } = usePWA()
 
   // Initialize app
   useEffect(() => {
@@ -144,11 +153,42 @@ function App(): JSX.Element {
                 <span className={`status ${isOnline ? 'online' : 'offline'}`}>
                   {isOnline ? '🟢 Online' : '🟡 Offline Mode'}
                 </span>
+                {swRegistered && (
+                  <span className="pwa-indicator">
+                    {isInstalled ? '📱 PWA' : '🌐 Web'}
+                  </span>
+                )}
                 <span className="privacy-indicator">
                   🔒 Anonymous
                 </span>
               </div>
             </div>
+            
+            {/* PWA Install Banner */}
+            {canInstall && !isInstalled && (
+              <div className="install-banner">
+                <span>📱 Install Digital Sponsor for offline access</span>
+                <button 
+                  onClick={installApp}
+                  className="install-button"
+                >
+                  Install App
+                </button>
+              </div>
+            )}
+            
+            {/* Update Available Banner */}
+            {updateAvailable && (
+              <div className="update-banner">
+                <span>🔄 App update available</span>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="update-button"
+                >
+                  Update Now
+                </button>
+              </div>
+            )}
           </header>
 
           {/* Navigation */}

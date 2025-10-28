@@ -1,4 +1,4 @@
-version: '3.8'
+# Docker Compose for Digital Sponsor Development
 
 services:
   # PostgreSQL Database
@@ -28,7 +28,7 @@ services:
     container_name: digital-sponsor-redis
     command: redis-server --appendonly yes --requirepass password
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
