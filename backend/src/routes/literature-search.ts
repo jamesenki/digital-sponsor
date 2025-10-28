@@ -28,6 +28,7 @@ interface SearchResult {
   chapterNumber?: number
   relevanceScore: number
   copyright: string
+  metadata?: any
 }
 
 /**
@@ -53,6 +54,7 @@ router.post('/search', asyncHandler(async (req: Request, res: Response) => {
         c.content_text,
         c.page_number,
         c.chapter_number,
+        c.metadata,
         ts_rank(to_tsvector('english', c.content_text), plainto_tsquery('english', $1)) as relevance_score,
         s.copyright_notice
       FROM literature_content c
@@ -81,7 +83,8 @@ router.post('/search', asyncHandler(async (req: Request, res: Response) => {
       pageNumber: row.page_number,
       chapterNumber: row.chapter_number,
       relevanceScore: parseFloat(row.relevance_score),
-      copyright: row.copyright_notice
+      copyright: row.copyright_notice,
+      metadata: row.metadata
     }))
     
     // Analytics logging disabled for now (table doesn't exist)
