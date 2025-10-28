@@ -30,8 +30,8 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^1.0.4",
-    "@vitest/ui": "^1.0.4",
+    "@vitest/coverage-v8": "^4.0.4",
+    "@vitest/ui": "^4.0.4",
     "axe-playwright": "^1.2.3",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -39,8 +39,8 @@
     "jsdom": "^23.0.1",
     "playwright": "^1.40.0",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8",
-    "vite-plugin-pwa": "^0.17.5",
-    "vitest": "^1.0.4"
+    "vite": "^7.1.12",
+    "vite-plugin-pwa": "^1.1.0",
+    "vitest": "^4.0.4"
   }
 }
