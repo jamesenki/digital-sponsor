@@ -1,26 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
+import '@/styles/theme.css'
+import '@/styles/accessibility.css'
 
 // Types
 import type { AppState } from '@/types'
 
-// Components
+// Core components (always loaded)
 import Navigation from '@/components/Navigation'
-import HomePage from '@/components/HomePage'
-import ChatPage from '@/components/ChatPage'
-import LiteraturePage from '@/components/LiteraturePage'
-import StepWorkPage from '@/components/StepWorkPage'
-import MeetingsPage from '@/components/MeetingsPage'
 import CrisisModal from '@/components/CrisisModal'
 import CrisisButton from '@/components/CrisisButton'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import ThemeToggle from '@/components/ThemeToggle'
+
+// Lazy-loaded components for code splitting
+const HomePage = React.lazy(() => import('@/components/HomePage'))
+const ChatPage = React.lazy(() => import('@/components/ChatPage'))
+const EnhancedLiteraturePage = React.lazy(() => import('@/components/EnhancedLiteraturePage'))
+const StepWorkPage = React.lazy(() => import('@/components/StepWorkPage'))
+const MeetingsPage = React.lazy(() => import('@/components/MeetingsPage'))
+const RecoveryDashboard = React.lazy(() => import('@/components/RecoveryDashboard'))
+const CrisisSupport = React.lazy(() => import('@/components/CrisisSupport'))
+const PerformanceDashboard = React.lazy(() => import('@/components/PerformanceDashboard'))
+const RecoveryResourceLibrary = React.lazy(() => import('@/components/RecoveryResourceLibrary'))
 
 // Hooks
 import { useSession } from '@/hooks/useSession'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { usePWA } from '@/hooks/usePWA'
+import { useTheme } from '@/hooks/useTheme'
+import { useAccessibility } from '@/hooks/useAccessibility'
+import { usePerformance, useRoutePerformance } from '@/hooks/usePerformance'
 
 /**
  * Digital Sponsor Main Application Component
@@ -41,10 +53,19 @@ function App(): JSX.Element {
   })
 
   const [showCrisisModal, setShowCrisisModal] = useState(false)
+  const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
+  const [showResourceLibrary, setShowResourceLibrary] = useState(false)
 
   // Custom hooks
   const { session, createSession } = useSession()
   const isOnline = useOnlineStatus()
+  const { currentTheme } = useTheme()
+  const { announcePageChange, enhanceAriaLabels } = useAccessibility()
+  const { 
+    performIntelligentPreloading, 
+    optimizeBundle,
+    recordComponentPerformance 
+  } = usePerformance()
   const { 
     isInstalled, 
     canInstall, 
@@ -84,6 +105,33 @@ function App(): JSX.Element {
 
     initializeApp()
   }, [createSession, isOnline])
+
+  // Initialize accessibility features
+  useEffect(() => {
+    // Enhance ARIA labels after component mount
+    setTimeout(() => {
+      enhanceAriaLabels()
+    }, 1000)
+  }, [enhanceAriaLabels])
+
+  // Initialize performance optimizations
+  useEffect(() => {
+    // Record app component performance
+    const startTime = performance.now()
+    
+    setTimeout(() => {
+      const mountTime = performance.now() - startTime
+      recordComponentPerformance('App', mountTime)
+      
+      // Perform intelligent preloading after app is loaded
+      performIntelligentPreloading()
+      
+      // Optimize bundle after a delay
+      setTimeout(() => {
+        optimizeBundle()
+      }, 5000)
+    }, 100)
+  }, [recordComponentPerformance, performIntelligentPreloading, optimizeBundle])
 
   // Update online status
   useEffect(() => {
@@ -161,6 +209,15 @@ function App(): JSX.Element {
                 <span className="privacy-indicator">
                   🔒 Anonymous
                 </span>
+                <button
+                  onClick={() => setShowResourceLibrary(true)}
+                  className="header-action-button"
+                  title="Recovery Resources"
+                  aria-label="Open Recovery Resource Library"
+                >
+                  Resources
+                </button>
+                <ThemeToggle size="small" className="header-theme-toggle" />
               </div>
             </div>
             
@@ -195,8 +252,14 @@ function App(): JSX.Element {
           <Navigation />
 
           {/* Main Content */}
-          <main className="main-content">
-            <Routes>
+          <main className="main-content" id="main-content" role="main" aria-label="Main application content">
+            <Suspense fallback={
+              <div className="route-loading">
+                <LoadingSpinner />
+                <p>Loading...</p>
+              </div>
+            }>
+              <Routes>
               <Route 
                 path="/" 
                 element={
@@ -218,7 +281,7 @@ function App(): JSX.Element {
               <Route 
                 path="/literature" 
                 element={
-                  <LiteraturePage 
+                  <EnhancedLiteraturePage 
                     isOnline={isOnline}
                     session={session}
                   />
@@ -242,7 +305,26 @@ function App(): JSX.Element {
                   />
                 } 
               />
-            </Routes>
+              <Route 
+                path="/dashboard" 
+                element={
+                  <RecoveryDashboard 
+                    isOnline={isOnline}
+                    session={session}
+                  />
+                } 
+              />
+              <Route 
+                path="/crisis" 
+                element={
+                  <CrisisSupport 
+                    isOnline={isOnline}
+                    session={session}
+                  />
+                } 
+              />
+              </Routes>
+            </Suspense>
           </main>
 
           {/* Crisis Support - Always Accessible */}
@@ -251,6 +333,26 @@ function App(): JSX.Element {
           {/* Crisis Modal */}
           {showCrisisModal && (
             <CrisisModal isOpen={showCrisisModal} onClose={() => setShowCrisisModal(false)} />
+          )}
+
+          {/* Recovery Resource Library */}
+          {showResourceLibrary && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <RecoveryResourceLibrary 
+                isOpen={showResourceLibrary} 
+                onClose={() => setShowResourceLibrary(false)} 
+              />
+            </Suspense>
+          )}
+
+          {/* Performance Dashboard */}
+          {showPerformanceDashboard && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <PerformanceDashboard 
+                isOpen={showPerformanceDashboard} 
+                onClose={() => setShowPerformanceDashboard(false)} 
+              />
+            </Suspense>
           )}
 
           {/* App Footer */}

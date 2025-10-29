@@ -1,0 +1,421 @@
+/* Generic Step Worksheet Styles */
+
+.generic-step-worksheet {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.generic-step-worksheet.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+}
+
+/* Header */
+.worksheet-header {
+  margin-bottom: 30px;
+}
+
+.worksheet-header h3 {
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+}
+
+.step-text {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+  margin-bottom: 20px;
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.page-ref {
+  color: var(--text-light);
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+/* Progress Section */
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-text {
+  font-weight: 600;
+  color: var(--success-color);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Save Section */
+.save-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-lg);
+}
+
+.save-button {
+  background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-button.has-changes {
+  background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
+  animation: pulse 2s infinite;
+}
+
+.save-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-status {
+  color: var(--success-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Worksheet Sections */
+.worksheet-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.worksheet-section {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--border-radius-xl);
+  padding: 24px;
+  transition: var(--transition);
+}
+
+.worksheet-section:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.worksheet-section.completed {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.1) 100%);
+}
+
+.section-header {
+  margin-bottom: 16px;
+}
+
+.section-header h4 {
+  color: var(--text-color);
+  margin: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-number {
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.completion-indicator {
+  color: var(--success-color);
+  font-size: 1rem;
+  margin-left: auto;
+}
+
+/* Section Content */
+.section-content {
+  position: relative;
+}
+
+.section-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--border-radius-lg);
+  font-size: 1rem;
+  font-family: inherit;
+  background: white;
+  color: var(--text-color);
+  transition: var(--transition);
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.section-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.section-textarea::placeholder {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* List Section */
+.list-section {
+  position: relative;
+}
+
+.list-textarea {
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+}
+
+.list-help {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.list-help small {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* Reflection Section */
+.reflection-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reflection-prompt {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+}
+
+.reflection-prompt p {
+  margin: 0;
+  color: var(--text-color);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.reflection-textarea {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary-color);
+  min-height: 150px;
+}
+
+/* Step Guidance */
+.step-guidance {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--border-radius-xl);
+  padding: 24px;
+  margin-top: 40px;
+}
+
+.step-guidance h4 {
+  color: var(--success-color);
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+.guidance-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.guidance-item {
+  background: white;
+  padding: 16px;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border);
+}
+
+.guidance-item h5 {
+  color: var(--text-color);
+  margin-bottom: 8px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guidance-item p {
+  color: var(--text-light);
+  line-height: 1.4;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .generic-step-worksheet {
+    padding: 16px;
+  }
+
+  .save-section {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .progress-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .progress-text {
+    text-align: center;
+  }
+
+  .worksheet-section {
+    padding: 16px;
+  }
+
+  .section-header h4 {
+    font-size: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  .completion-indicator {
+    margin-left: 0;
+  }
+
+  .guidance-items {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .reflection-section {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .worksheet-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .step-text {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .section-textarea {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .guidance-item {
+    padding: 12px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .worksheet-section {
+    background: var(--dark-surface);
+    border-color: var(--dark-border);
+  }
+
+  .section-textarea {
+    background: var(--dark-surface);
+    border-color: var(--dark-border);
+    color: var(--dark-text);
+  }
+
+  .guidance-item {
+    background: var(--dark-surface);
+    border-color: var(--dark-border);
+  }
+
+  .reflection-textarea {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .worksheet-section {
+    border-width: 3px;
+  }
+
+  .section-textarea {
+    border-width: 3px;
+  }
+
+  .progress-bar-container {
+    border: 2px solid var(--text-color);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .save-button,
+  .worksheet-section,
+  .section-textarea,
+  .progress-bar {
+    transition: none;
+  }
+
+  .save-button:hover {
+    transform: none;
+  }
+
+  .save-button.has-changes {
+    animation: none;
+  }
+}

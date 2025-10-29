@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
+import { RAGService } from './services/rag-service'
 
 // Load environment variables
 dotenv.config()
@@ -106,40 +107,106 @@ app.post('/api/sessions', (req, res) => {
   })
 })
 
-// Basic chat endpoint
-app.post('/api/chat', (req, res) => {
-  const { message } = req.body
+// Initialize RAG service
+const ragService = new RAGService()
+
+// Chat endpoint with RAG
+app.post('/api/chat', async (req, res) => {
+  const { message, sessionId } = req.body
   
-  if (!message) {
+  // Validation
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
     return res.status(400).json({
       error: 'Message is required',
       example: {
-        message: 'What does the Big Book say about resentments?'
+        message: 'What does the Big Book say about resentments?',
+        sessionId: 'optional-session-id'
+      },
+      compliance: {
+        aa_traditions: true,
+        anonymous_access: true
       }
     })
   }
-  
-  // Simple response for now
-  const response = {
-    message: 'Thank you for your question about AA literature. This is a placeholder response. The full RAG system will provide detailed answers from the Big Book, Twelve Steps and Twelve Traditions, and other AA-approved materials.',
-    sources: ['Placeholder - AA Literature Database'],
-    context: 'general',
-    confidence: 0.5
+
+  // Rate limiting check (basic)
+  const messageLength = message.trim().length
+  if (messageLength > 500) {
+    return res.status(400).json({
+      error: 'Message too long',
+      message: 'Please keep your question under 500 characters',
+      current_length: messageLength,
+      max_length: 500
+    })
   }
-  
-  res.json({
-    response,
-    session: {
-      id: 'anonymous',
-      anonymous: true
-    },
-    compliance: {
-      aa_traditions: true,
-      literature_only: true,
-      no_endorsements: true
-    },
-    timestamp: new Date().toISOString()
-  })
+
+  try {
+    const startTime = Date.now()
+    
+    // Process chat with RAG service
+    const chatResponse = await ragService.processChat(message.trim(), sessionId)
+    
+    const processingTime = Date.now() - startTime
+    
+    // Log interaction (anonymously)
+    console.log(`💬 Chat processed in ${processingTime}ms - Type: ${chatResponse.responseType}, Confidence: ${chatResponse.confidence.toFixed(2)}`)
+    
+    // Determine HTTP status based on response type
+    let statusCode = 200
+    if (chatResponse.responseType === 'crisis_referral') {
+      statusCode = 202 // Accepted - indicating special handling needed
+    }
+    
+    res.status(statusCode).json({
+      response: {
+        message: chatResponse.response,
+        type: chatResponse.responseType,
+        confidence: chatResponse.confidence,
+        sources: chatResponse.sources,
+        processing_time_ms: processingTime
+      },
+      session: {
+        id: sessionId || 'anonymous',
+        anonymous: true,
+        timestamp: new Date().toISOString()
+      },
+      compliance: {
+        ...chatResponse.compliance,
+        attribution_included: chatResponse.sources.length > 0,
+        literature_based: chatResponse.responseType === 'literature_based'
+      },
+      crisis_support: chatResponse.responseType === 'crisis_referral' ? {
+        immediate_help: {
+          suicide_lifeline: '988',
+          crisis_text: 'Text HOME to 741741',
+          emergency: '911'
+        },
+        aa_resources: {
+          meeting_guide: 'https://meetingguide.aa.org',
+          general_service: '(212) 870-3400'
+        }
+      } : undefined
+    })
+    
+  } catch (error) {
+    console.error('Chat processing error:', error)
+    
+    res.status(500).json({
+      error: 'Chat processing failed',
+      message: 'I apologize, but I\'m unable to process your question right now. Please try again later.',
+      fallback: {
+        aa_resources: {
+          meeting_guide: 'https://meetingguide.aa.org',
+          literature: 'https://www.aa.org/aa-literature'
+        },
+        crisis_support: {
+          suicide_lifeline: '988',
+          crisis_text: 'Text HOME to 741741'
+        }
+      },
+      timestamp: new Date().toISOString()
+    })
+  }
 })
 
 // Basic literature search endpoint

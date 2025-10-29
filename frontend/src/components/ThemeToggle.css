@@ -1,0 +1,235 @@
+/* Theme Toggle Component Styles */
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--ds-background-secondary);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  overflow: hidden;
+  transition: var(--ds-transition-fast);
+}
+
+.theme-toggle:hover {
+  border-color: var(--ds-primary);
+  box-shadow: 0 2px 4px var(--ds-shadow-light);
+}
+
+.theme-toggle-button,
+.theme-settings-button,
+.accessibility-settings-button,
+.sync-settings-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--ds-transition-fast);
+  color: var(--ds-text);
+}
+
+.theme-toggle-button:hover,
+.theme-settings-button:hover,
+.accessibility-settings-button:hover,
+.sync-settings-button:hover {
+  background: var(--ds-background-tertiary);
+}
+
+.theme-toggle-button:focus,
+.theme-settings-button:focus,
+.accessibility-settings-button:focus,
+.sync-settings-button:focus {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: -2px;
+}
+
+.theme-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.theme-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+}
+
+/* Size variants */
+.theme-toggle.small {
+  padding: 0.25rem;
+}
+
+.theme-toggle.small .theme-toggle-button,
+.theme-toggle.small .theme-settings-button {
+  padding: 0.25rem 0.5rem;
+  min-height: 2rem;
+}
+
+.theme-toggle.small .theme-icon {
+  font-size: 1rem;
+}
+
+.theme-toggle.small .theme-label {
+  font-size: 0.8rem;
+}
+
+.theme-toggle.medium {
+  padding: 0.375rem;
+}
+
+.theme-toggle.medium .theme-toggle-button,
+.theme-toggle.medium .theme-settings-button {
+  padding: 0.375rem 0.75rem;
+  min-height: 2.5rem;
+}
+
+.theme-toggle.medium .theme-icon {
+  font-size: 1.2rem;
+}
+
+.theme-toggle.medium .theme-label {
+  font-size: 0.9rem;
+}
+
+.theme-toggle.large {
+  padding: 0.5rem;
+}
+
+.theme-toggle.large .theme-toggle-button,
+.theme-toggle.large .theme-settings-button {
+  padding: 0.5rem 1rem;
+  min-height: 3rem;
+}
+
+.theme-toggle.large .theme-icon {
+  font-size: 1.4rem;
+}
+
+.theme-toggle.large .theme-label {
+  font-size: 1rem;
+}
+
+/* Settings button separators */
+.theme-toggle-button + .theme-settings-button,
+.theme-settings-button + .accessibility-settings-button,
+.accessibility-settings-button + .sync-settings-button {
+  border-left: 1px solid var(--ds-border);
+}
+
+.theme-settings-button,
+.accessibility-settings-button,
+.sync-settings-button {
+  opacity: 0.7;
+}
+
+.theme-settings-button:hover,
+.accessibility-settings-button:hover,
+.sync-settings-button:hover {
+  opacity: 1;
+}
+
+/* Compact mode (no settings button visible on hover) */
+.theme-toggle.compact .theme-settings-button {
+  opacity: 0;
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border: none;
+  transition: all var(--ds-transition-fast);
+}
+
+.theme-toggle.compact:hover .theme-settings-button {
+  opacity: 0.7;
+  width: auto;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-left: 1px solid var(--ds-border);
+}
+
+.theme-toggle.compact:hover .theme-settings-button:hover {
+  opacity: 1;
+}
+
+/* High contrast adjustments */
+.high-contrast .theme-toggle {
+  border-width: 2px;
+}
+
+.high-contrast .theme-toggle-button:focus,
+.high-contrast .theme-settings-button:focus {
+  outline-width: 3px;
+}
+
+/* Reduced motion */
+.reduce-motion .theme-toggle,
+.reduce-motion .theme-toggle-button,
+.reduce-motion .theme-settings-button {
+  transition: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .theme-toggle.medium {
+    padding: 0.25rem;
+  }
+  
+  .theme-toggle.medium .theme-toggle-button,
+  .theme-toggle.medium .theme-settings-button {
+    padding: 0.25rem 0.5rem;
+    min-height: 2rem;
+  }
+  
+  .theme-toggle.large {
+    padding: 0.375rem;
+  }
+  
+  .theme-toggle.large .theme-toggle-button,
+  .theme-toggle.large .theme-settings-button {
+    padding: 0.375rem 0.75rem;
+    min-height: 2.5rem;
+  }
+  
+  .theme-label {
+    display: none;
+  }
+}
+
+/* Loading state */
+.theme-toggle.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.theme-toggle.loading .theme-icon::after {
+  content: '⏳';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8rem;
+}
+
+/* Keyboard navigation improvements */
+.theme-toggle-button:focus-visible,
+.theme-settings-button:focus-visible {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+  border-radius: var(--ds-radius-sm);
+}
+
+/* Animation for theme icon changes */
+@keyframes theme-switch {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(0.8) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+
+.theme-icon {
+  animation: theme-switch 0.3s ease-in-out;
+}
+
+.reduce-motion .theme-icon {
+  animation: none;
+}

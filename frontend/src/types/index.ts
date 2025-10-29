@@ -68,6 +68,80 @@ export interface StepWorkProgress {
   progress: number; // 0-100
 }
 
+export interface StepWorkDocument {
+  id: string;
+  stepNumber: number;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isComplete: boolean;
+  privacy: 'local_only' | 'shareable';
+  content: StepWorkContent;
+}
+
+export interface StepWorkContent {
+  sections: StepWorkSection[];
+  reflections?: string[];
+  notes?: string;
+  completedDate?: Date;
+}
+
+export interface StepWorkSection {
+  id: string;
+  title: string;
+  type: 'text' | 'list' | 'table' | 'reflection';
+  content: any;
+  isComplete: boolean;
+}
+
+export interface ResentmentInventory {
+  id: string;
+  person: string;
+  cause: string;
+  affects: {
+    selfEsteem: boolean;
+    pride: boolean;
+    personalRelations: boolean;
+    sexRelations: boolean;
+    security: boolean;
+    ambitions: boolean;
+    pocketbook: boolean;
+    other: string;
+  };
+  myPart: string;
+  characterDefect: string;
+  notes?: string;
+}
+
+export interface FearInventory {
+  id: string;
+  fear: string;
+  cause: string;
+  affects: {
+    selfEsteem: boolean;
+    pride: boolean;
+    personalRelations: boolean;
+    sexRelations: boolean;
+    security: boolean;
+    ambitions: boolean;
+    pocketbook: boolean;
+    other: string;
+  };
+  notes?: string;
+}
+
+export interface AmendsItem {
+  id: string;
+  person: string;
+  harm: string;
+  willingness: 'willing' | 'not_ready' | 'impossible';
+  method?: string;
+  timing?: string;
+  notes?: string;
+  completed: boolean;
+  completedDate?: Date;
+}
+
 // Crisis Support Types
 export interface CrisisResource {
   id: string;

@@ -1,0 +1,381 @@
+/* Global Theme Styles */
+
+/* Default Light Theme Variables */
+:root {
+  /* Background colors */
+  --ds-background: #ffffff;
+  --ds-background-secondary: #f8f9fa;
+  --ds-background-tertiary: #e9ecef;
+  
+  /* Text colors */
+  --ds-text: #212529;
+  --ds-text-secondary: #495057;
+  --ds-text-muted: #6c757d;
+  
+  /* Interactive colors */
+  --ds-primary: #0d6efd;
+  --ds-primary-hover: #0b5ed7;
+  --ds-secondary: #6c757d;
+  --ds-secondary-hover: #5c636a;
+  
+  /* Status colors */
+  --ds-success: #198754;
+  --ds-warning: #fd7e14;
+  --ds-error: #dc3545;
+  --ds-info: #0dcaf0;
+  
+  /* Border and shadow */
+  --ds-border: #dee2e6;
+  --ds-border-secondary: #e9ecef;
+  --ds-shadow: rgba(0, 0, 0, 0.15);
+  --ds-shadow-light: rgba(0, 0, 0, 0.075);
+  
+  /* Special colors */
+  --ds-crisis: #dc3545;
+  --ds-sobriety: #198754;
+  --ds-milestone: #fd7e14;
+  
+  /* Font sizes */
+  --ds-font-size-base: 16px;
+  --ds-font-size-sm: 14px;
+  --ds-font-size-lg: 18px;
+  --ds-font-size-xl: 20px;
+  --ds-font-size-xxl: 24px;
+  
+  /* Spacing */
+  --ds-spacing-xs: 0.25rem;
+  --ds-spacing-sm: 0.5rem;
+  --ds-spacing-md: 1rem;
+  --ds-spacing-lg: 1.5rem;
+  --ds-spacing-xl: 2rem;
+  --ds-spacing-xxl: 3rem;
+  
+  /* Border radius */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 6px;
+  --ds-radius-lg: 8px;
+  --ds-radius-xl: 12px;
+  
+  /* Animation */
+  --ds-transition-fast: 0.15s ease;
+  --ds-transition-normal: 0.2s ease;
+  --ds-transition-slow: 0.3s ease;
+}
+
+/* Dark Theme */
+.theme-dark {
+  /* Background colors */
+  --ds-background: #0d1117;
+  --ds-background-secondary: #161b22;
+  --ds-background-tertiary: #21262d;
+  
+  /* Text colors */
+  --ds-text: #c9d1d9;
+  --ds-text-secondary: #8b949e;
+  --ds-text-muted: #6e7681;
+  
+  /* Interactive colors */
+  --ds-primary: #58a6ff;
+  --ds-primary-hover: #388bfd;
+  --ds-secondary: #6e7681;
+  --ds-secondary-hover: #8b949e;
+  
+  /* Status colors */
+  --ds-success: #3fb950;
+  --ds-warning: #d29922;
+  --ds-error: #f85149;
+  --ds-info: #58a6ff;
+  
+  /* Border and shadow */
+  --ds-border: #30363d;
+  --ds-border-secondary: #21262d;
+  --ds-shadow: rgba(0, 0, 0, 0.3);
+  --ds-shadow-light: rgba(0, 0, 0, 0.15);
+  
+  /* Special colors */
+  --ds-crisis: #f85149;
+  --ds-sobriety: #3fb950;
+  --ds-milestone: #d29922;
+}
+
+/* High Contrast Light Theme */
+.theme-light.high-contrast {
+  /* Background colors */
+  --ds-background: #ffffff;
+  --ds-background-secondary: #f8f9fa;
+  --ds-background-tertiary: #e9ecef;
+  
+  /* Text colors */
+  --ds-text: #000000;
+  --ds-text-secondary: #000000;
+  --ds-text-muted: #333333;
+  
+  /* Interactive colors */
+  --ds-primary: #0000ff;
+  --ds-primary-hover: #0000cc;
+  --ds-secondary: #666666;
+  --ds-secondary-hover: #333333;
+  
+  /* Status colors */
+  --ds-success: #006600;
+  --ds-warning: #cc6600;
+  --ds-error: #cc0000;
+  --ds-info: #0066cc;
+  
+  /* Border and shadow */
+  --ds-border: #000000;
+  --ds-border-secondary: #666666;
+  --ds-shadow: rgba(0, 0, 0, 0.8);
+  --ds-shadow-light: rgba(0, 0, 0, 0.4);
+  
+  /* Special colors */
+  --ds-crisis: #cc0000;
+  --ds-sobriety: #006600;
+  --ds-milestone: #cc6600;
+}
+
+/* High Contrast Dark Theme */
+.theme-dark.high-contrast {
+  /* Background colors */
+  --ds-background: #000000;
+  --ds-background-secondary: #111111;
+  --ds-background-tertiary: #222222;
+  
+  /* Text colors */
+  --ds-text: #ffffff;
+  --ds-text-secondary: #ffffff;
+  --ds-text-muted: #cccccc;
+  
+  /* Interactive colors */
+  --ds-primary: #66b3ff;
+  --ds-primary-hover: #3399ff;
+  --ds-secondary: #999999;
+  --ds-secondary-hover: #cccccc;
+  
+  /* Status colors */
+  --ds-success: #66ff66;
+  --ds-warning: #ffcc66;
+  --ds-error: #ff6666;
+  --ds-info: #66ccff;
+  
+  /* Border and shadow */
+  --ds-border: #ffffff;
+  --ds-border-secondary: #999999;
+  --ds-shadow: rgba(255, 255, 255, 0.3);
+  --ds-shadow-light: rgba(255, 255, 255, 0.15);
+  
+  /* Special colors */
+  --ds-crisis: #ff6666;
+  --ds-sobriety: #66ff66;
+  --ds-milestone: #ffcc66;
+}
+
+/* Font Size Classes */
+.font-small {
+  --ds-font-size-base: 14px;
+  --ds-font-size-sm: 12px;
+  --ds-font-size-lg: 16px;
+  --ds-font-size-xl: 18px;
+  --ds-font-size-xxl: 20px;
+}
+
+.font-medium {
+  --ds-font-size-base: 16px;
+  --ds-font-size-sm: 14px;
+  --ds-font-size-lg: 18px;
+  --ds-font-size-xl: 20px;
+  --ds-font-size-xxl: 24px;
+}
+
+.font-large {
+  --ds-font-size-base: 18px;
+  --ds-font-size-sm: 16px;
+  --ds-font-size-lg: 20px;
+  --ds-font-size-xl: 22px;
+  --ds-font-size-xxl: 28px;
+}
+
+/* Reduced Motion */
+.reduce-motion,
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Base styling adjustments */
+body {
+  background-color: var(--ds-background);
+  color: var(--ds-text);
+  font-size: var(--ds-font-size-base);
+  transition: var(--ds-transition-normal);
+}
+
+.reduce-motion body {
+  transition: none;
+}
+
+/* Theme-aware component styles */
+.app {
+  background-color: var(--ds-background);
+  color: var(--ds-text);
+  min-height: 100vh;
+}
+
+.app-header {
+  background-color: var(--ds-background-secondary);
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.navigation {
+  background-color: var(--ds-background-secondary);
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.nav-item {
+  color: var(--ds-text-secondary);
+  transition: var(--ds-transition-fast);
+}
+
+.nav-item:hover {
+  color: var(--ds-primary);
+}
+
+.nav-item.active {
+  color: var(--ds-primary);
+  border-bottom-color: var(--ds-primary);
+}
+
+.main-content {
+  background-color: var(--ds-background);
+}
+
+/* Modal and overlay theming */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.theme-dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal {
+  background-color: var(--ds-background);
+  border: 1px solid var(--ds-border);
+  box-shadow: 0 10px 25px var(--ds-shadow);
+}
+
+/* Button theming */
+.primary-button {
+  background-color: var(--ds-primary);
+  color: white;
+  border: none;
+  transition: var(--ds-transition-fast);
+}
+
+.primary-button:hover {
+  background-color: var(--ds-primary-hover);
+}
+
+.secondary-button {
+  background-color: var(--ds-secondary);
+  color: white;
+  border: none;
+  transition: var(--ds-transition-fast);
+}
+
+.secondary-button:hover {
+  background-color: var(--ds-secondary-hover);
+}
+
+/* Form theming */
+input, textarea, select {
+  background-color: var(--ds-background);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  transition: var(--ds-transition-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--ds-primary);
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+
+/* Card theming */
+.card, .stat-card, .goal-card, .activity-item {
+  background-color: var(--ds-background-secondary);
+  border: 1px solid var(--ds-border);
+  box-shadow: 0 2px 4px var(--ds-shadow-light);
+}
+
+/* Status indicators */
+.status.online {
+  color: var(--ds-success);
+}
+
+.status.offline {
+  color: var(--ds-warning);
+}
+
+.crisis-nav, .crisis-button {
+  background-color: var(--ds-crisis) !important;
+  color: white !important;
+}
+
+/* Accessibility improvements */
+@media (prefers-contrast: high) {
+  :root {
+    --ds-border: #000000;
+    --ds-text: #000000;
+  }
+  
+  .theme-dark {
+    --ds-border: #ffffff;
+    --ds-text: #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visible improvements */
+*:focus-visible {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode improvements */
+.high-contrast * {
+  border-width: 2px;
+}
+
+.high-contrast .nav-item.active {
+  background-color: var(--ds-primary);
+  color: white;
+}
+
+.high-contrast .modal {
+  border-width: 3px;
+}
+
+/* Print styles */
+@media print {
+  .app {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .modal-overlay, .navigation, .crisis-button {
+    display: none !important;
+  }
+}

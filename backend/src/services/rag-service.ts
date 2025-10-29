@@ -49,7 +49,7 @@ class RAGService {
 
   constructor() {
     this.pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL || 'postgresql://digital_sponsor:password@localhost:5432/digital_sponsor_dev',
+      connectionString: process.env.DATABASE_URL || 'postgresql://postgres@127.0.0.1:5433/digital_sponsor_dev',
     })
 
     // Initialize OpenAI only if API key is available
@@ -61,40 +61,200 @@ class RAGService {
   }
 
   /**
-   * Search literature for relevant content
+   * Extract key terms from natural language queries
+   */
+  private extractKeyTerms(query: string): string[] {
+    const terms: string[] = []
+    const lowerQuery = query.toLowerCase()
+    console.log(`🔍 Extracting terms from: "${lowerQuery}"`)
+    
+    // Extract step numbers (various formats)
+    const stepPatterns = [
+      /\bstep (\d+)\b/g,
+      /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) step\b/g,
+      /\bthe (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) step\b/g,
+      /\bwhat is the (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) step\b/g,
+      /\btell me about the (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) step\b/g,
+      /\bstep (one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g,
+      /\bhow (?:do i |to )?work (?:the )?(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) step\b/g
+    ]
+    
+    for (const pattern of stepPatterns) {
+      const matches = lowerQuery.matchAll(pattern)
+      for (const match of matches) {
+        if (match[1]) {
+          // Convert word/ordinal to number
+          const wordToNum: { [key: string]: string } = {
+            'one': '1', 'first': '1',
+            'two': '2', 'second': '2', 
+            'three': '3', 'third': '3',
+            'four': '4', 'fourth': '4',
+            'five': '5', 'fifth': '5',
+            'six': '6', 'sixth': '6',
+            'seven': '7', 'seventh': '7',
+            'eight': '8', 'eighth': '8',
+            'nine': '9', 'ninth': '9',
+            'ten': '10', 'tenth': '10',
+            'eleven': '11', 'eleventh': '11',
+            'twelve': '12', 'twelfth': '12'
+          }
+          const stepNum = wordToNum[match[1]] || match[1]
+          console.log(`   📌 Found step match: "${match[0]}" → step ${stepNum}`)
+          terms.push(`step ${stepNum}`)
+        }
+      }
+    }
+    
+    // Extract key concepts
+    const concepts = [
+      'powerless', 'powerlessness', 'unmanageable',
+      'higher power', 'god', 'believe',
+      'decision', 'turn over', 'will',
+      'inventory', 'moral inventory', 'resentments', 'fears',
+      'admitted', 'wrong',
+      'character defects', 'shortcomings', 'entirely ready',
+      'humbly', 'remove',
+      'amends', 'harm',
+      'prayer', 'meditation', 'conscious contact',
+      'spiritual awakening', 'carry message',
+      'sponsor', 'sponsorship',
+      'promises'
+    ]
+    
+    for (const concept of concepts) {
+      if (lowerQuery.includes(concept)) {
+        terms.push(concept)
+      }
+    }
+    
+    const uniqueTerms = [...new Set(terms)]
+    console.log(`   🎯 Extracted terms: [${uniqueTerms.join(', ')}]`)
+    return uniqueTerms // Remove duplicates
+  }
+
+  /**
+   * Preprocess query to handle common AA terminology and variations
+   */
+  private preprocessQuery(query: string): string {
+    const keyTerms = this.extractKeyTerms(query)
+    
+    if (keyTerms.length > 0) {
+      // Use extracted key terms for more focused search
+      return keyTerms.join(' OR ')
+    }
+    
+    // Fallback to original query
+    return query.toLowerCase().trim()
+  }
+
+  /**
+   * Search literature for relevant content with enhanced query processing
    */
   private async searchLiterature(query: string): Promise<SearchResult[]> {
     try {
-      const searchQuery = `
-        SELECT 
-          c.id,
-          s.title as source_title,
-          c.section_title,
-          c.content_text,
-          c.page_number,
-          c.chapter_number,
-          ts_rank(to_tsvector('english', c.content_text), plainto_tsquery('english', $1)) as relevance_score,
-          s.copyright_notice
-        FROM literature_content c
-        JOIN literature_sources s ON c.source_id = s.id
-        WHERE to_tsvector('english', c.content_text) @@ plainto_tsquery('english', $1)
-          AND s.aa_approved = true
-        ORDER BY relevance_score DESC
-        LIMIT $2
-      `
+      const processedQuery = this.preprocessQuery(query)
+      console.log(`🔍 Original query: "${query}" → Processed: "${processedQuery}"`)
       
-      const result = await this.pgPool.query(searchQuery, [query.trim(), this.MAX_SEARCH_RESULTS])
+      // Try multiple search strategies
+      const searchStrategies = [
+        // Strategy 1: Enhanced full-text search with preprocessed query
+        {
+          query: `
+            SELECT 
+              c.id,
+              s.title as source_title,
+              c.section_title,
+              c.content_text,
+              c.page_number,
+              c.chapter_number,
+              ts_rank(to_tsvector('english', c.content_text || ' ' || c.section_title), plainto_tsquery('english', $1)) as relevance_score,
+              s.copyright_notice
+            FROM literature_content c
+            JOIN literature_sources s ON c.source_id = s.id
+            WHERE (to_tsvector('english', c.content_text || ' ' || c.section_title) @@ plainto_tsquery('english', $1)
+                   OR c.content_text ILIKE '%' || $2 || '%'
+                   OR c.section_title ILIKE '%' || $2 || '%')
+              AND s.aa_approved = true
+            ORDER BY relevance_score DESC
+            LIMIT $3
+          `,
+          params: [processedQuery, processedQuery, this.MAX_SEARCH_RESULTS]
+        },
+        // Strategy 2: Keyword array search (simplified)
+        {
+          query: `
+            SELECT 
+              c.id,
+              s.title as source_title,
+              c.section_title,
+              c.content_text,
+              c.page_number,
+              c.chapter_number,
+              0.8 as relevance_score,
+              s.copyright_notice
+            FROM literature_content c
+            JOIN literature_sources s ON c.source_id = s.id
+            WHERE c.keywords && string_to_array(lower($1), ' ')
+              AND s.aa_approved = true
+            ORDER BY c.id
+            LIMIT $2
+          `,
+          params: [processedQuery, this.MAX_SEARCH_RESULTS]
+        },
+        // Strategy 3: Simple ILIKE search for step numbers
+        {
+          query: `
+            SELECT 
+              c.id,
+              s.title as source_title,
+              c.section_title,
+              c.content_text,
+              c.page_number,
+              c.chapter_number,
+              0.9 as relevance_score,
+              s.copyright_notice
+            FROM literature_content c
+            JOIN literature_sources s ON c.source_id = s.id
+            WHERE (c.content_text ILIKE '%step ' || $1 || '%' 
+                   OR c.section_title ILIKE '%step ' || $1 || '%'
+                   OR c.keywords::text ILIKE '%step ' || $1 || '%')
+              AND s.aa_approved = true
+            ORDER BY c.id
+            LIMIT $2
+          `,
+          params: [processedQuery.replace('step ', '').trim(), this.MAX_SEARCH_RESULTS]
+        }
+      ]
       
-      return result.rows.map(row => ({
-        id: row.id,
-        sourceTitle: row.source_title,
-        sectionTitle: row.section_title,
-        content: row.content_text,
-        pageNumber: row.page_number,
-        chapterNumber: row.chapter_number,
-        relevanceScore: parseFloat(row.relevance_score),
-        copyright: row.copyright_notice
-      }))
+      let allResults: SearchResult[] = []
+      
+      for (const strategy of searchStrategies) {
+        try {
+          const result = await this.pgPool.query(strategy.query, strategy.params)
+          const strategyResults = result.rows.map(row => ({
+            id: row.id,
+            sourceTitle: row.source_title,
+            sectionTitle: row.section_title,
+            content: row.content_text,
+            pageNumber: row.page_number,
+            chapterNumber: row.chapter_number,
+            relevanceScore: parseFloat(row.relevance_score),
+            copyright: row.copyright_notice
+          }))
+          
+          allResults = allResults.concat(strategyResults)
+        } catch (strategyError) {
+          console.error(`Search strategy failed:`, strategyError)
+          continue
+        }
+      }
+      
+      // Remove duplicates and sort by relevance
+      const uniqueResults = allResults.filter((result, index, self) => 
+        index === self.findIndex(r => r.id === result.id)
+      ).sort((a, b) => b.relevanceScore - a.relevanceScore)
+      
+      return uniqueResults.slice(0, this.MAX_SEARCH_RESULTS)
       
     } catch (error) {
       console.error('Literature search failed:', error)
@@ -215,10 +375,23 @@ This response is based solely on AA-approved literature and is provided for educ
    * Determine response type based on query and results
    */
   private determineResponseType(query: string, searchResults: SearchResult[]): ChatResponse['responseType'] {
-    const crisisKeywords = ['suicide', 'kill', 'death', 'crisis', 'emergency', 'help']
+    const crisisKeywords = ['suicide', 'suicidal', 'kill myself', 'end my life', 'want to die', 'crisis', 'emergency']
+    const crisisPatterns = [
+      /\bkill\s+myself\b/i,
+      /\bwant\s+to\s+die\b/i,
+      /\bend\s+my\s+life\b/i,
+      /\bsuicide\b/i,
+      /\bsuicidal\b/i
+    ]
     const lowerQuery = query.toLowerCase()
     
+    // Check for specific crisis keywords (not general "help")
     if (crisisKeywords.some(keyword => lowerQuery.includes(keyword))) {
+      return 'crisis_referral'
+    }
+    
+    // Check for crisis patterns
+    if (crisisPatterns.some(pattern => pattern.test(query))) {
       return 'crisis_referral'
     }
     
