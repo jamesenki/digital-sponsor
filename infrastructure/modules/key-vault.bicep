@@ -96,6 +96,95 @@ resource jwtSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// JWT refresh secret
+resource jwtRefreshSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'jwt-refresh-secret'
+  properties: {
+    value: base64(guid(keyVault.id, 'refresh'))
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+// Step work encryption key
+resource stepWorkEncryptionKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'step-work-encryption-key'
+  properties: {
+    value: base64(guid(keyVault.id, 'stepwork'))
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+// Session encryption key
+resource sessionEncryptionKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'session-encryption-key'
+  properties: {
+    value: base64(guid(keyVault.id, 'session'))
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+// Crisis support configuration
+resource crisisHotlineNational 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'crisis-hotline-national'
+  properties: {
+    value: '988'
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+resource crisisTextLine 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'crisis-text-line'
+  properties: {
+    value: '741741'
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+// SMTP configuration placeholders
+resource smtpHost 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'smtp-host'
+  properties: {
+    value: 'smtp.sendgrid.net'
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
+resource smtpPort 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'smtp-port'
+  properties: {
+    value: '587'
+    contentType: 'text/plain'
+    attributes: {
+      enabled: true
+    }
+  }
+}
+
 // Diagnostic settings for Key Vault
 resource keyVaultDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: keyVault
