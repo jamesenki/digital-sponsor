@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "dev"
+    },
+    "appName": {
+      "value": "digital-sponsor"
+    },
+    "location": {
+      "value": "East US 2"
+    },
+    "openaiApiKey": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/{subscription-id}/resourceGroups/rg-shared-secrets/providers/Microsoft.KeyVault/vaults/kv-shared-secrets"
+        },
+        "secretName": "openai-api-key"
+      }
+    },
+    "adminEmail": {
+      "value": "jamessimonster@gmail.com"
+    },
+    "customDomain": {
+      "value": ""
+    },
+    "tags": {
+      "value": {
+        "application": "Digital Sponsor",
+        "environment": "development",
+        "managedBy": "Bicep",
+        "costCenter": "Recovery Services",
+        "owner": "james@commonsolution.org",
+        "project": "digital-sponsor-rebuild"
+      }
+    }
+  }
+}
