@@ -1,0 +1,106 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_run:
+    workflows: ['Continuous Integration']
+    branches: [develop]
+    types:
+      - completed
+
+env:
+  NODE_VERSION: '20.x'
+  AZURE_RESOURCE_GROUP: 'rg-digital-sponsor-staging'
+  AZURE_WEBAPP_NAME: 'app-digital-sponsor-staging'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    environment:
+      name: staging
+      url: https://staging.digitalsponsor.commonsolution.org
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for staging
+        run: npm run build
+        env:
+          NODE_ENV: staging
+          VITE_API_URL: https://api-staging.digitalsponsor.commonsolution.org
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_STAGING }}
+
+      - name: Deploy to Azure Static Web Apps (Frontend)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_STAGING }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'apps/web'
+          api_location: ''
+          output_location: 'dist'
+          skip_deploy_on_missing_secrets: true
+
+      - name: Build and deploy backend container
+        run: |
+          az acr build --registry ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
+            --image digital-sponsor-api:${{ github.sha }} \
+            --image digital-sponsor-api:staging-latest \
+            --file services/api/Dockerfile \
+            services/api
+
+      - name: Update Container App
+        run: |
+          az containerapp update \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/digital-sponsor-api:${{ github.sha }}
+
+      - name: Run health checks
+        run: |
+          echo "Waiting for deployment to be ready..."
+          sleep 60
+
+          # Check frontend health
+          curl -f "https://staging.digitalsponsor.commonsolution.org" || exit 1
+
+          # Check API health
+          curl -f "https://api-staging.digitalsponsor.commonsolution.org/api/health" || exit 1
+
+          echo "✅ Staging deployment health checks passed"
+
+      - name: Run smoke tests
+        run: npm run test:e2e:staging
+        env:
+          TEST_BASE_URL: https://staging.digitalsponsor.commonsolution.org
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🚀 Staging deployment successful!"
+          echo "Frontend: https://staging.digitalsponsor.commonsolution.org"
+          echo "API: https://api-staging.digitalsponsor.commonsolution.org"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Staging deployment failed!"
+          echo "Check the logs for more details."

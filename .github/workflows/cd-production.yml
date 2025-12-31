@@ -1,0 +1,200 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: 'latest'
+
+env:
+  NODE_VERSION: '20.x'
+  AZURE_RESOURCE_GROUP: 'rg-digital-sponsor-prod'
+  AZURE_WEBAPP_NAME: 'app-digital-sponsor-prod'
+
+jobs:
+  security-review:
+    name: Pre-deployment Security Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run comprehensive security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Verify no secrets in code
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --fail
+
+  deploy-production:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    environment:
+      name: production
+      url: https://digitalsponsor.commonsolution.org
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for production
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: https://api.digitalsponsor.commonsolution.org
+
+      - name: Run production tests
+        run: npm run test:prod
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_PROD }}
+
+      - name: Create deployment backup
+        run: |
+          echo "Creating production backup..."
+          az containerapp revision list \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query '[0].name' -o tsv > previous_revision.txt
+
+      - name: Deploy to Azure Static Web Apps (Frontend)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROD }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'apps/web'
+          api_location: ''
+          output_location: 'dist'
+
+      - name: Build and deploy production container
+        run: |
+          # Build with production tags
+          az acr build --registry ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
+            --image digital-sponsor-api:${{ github.sha }} \
+            --image digital-sponsor-api:production-latest \
+            --image digital-sponsor-api:v${{ github.event.release.tag_name || inputs.version }} \
+            --file services/api/Dockerfile \
+            services/api
+
+      - name: Blue-Green Deployment
+        run: |
+          # Update container app with new image
+          az containerapp update \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/digital-sponsor-api:${{ github.sha }}
+
+      - name: Health check and validation
+        run: |
+          echo "Waiting for production deployment to be ready..."
+          sleep 120
+
+          # Comprehensive health checks
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+            
+            # Check frontend
+            if curl -f -s "https://digitalsponsor.commonsolution.org/health" > /dev/null; then
+              echo "✅ Frontend health check passed"
+              FRONTEND_OK=true
+            else
+              echo "❌ Frontend health check failed"
+              sleep 30
+              continue
+            fi
+            
+            # Check API
+            if curl -f -s "https://api.digitalsponsor.commonsolution.org/api/health" > /dev/null; then
+              echo "✅ API health check passed"
+              API_OK=true
+            else
+              echo "❌ API health check failed"
+              sleep 30
+              continue
+            fi
+            
+            # Check critical endpoints
+            if curl -f -s "https://api.digitalsponsor.commonsolution.org/api/literature/stats" > /dev/null; then
+              echo "✅ Critical endpoints check passed"
+              break
+            else
+              echo "❌ Critical endpoints check failed"
+              sleep 30
+            fi
+          done
+
+          if [[ "$FRONTEND_OK" != "true" || "$API_OK" != "true" ]]; then
+            echo "❌ Production health checks failed after 10 attempts"
+            exit 1
+          fi
+
+      - name: Run production smoke tests
+        run: npm run test:e2e:production
+        env:
+          TEST_BASE_URL: https://digitalsponsor.commonsolution.org
+
+      - name: Monitor performance baseline
+        run: |
+          echo "Running performance baseline check..."
+          npm run test:lighthouse -- --url=https://digitalsponsor.commonsolution.org
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "🔄 Deployment failed, initiating rollback..."
+          PREVIOUS_REVISION=$(cat previous_revision.txt)
+          if [ ! -z "$PREVIOUS_REVISION" ]; then
+            az containerapp revision activate \
+              --revision $PREVIOUS_REVISION \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+            echo "✅ Rollback to $PREVIOUS_REVISION completed"
+          else
+            echo "❌ No previous revision found for rollback"
+          fi
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "🌐 Frontend: https://digitalsponsor.commonsolution.org"
+          echo "🔧 API: https://api.digitalsponsor.commonsolution.org"
+          echo "📊 Version: ${{ github.event.release.tag_name || inputs.version }}"
+
+      - name: Update deployment status
+        if: always()
+        run: |
+          STATUS=${{ job.status }}
+          VERSION=${{ github.event.release.tag_name || inputs.version }}
+
+          echo "Deployment Status: $STATUS"
+          echo "Version: $VERSION"
+          echo "Timestamp: $(date -u)"
