@@ -1,105 +1,63 @@
 {
   "name": "digital-sponsor",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "AI-powered AA literature companion for underserved recovery community members",
   "private": true,
-  "description": "AI-powered AA literature companion for those who cannot access traditional sponsorship",
-  "keywords": [
-    "recovery",
-    "alcoholics-anonymous",
-    "ai",
-    "rag",
-    "literature",
-    "privacy"
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
   ],
-  "homepage": "https://digitalsponsor.org",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/your-username/digital-sponsor.git"
-  },
-  "license": "MIT",
-  "author": "Digital Sponsor Contributors",
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ai\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:ai": "cd ai && python -m uvicorn main:app --reload --port 8001",
-    "build": "npm run build:frontend && npm run build:backend",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm run build",
-    "test": "npm run test:frontend && npm run test:backend && npm run test:ai",
-    "test:frontend": "cd frontend && npm test",
-    "test:backend": "cd backend && npm test",
-    "test:ai": "cd ai && python -m pytest",
-    "test:integration": "jest --config=tests/integration/jest.config.js",
-    "test:e2e": "playwright test",
-    "lint": "npm run lint:frontend && npm run lint:backend && npm run lint:ai",
-    "lint:frontend": "cd frontend && npm run lint",
-    "lint:backend": "cd backend && npm run lint",
-    "lint:ai": "cd ai && flake8 . && black --check .",
-    "lint:fix": "npm run lint:frontend -- --fix && npm run lint:backend -- --fix && cd ai && black .",
-    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\" \"npm run start:ai\"",
-    "start:frontend": "cd frontend && npm start",
-    "start:backend": "cd backend && npm start",
-    "start:ai": "cd ai && python -m uvicorn main:app --host 0.0.0.0 --port 8001",
-    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
-    "docker:prod": "docker-compose -f docker-compose.prod.yml up",
-    "setup:dev": "npm run install:all && npm run setup:env && npm run setup:db",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../ai && pip install -r requirements.txt",
-    "setup:env": "cp .env.example .env && echo 'Please edit .env with your configuration'",
-    "setup:db": "docker-compose up -d postgres redis chroma",
-    "db:migrate": "cd backend && npm run migrate",
-    "db:seed": "cd backend && npm run seed",
-    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules frontend/build backend/dist ai/__pycache__ ai/*.pyc",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" && cd ai && black .",
-    "type-check": "cd frontend && npm run type-check && cd ../backend && npm run type-check",
-    "security:audit": "npm audit && cd frontend && npm audit && cd ../backend && npm audit",
-    "security:scan": "docker run --rm -v $(pwd):/app -w /app securecodewarrior/docker-security-scanning",
-    "performance:test": "lighthouse http://localhost:3000 --output=json --output-path=./performance-report.json",
-    "docs:build": "cd docs && mkdocs build",
-    "docs:serve": "cd docs && mkdocs serve",
-    "release": "standard-version",
-    "precommit": "lint-staged"
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
+    "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 10",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "type-check": "npm run type-check --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "prepare": "husky install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "concurrently": "^8.2.0",
-    "eslint": "^8.45.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-react": "^7.32.0",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-prettier": "^5.0.1",
     "husky": "^8.0.3",
-    "jest": "^29.6.0",
-    "lint-staged": "^13.2.0",
-    "prettier": "^3.0.0",
-    "standard-version": "^9.5.0",
-    "typescript": "^5.1.0"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ],
-    "*.py": [
-      "black",
-      "flake8"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "volta": {
-    "node": "18.18.0",
-    "npm": "9.8.1"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/digital-sponsor.git"
+  },
+  "keywords": [
+    "aa",
+    "alcoholics-anonymous",
+    "recovery",
+    "ai",
+    "literature",
+    "azure",
+    "typescript"
+  ],
+  "author": "Digital Sponsor Team",
+  "license": "MIT",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

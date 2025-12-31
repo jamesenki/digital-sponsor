@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Note: commitlint temporarily disabled for initial setup
+# TODO: Add commitlint configuration in TASK-002
+echo "Commit message validation temporarily disabled"
