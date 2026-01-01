@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Sponsor - Join Us</title>
+    <style>
+        :root {
+            --primary-color: #2c5f3e;
+            --secondary-color: #4a7c59;
+            --accent-color: #8fbc8f;
+            --text-color: #333;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --border-color: #e0e0e0;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .aa-notice {
+            background: #e8f5e8;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .aa-notice h3 {
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .aa-notice h3::before {
+            content: "🤝";
+            margin-right: 8px;
+        }
+
+        .aa-notice ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .aa-notice li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .aa-notice li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(44, 95, 62, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-top: 3px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .required {
+            color: var(--error-color);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .privacy-notice {
+            background: #fff3cd;
+            border: 1px solid var(--warning-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .privacy-notice h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(44, 95, 62, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+        }
+
+        /* High contrast mode support (AA Compliance) */
+        @media (prefers-contrast: high) {
+            :root {
+                --primary-color: #000;
+                --secondary-color: #000;
+                --text-color: #000;
+                --background-color: #fff;
+                --border-color: #000;
+            }
+
+            .btn-primary {
+                background: #000;
+                border: 2px solid #000;
+            }
+        }
+
+        /* Reduced motion support (AA Compliance) */
+        @media (prefers-reduced-motion: reduce) {
+            .btn-primary {
+                transition: none;
+            }
+
+            .form-group input:focus,
+            .form-group select:focus {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Digital Sponsor</h1>
+            <p>Your personal recovery companion</p>
+        </div>
+        
+        <div class="content">
+            <div class="aa-notice">
+                <h3>AA Traditions Commitment</h3>
+                <ul>
+                    <li>We respect your anonymity (Tradition 11)</li>
+                    <li>No endorsement of outside enterprises (Tradition 6)</li>
+                    <li>Personal recovery focus only (Tradition 12)</li>
+                    <li>No professional advice given (Tradition 8)</li>
+                </ul>
+            </div>
+
+            <!-- This is where Azure B2C will inject the signup form -->
+            <div id="api">
+                <!-- Standard form fields will be injected here by Azure B2C -->
+            </div>
+
+            <div class="privacy-notice">
+                <h4>🔒 Your Privacy & Data</h4>
+                <p>Your step work and personal information are encrypted and stored securely. 
+                   You can choose how long to keep your data, and anonymous participation 
+                   is always supported per AA Tradition 11.</p>
+            </div>
+
+            <div class="links">
+                <a href="#" onclick="showPrivacyPolicy()">Privacy Policy</a> | 
+                <a href="#" onclick="showAATerms()">AA Traditions Compliance</a> | 
+                <a href="#" onclick="showHelpResources()">Crisis Resources</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Custom JavaScript for AA compliance features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add accessibility improvements
+            addAccessibilityFeatures();
+            
+            // Add form validation with AA-specific considerations
+            addFormValidation();
+            
+            // Add crisis support reminder
+            addCrisisSupport();
+        });
+
+        function addAccessibilityFeatures() {
+            // High contrast toggle
+            if (localStorage.getItem('highContrast') === 'true') {
+                document.body.classList.add('high-contrast');
+            }
+
+            // Font size adjustment
+            const fontSize = localStorage.getItem('fontSize');
+            if (fontSize) {
+                document.documentElement.style.fontSize = fontSize;
+            }
+
+            // Screen reader announcements for form changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Announce form validation messages to screen readers
+                        const errorElements = document.querySelectorAll('.error, .alert');
+                        errorElements.forEach(function(element) {
+                            element.setAttribute('aria-live', 'polite');
+                            element.setAttribute('role', 'alert');
+                        });
+                    }
+                });
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        function addFormValidation() {
+            // Wait for Azure B2C form to load
+            setTimeout(function() {
+                const form = document.querySelector('form');
+                if (form) {
+                    // Add custom validation for preferred name (AA Tradition 11)
+                    const preferredNameField = document.querySelector('[id*="preferredName"], [name*="preferredName"]');
+                    if (preferredNameField) {
+                        preferredNameField.addEventListener('blur', function() {
+                            validatePreferredName(this);
+                        });
+                    }
+
+                    // Ensure crisis contact consent is checked
+                    const crisisConsentField = document.querySelector('[id*="crisisContactConsent"], [name*="crisisContactConsent"]');
+                    if (crisisConsentField) {
+                        crisisConsentField.required = true;
+                        crisisConsentField.addEventListener('change', function() {
+                            if (!this.checked) {
+                                showCrisisConsentReminder();
+                            }
+                        });
+                    }
+                }
+            }, 2000);
+        }
+
+        function validatePreferredName(field) {
+            const value = field.value.trim();
+            
+            // AA Tradition 11: Recommend first name only for anonymity
+            if (value && value.split(' ').length > 2) {
+                showTooltip(field, 'For anonymity (AA Tradition 11), consider using just your first name.');
+            }
+            
+            // Check for potentially identifying information
+            if (value && (value.length > 50 || /\d/.test(value))) {
+                showTooltip(field, 'Please use a simple name without numbers or personal details.');
+            }
+        }
+
+        function showCrisisConsentReminder() {
+            const reminder = document.createElement('div');
+            reminder.className = 'crisis-reminder';
+            reminder.style.cssText = `
+                background: #fff3cd;
+                border: 1px solid #ffc107;
+                border-radius: 6px;
+                padding: 15px;
+                margin: 10px 0;
+                font-size: 14px;
+            `;
+            reminder.innerHTML = `
+                <strong>Crisis Support:</strong> This consent allows us to provide emergency 
+                resources if our system detects crisis language in your interactions. 
+                This is for your safety and wellbeing.
+            `;
+            
+            const crisisField = document.querySelector('[id*="crisisContactConsent"], [name*="crisisContactConsent"]');
+            if (crisisField && crisisField.parentNode) {
+                crisisField.parentNode.appendChild(reminder);
+                
+                setTimeout(() => {
+                    reminder.remove();
+                }, 10000);
+            }
+        }
+
+        function showTooltip(field, message) {
+            // Remove existing tooltip
+            const existingTooltip = field.parentNode.querySelector('.custom-tooltip');
+            if (existingTooltip) {
+                existingTooltip.remove();
+            }
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'custom-tooltip';
+            tooltip.style.cssText = `
+                background: #333;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-top: 5px;
+                position: relative;
+            `;
+            tooltip.textContent = message;
+            
+            field.parentNode.appendChild(tooltip);
+            
+            setTimeout(() => {
+                tooltip.remove();
+            }, 5000);
+        }
+
+        function addCrisisSupport() {
+            // Add crisis support information
+            const crisisInfo = document.createElement('div');
+            crisisInfo.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #dc3545;
+                color: white;
+                padding: 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                max-width: 200px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                z-index: 1000;
+            `;
+            crisisInfo.innerHTML = `
+                <strong>Crisis Support:</strong><br>
+                National Suicide Prevention: 988<br>
+                Crisis Text Line: Text HOME to 741741<br>
+                Emergency: 911
+            `;
+            
+            document.body.appendChild(crisisInfo);
+        }
+
+        function showPrivacyPolicy() {
+            alert('Privacy Policy: We encrypt and protect your data according to AA Traditions. You control your data retention settings.');
+        }
+
+        function showAATerms() {
+            alert('AA Traditions Compliance: We follow all 12 AA Traditions, especially respecting anonymity (11) and avoiding endorsement (6).');
+        }
+
+        function showHelpResources() {
+            alert('Crisis Resources Available 24/7:\n• National Suicide Prevention Lifeline: 988\n• Crisis Text Line: 741741\n• Emergency Services: 911');
+        }
+    </script>
+</body>
+</html>

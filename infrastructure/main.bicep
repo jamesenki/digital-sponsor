@@ -124,6 +124,16 @@ module keyVault 'modules/key-vault.bicep' = {
   }
 }
 
+// B2C Tenant Configuration (outputs only - tenant must be created manually)
+module b2cConfig 'modules/b2c-tenant.bicep' = {
+  name: 'b2cConfig'
+  params: {
+    environment: environment
+    projectName: appName
+    location: location
+  }
+}
+
 // Container Registry for backend API images
 module containerRegistry 'modules/container-registry.bicep' = {
   name: 'containerRegistry'
@@ -224,6 +234,15 @@ output containerAppFqdn string = containerApp.outputs.fqdn
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.workspaceId
 output appInsightsConnectionString string = appInsights.outputs.connectionString
 output appInsightsInstrumentationKey string = appInsights.outputs.instrumentationKey
+
+// B2C Configuration Outputs
+output b2cTenantName string = b2cConfig.outputs.tenantName
+output b2cTenantDomain string = b2cConfig.outputs.tenantDomain
+output b2cSignUpSignInPolicy string = b2cConfig.outputs.signUpSignInPolicyId
+output b2cEditProfilePolicy string = b2cConfig.outputs.editProfilePolicyId
+output b2cPasswordResetPolicy string = b2cConfig.outputs.passwordResetPolicyId
+output b2cApiScopes array = b2cConfig.outputs.apiScopes
+output b2cMsalConfig object = b2cConfig.outputs.msalConfig
 
 // Resource Group tags
 resource rgTags 'Microsoft.Resources/tags@2021-04-01' = {

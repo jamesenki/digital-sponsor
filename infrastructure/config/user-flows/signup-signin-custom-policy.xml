@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TrustFrameworkPolicy
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns="http://schemas.microsoft.com/online/cpim/schemas/2013/06"
+  PolicySchemaVersion="0.3.0.0"
+  TenantId="{B2C_TENANT_NAME}.onmicrosoft.com"
+  PolicyId="B2C_1A_DigitalSponsor_SignupSignin"
+  PublicPolicyUri="http://{B2C_TENANT_NAME}.onmicrosoft.com/B2C_1A_DigitalSponsor_SignupSignin">
+
+  <BasePolicy>
+    <TenantId>{B2C_TENANT_NAME}.onmicrosoft.com</TenantId>
+    <PolicyId>B2C_1A_TrustFrameworkExtensions</PolicyId>
+  </BasePolicy>
+
+  <BuildingBlocks>
+    <ClaimsSchema>
+      <!-- Standard Claims -->
+      <ClaimType Id="objectId">
+        <DisplayName>User's Object ID</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Object identifier (ID) of the user object in Azure AD.</UserHelpText>
+      </ClaimType>
+      
+      <ClaimType Id="email">
+        <DisplayName>Email Address</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Email address that can be used to contact you.</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="givenName">
+        <DisplayName>Given Name</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Your given name (also known as first name).</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="surname">
+        <DisplayName>Surname</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Your surname (also known as family name or last name).</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+
+      <!-- AA Traditions Compliant Custom Claims -->
+      <ClaimType Id="extension_anonymousMode">
+        <DisplayName>Anonymous Mode</DisplayName>
+        <DataType>boolean</DataType>
+        <UserHelpText>Enable anonymous participation in meetings and discussions (AA Tradition 11)</UserHelpText>
+        <UserInputType>CheckboxMultiSelect</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="extension_preferredName">
+        <DisplayName>Preferred Name</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Name to use in meetings (first name only recommended for anonymity)</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+        <Restriction>
+          <Pattern RegularExpression="^[a-zA-Z\s]{1,50}$" HelpText="Only letters and spaces allowed, maximum 50 characters" />
+        </Restriction>
+      </ClaimType>
+      
+      <ClaimType Id="extension_sobrietyDate">
+        <DisplayName>Sobriety Date</DisplayName>
+        <DataType>date</DataType>
+        <UserHelpText>Your sobriety date (optional, for step work tracking)</UserHelpText>
+        <UserInputType>DateTimeDropdown</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="extension_homeMeetingId">
+        <DisplayName>Home Meeting</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Your home meeting affiliation (optional)</UserHelpText>
+        <UserInputType>DropdownSingleSelect</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="extension_crisisContactConsent">
+        <DisplayName>Crisis Support Contact Consent</DisplayName>
+        <DataType>boolean</DataType>
+        <UserHelpText>I consent to be contacted in crisis situations</UserHelpText>
+        <UserInputType>CheckboxMultiSelect</UserInputType>
+      </ClaimType>
+      
+      <ClaimType Id="extension_dataRetentionChoice">
+        <DisplayName>Data Retention Preference</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>How long should we keep your step work data?</UserHelpText>
+        <UserInputType>DropdownSingleSelect</UserInputType>
+        <Restriction>
+          <Enumeration Text="Session only" Value="session" />
+          <Enumeration Text="30 days" Value="30days" />
+          <Enumeration Text="90 days" Value="90days" />
+          <Enumeration Text="Never delete" Value="never" />
+        </Restriction>
+      </ClaimType>
+    </ClaimsSchema>
+    
+    <ClaimsTransformations>
+      <!-- Set default values for AA compliance -->
+      <ClaimsTransformation Id="SetAnonymousModeDefault" TransformationMethod="CreateBooleanClaim">
+        <InputParameters>
+          <InputParameter Id="value" DataType="boolean" Value="true" />
+        </InputParameters>
+        <OutputClaims>
+          <OutputClaim ClaimTypeReferenceId="extension_anonymousMode" TransformationClaimType="outputClaim" />
+        </OutputClaims>
+      </ClaimsTransformation>
+      
+      <ClaimsTransformation Id="SetDataRetentionDefault" TransformationMethod="CreateStringClaim">
+        <InputParameters>
+          <InputParameter Id="value" DataType="string" Value="session" />
+        </InputParameters>
+        <OutputClaims>
+          <OutputClaim ClaimTypeReferenceId="extension_dataRetentionChoice" TransformationClaimType="outputClaim" />
+        </OutputClaims>
+      </ClaimsTransformation>
+    </ClaimsTransformations>
+  </BuildingBlocks>
+
+  <ClaimsProviders>
+    <ClaimsProvider>
+      <DisplayName>Local Account SignIn</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="SelfAsserted-LocalAccountSignin-Email">
+          <DisplayName>Local Account Signin</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <Item Key="SignUpTarget">SignUpWithLogonEmailExchange</Item>
+            <Item Key="setting.operatingMode">Email</Item>
+            <Item Key="ContentDefinitionReferenceId">api.selfasserted</Item>
+            <!-- AA Tradition 11: Anonymity reminder -->
+            <Item Key="setting.showSignupLink">true</Item>
+            <Item Key="setting.showCancelButton">false</Item>
+          </Metadata>
+          <IncludeInSso>false</IncludeInSso>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="signInName" />
+          </InputClaims>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="signInName" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="password" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="objectId" />
+            <OutputClaim ClaimTypeReferenceId="authenticationSource" />
+          </OutputClaims>
+          <ValidationTechnicalProfiles>
+            <ValidationTechnicalProfile ReferenceId="login-NonInteractive" />
+          </ValidationTechnicalProfiles>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
+    <ClaimsProvider>
+      <DisplayName>Local Account SignUp</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="LocalAccountSignUpWithLogonEmail">
+          <DisplayName>Email signup</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <Item Key="IpAddressNotEqual">false</Item>
+            <Item Key="ContentDefinitionReferenceId">api.localaccountsignup</Item>
+            <Item Key="setting.showContinueButton">false</Item>
+            <Item Key="setting.showCancelButton">false</Item>
+            <Item Key="setting.operatingMode">Email</Item>
+            <!-- Custom content for AA Traditions awareness -->
+            <Item Key="LocalizedResourcesReferenceId">api.localaccountsignup.aa</Item>
+          </Metadata>
+          <InputClaimsTransformations>
+            <InputClaimsTransformation ReferenceId="SetAnonymousModeDefault" />
+            <InputClaimsTransformation ReferenceId="SetDataRetentionDefault" />
+          </InputClaimsTransformations>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="extension_anonymousMode" />
+            <InputClaim ClaimTypeReferenceId="extension_dataRetentionChoice" />
+          </InputClaims>
+          <OutputClaims>
+            <!-- Standard claims -->
+            <OutputClaim ClaimTypeReferenceId="objectId" />
+            <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="Verified.Email" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="newPassword" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="executed-SelfAsserted-Input" DefaultValue="true" />
+            <OutputClaim ClaimTypeReferenceId="authenticationSource" />
+            <OutputClaim ClaimTypeReferenceId="newUser" />
+            
+            <!-- Personal information -->
+            <OutputClaim ClaimTypeReferenceId="givenName" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="surname" Required="false" />
+            
+            <!-- AA Traditions compliant claims -->
+            <OutputClaim ClaimTypeReferenceId="extension_anonymousMode" />
+            <OutputClaim ClaimTypeReferenceId="extension_preferredName" />
+            <OutputClaim ClaimTypeReferenceId="extension_sobrietyDate" />
+            <OutputClaim ClaimTypeReferenceId="extension_homeMeetingId" />
+            <OutputClaim ClaimTypeReferenceId="extension_crisisContactConsent" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="extension_dataRetentionChoice" />
+          </OutputClaims>
+          <ValidationTechnicalProfiles>
+            <ValidationTechnicalProfile ReferenceId="AAD-UserWriteUsingLogonEmail" />
+          </ValidationTechnicalProfiles>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+  </ClaimsProviders>
+
+  <UserJourneys>
+    <UserJourney Id="SignUpOrSignIn">
+      <OrchestrationSteps>
+        <OrchestrationStep Order="1" Type="CombinedSignInAndSignUp" ContentDefinitionReferenceId="api.signuporsignin">
+          <ClaimsProviderSelections>
+            <ClaimsProviderSelection ValidationClaimsExchangeId="LocalAccountSigninEmailExchange" />
+          </ClaimsProviderSelections>
+          <ClaimsExchanges>
+            <ClaimsExchange Id="LocalAccountSigninEmailExchange" TechnicalProfileReferenceId="SelfAsserted-LocalAccountSignin-Email" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="2" Type="ClaimsExchange">
+          <Preconditions>
+            <Precondition Type="ClaimsExist" ExecuteActionsIf="true">
+              <Value>objectId</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+          </Preconditions>
+          <ClaimsExchanges>
+            <ClaimsExchange Id="SignUpWithLogonEmailExchange" TechnicalProfileReferenceId="LocalAccountSignUpWithLogonEmail" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <!-- Read user data for existing users -->
+        <OrchestrationStep Order="3" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="AADUserReadWithObjectId" TechnicalProfileReferenceId="AAD-UserReadUsingObjectId" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="4" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+      </OrchestrationSteps>
+      <ClientDefinition ReferenceId="DefaultWeb" />
+    </UserJourney>
+  </UserJourneys>
+
+  <RelyingParty>
+    <DefaultUserJourney ReferenceId="SignUpOrSignIn" />
+    <TechnicalProfile Id="PolicyProfile">
+      <DisplayName>PolicyProfile</DisplayName>
+      <Protocol Name="OpenIdConnect" />
+      <OutputClaims>
+        <!-- Standard OIDC claims -->
+        <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="sub"/>
+        <OutputClaim ClaimTypeReferenceId="email" />
+        <OutputClaim ClaimTypeReferenceId="givenName" />
+        <OutputClaim ClaimTypeReferenceId="surname" />
+        
+        <!-- AA Traditions compliant claims -->
+        <OutputClaim ClaimTypeReferenceId="extension_anonymousMode" PartnerClaimType="anonymousMode" />
+        <OutputClaim ClaimTypeReferenceId="extension_preferredName" PartnerClaimType="preferredName" />
+        <OutputClaim ClaimTypeReferenceId="extension_sobrietyDate" PartnerClaimType="sobrietyDate" />
+        <OutputClaim ClaimTypeReferenceId="extension_homeMeetingId" PartnerClaimType="homeMeetingId" />
+        <OutputClaim ClaimTypeReferenceId="extension_crisisContactConsent" PartnerClaimType="crisisContactConsent" />
+        <OutputClaim ClaimTypeReferenceId="extension_dataRetentionChoice" PartnerClaimType="dataRetentionChoice" />
+      </OutputClaims>
+      <SubjectNamingInfo ClaimType="sub" />
+    </TechnicalProfile>
+  </RelyingParty>
+</TrustFrameworkPolicy>

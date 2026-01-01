@@ -17,3 +17,4 @@ export * from './errors/error-classes';
 // Utilities
 export * from './utils/request-id';
 export * from './utils/logger';
+export * from './utils/msal-config';
