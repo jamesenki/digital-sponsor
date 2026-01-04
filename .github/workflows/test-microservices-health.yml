@@ -1,0 +1,136 @@
+name: Test Microservices Health
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to test (health, auth, session, or "all")'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - health
+          - auth
+          - session
+  schedule:
+    # Run health checks every 6 hours
+    - cron: '0 */6 * * *'
+
+env:
+  AZURE_RESOURCE_GROUP: 'rg-digitalsponsor-centralus'
+
+jobs:
+  health-check:
+    name: Microservices Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Test Service Health
+        run: |
+          SERVICE="${{ inputs.service || 'all' }}"
+
+          echo "🏥 Running health check for: $SERVICE"
+          echo "⏰ Test started at: $(date -u)"
+          echo ""
+
+          if [ "$SERVICE" = "all" ]; then
+            SERVICES=("health" "auth" "session")
+          else
+            SERVICES=("$SERVICE")
+          fi
+
+          FAILED_SERVICES=()
+
+          for SVC in "${SERVICES[@]}"; do
+            case $SVC in
+              "health")
+                URL="https://health-digitalsponsor-prod.azurewebsites.net/api/health"
+                EXPECTED="healthy"
+                ;;
+              "auth")
+                URL="https://auth-v2-digitalsponsor-prod.azurewebsites.net/api/auth/validate"
+                EXPECTED="authenticated"
+                ;;
+              "session")
+                URL="https://session-digitalsponsor-prod.azurewebsites.net/api/session"
+                EXPECTED="session-service"
+                ;;
+            esac
+            
+            echo "🔍 Testing $SVC service..."
+            
+            # Single health check attempt
+            if RESPONSE=$(curl -f -s -w "HTTPSTATUS:%{http_code}" "$URL" --max-time 10 2>/dev/null); then
+              HTTP_CODE=$(echo $RESPONSE | tr -d '\n' | sed -E 's/.*HTTPSTATUS:([0-9]{3})$/\1/')
+              BODY=$(echo $RESPONSE | sed -E 's/HTTPSTATUS:[0-9]{3}$//')
+              
+              if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 400 ]] && echo "$BODY" | grep -q "$EXPECTED"; then
+                RESPONSE_TIME=$(echo "$BODY" | jq -r '.responseTime // "N/A"' 2>/dev/null || echo "N/A")
+                echo "  ✅ $SVC service: HTTP $HTTP_CODE, Response time: $RESPONSE_TIME"
+                
+                # Show additional service info
+                case $SVC in
+                  "health")
+                    MEMORY=$(echo "$BODY" | jq -r '.memory.used // "N/A"' 2>/dev/null || echo "N/A")
+                    echo "     Memory usage: ${MEMORY}MB"
+                    ;;
+                  "session")
+                    ACTIVE=$(echo "$BODY" | jq -r '.activeSessionsCount // "N/A"' 2>/dev/null || echo "N/A")
+                    echo "     Active sessions: $ACTIVE"
+                    ;;
+                esac
+              else
+                echo "  ❌ $SVC service: HTTP $HTTP_CODE or unexpected response"
+                FAILED_SERVICES+=("$SVC")
+              fi
+            else
+              echo "  ❌ $SVC service: Connection failed or timeout"
+              FAILED_SERVICES+=("$SVC")
+            fi
+            echo ""
+          done
+
+          echo "📊 Health Check Summary:"
+          echo "⏰ Completed at: $(date -u)"
+
+          if [ ${#FAILED_SERVICES[@]} -eq 0 ]; then
+            echo "🎉 All services are healthy!"
+          else
+            echo "❌ Failed services: ${FAILED_SERVICES[*]}"
+            echo ""
+            echo "🔗 Service URLs for manual testing:"
+            echo "   Health:  https://health-digitalsponsor-prod.azurewebsites.net/api/health"
+            echo "   Auth:    https://auth-v2-digitalsponsor-prod.azurewebsites.net/api/auth/validate"
+            echo "   Session: https://session-digitalsponsor-prod.azurewebsites.net/api/session"
+            exit 1
+          fi
+
+      - name: Quick Integration Test
+        if: inputs.service == 'all' || inputs.service == 'session'
+        run: |
+          echo ""
+          echo "🧪 Running quick session integration test..."
+
+          # Test session lifecycle
+          CREATE_RESPONSE=$(curl -s -X POST \
+            "https://session-digitalsponsor-prod.azurewebsites.net/api/session/create" \
+            -H "Content-Type: application/json" \
+            -d '{"userId":"health-check-user","userData":{"test":true}}' \
+            --max-time 10)
+
+          if echo "$CREATE_RESPONSE" | grep -q '"success":true'; then
+            SESSION_ID=$(echo "$CREATE_RESPONSE" | jq -r '.session.sessionId' 2>/dev/null)
+            echo "  ✅ Session created: $SESSION_ID"
+            
+            # Clean up immediately
+            curl -s -X DELETE \
+              "https://session-digitalsponsor-prod.azurewebsites.net/api/session/delete" \
+              -H "Content-Type: application/json" \
+              -d "{\"sessionId\":\"$SESSION_ID\"}" \
+              --max-time 10 > /dev/null
+            echo "  ✅ Session cleaned up"
+          else
+            echo "  ⚠️  Session test failed (non-critical)"
+          fi

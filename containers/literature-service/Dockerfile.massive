@@ -1,0 +1,11 @@
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+COPY app_massive.py ./app.py
+COPY massive_literature_database.py .
+COPY advanced_literature_engine.py .
+
+EXPOSE 3002
+
+CMD ["python", "app.py"]
