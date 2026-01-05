@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Digital Sponsor Beta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .admin-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .admin-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+        }
+
+        .message.info {
+            background: #bee3f8;
+            border: 1px solid #90cdf4;
+            color: #2c5282;
+        }
+
+        .invitation-display {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .invitation-code {
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #667eea;
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .email-preview {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .generated-invitations {
+            margin-top: 20px;
+        }
+
+        .invitation-item {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Beta Invitation Manager</h1>
+            <p>Digital Sponsor Beta - Generate and Send Invitations</p>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="admin-section">
+            <h3>📊 Beta Program Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalGenerated">0</div>
+                    <div class="stat-label">Codes Generated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSent">0</div>
+                    <div class="stat-label">Emails Sent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsed">0</div>
+                    <div class="stat-label">Codes Used</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalActive">0</div>
+                    <div class="stat-label">Active Codes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Invitation -->
+        <div class="admin-section">
+            <h3>🎫 Generate Beta Invitations</h3>
+            <p>Create personalized beta invitation codes for potential testers.</p>
+            
+            <div id="generateMessage" class="message"></div>
+            
+            <form id="generateForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inviteEmail">Email Address</label>
+                        <input type="email" id="inviteEmail" placeholder="tester@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteFirstName">First Name</label>
+                        <input type="text" id="inviteFirstName" placeholder="John" required>
+                    </div>
+                    <div style="align-self: end;">
+                        <button type="submit" class="btn">Generate & Send</button>
+                    </div>
+                </div>
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="inviteType">Invitation Type</label>
+                    <select id="inviteType">
+                        <option value="general">General Beta</option>
+                        <option value="investor">Investor Demo</option>
+                        <option value="sponsor">Sponsor Preview</option>
+                        <option value="clinical">Clinical Trial</option>
+                    </select>
+                </div>
+            </form>
+            
+            <div id="generatedInvitation" class="invitation-display" style="display: none;">
+                <h4>✅ Invitation Generated Successfully!</h4>
+                <div class="invitation-code" id="generatedCode"></div>
+                <div id="invitationDetails"></div>
+                
+                <div class="email-preview" id="emailPreview" style="display: none;">
+                    <h5>📧 Email Preview:</h5>
+                    <div id="emailContent"></div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="btn" onclick="sendEmail()">Send Email Now</button>
+                    <button class="btn" style="background: #718096;" onclick="copyInviteCode()">Copy Code</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Invitations History -->
+        <div class="admin-section">
+            <h3>📝 Recent Invitations</h3>
+            <div id="invitationsHistory" class="generated-invitations">
+                <p style="color: #718096; text-align: center;">No invitations generated yet in this session.</p>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">&larr; Back to Beta Platform</a>
+        </div>
+    </div>
+
+    <script>
+        // In-memory storage for this session
+        let generatedInvitations = [];
+        let sessionStats = {
+            generated: 0,
+            sent: 0,
+            used: 0,
+            active: 0
+        };
+
+        // Load saved data from localStorage
+        function loadSessionData() {
+            const saved = localStorage.getItem('digitalSponsorInvitations');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    generatedInvitations = data.invitations || [];
+                    sessionStats = data.stats || sessionStats;
+                    updateStats();
+                    updateHistory();
+                } catch (error) {
+                    console.error('Failed to load saved data:', error);
+                }
+            }
+        }
+
+        // Save data to localStorage
+        function saveSessionData() {
+            const data = {
+                invitations: generatedInvitations,
+                stats: sessionStats,
+                lastUpdate: Date.now()
+            };
+            localStorage.setItem('digitalSponsorInvitations', JSON.stringify(data));
+        }
+
+        // Generate unique invitation code
+        function generateInvitationCode(type = 'general') {
+            const prefix = `DS-${type.toUpperCase()}`;
+            const uniqueId = Math.random().toString(36).substr(2, 8).toUpperCase();
+            return `${prefix}-${uniqueId}`;
+        }
+
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('totalGenerated').textContent = sessionStats.generated;
+            document.getElementById('totalSent').textContent = sessionStats.sent;
+            document.getElementById('totalUsed').textContent = sessionStats.used;
+            document.getElementById('totalActive').textContent = sessionStats.active;
+        }
+
+        // Update invitations history
+        function updateHistory() {
+            const historyContainer = document.getElementById('invitationsHistory');
+            
+            if (generatedInvitations.length === 0) {
+                historyContainer.innerHTML = '<p style="color: #718096; text-align: center;">No invitations generated yet in this session.</p>';
+                return;
+            }
+            
+            const historyHtml = generatedInvitations.slice(-10).reverse().map(invitation => `
+                <div class="invitation-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>${invitation.firstName}</strong>
+                        <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem;">
+                            ${invitation.type}
+                        </span>
+                    </div>
+                    <div style="font-family: monospace; background: #f7fafc; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                        ${invitation.code}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #718096;">
+                        📧 ${invitation.email} | 📅 ${new Date(invitation.createdAt).toLocaleString()}
+                        ${invitation.sent ? ' | ✅ Email Sent' : ' | ⏳ Pending'}
+                    </div>
+                </div>
+            `).join('');
+            
+            historyContainer.innerHTML = historyHtml;
+        }
+
+        // Generate invitation form handler
+        document.getElementById('generateForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('inviteEmail').value;
+            const firstName = document.getElementById('inviteFirstName').value;
+            const type = document.getElementById('inviteType').value;
+            
+            // Generate invitation
+            const invitation = {
+                code: generateInvitationCode(type),
+                email: email,
+                firstName: firstName,
+                type: type,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days
+                sent: false,
+                used: false
+            };
+            
+            // Add to history
+            generatedInvitations.push(invitation);
+            
+            // Update stats
+            sessionStats.generated++;
+            sessionStats.active++;
+            
+            // Save data
+            saveSessionData();
+            
+            // Update displays
+            updateStats();
+            updateHistory();
+            
+            // Show generated invitation
+            showGeneratedInvitation(invitation);
+            
+            // Clear form
+            document.getElementById('generateForm').reset();
+            
+            showGenerateMessage('✅ Invitation code generated successfully!', 'success');
+        });
+
+        function showGeneratedInvitation(invitation) {
+            const display = document.getElementById('generatedInvitation');
+            const codeEl = document.getElementById('generatedCode');
+            const detailsEl = document.getElementById('invitationDetails');
+            
+            codeEl.textContent = invitation.code;
+            detailsEl.innerHTML = `
+                <div style="margin: 10px 0;">
+                    <strong>Name:</strong> ${invitation.firstName}<br>
+                    <strong>Email:</strong> ${invitation.email}<br>
+                    <strong>Type:</strong> ${invitation.type}<br>
+                    <strong>Expires:</strong> ${new Date(invitation.expiresAt).toLocaleDateString()}
+                </div>
+            `;
+            
+            display.style.display = 'block';
+            
+            // Generate email preview
+            const emailContent = generateEmailTemplate(invitation);
+            document.getElementById('emailContent').innerHTML = emailContent;
+            
+            // Store current invitation for actions
+            window.currentInvitation = invitation;
+        }
+
+        function generateEmailTemplate(invitation) {
+            return `
+                <div style="max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background: white;">
+                    <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px;">
+                        <h3>🔥 Digital Sponsor</h3>
+                        <p>AI-Powered Recovery Companion</p>
+                    </div>
+                    
+                    <h4>Hi ${invitation.firstName}!</h4>
+                    
+                    <p>You've been invited to join the <strong>Digital Sponsor Beta</strong> - the world's first AI-powered recovery companion enhanced with authentic AA literature.</p>
+                    
+                    <div style="background: #f7fafc; border: 2px solid #667eea; padding: 15px; text-align: center; border-radius: 8px; margin: 15px 0;">
+                        <strong>Your Personal Beta Code:</strong><br>
+                        <div style="font-size: 18px; font-weight: bold; color: #667eea; font-family: monospace; margin-top: 5px;">
+                            ${invitation.code}
+                        </div>
+                    </div>
+                    
+                    <h5>🎯 What You Get:</h5>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>💬 AI Spiritual Guidance</strong> - Ask questions enhanced with 2,382+ pieces of AA literature</li>
+                        <li><strong>📝 Interactive Step Work</strong> - Digital workbooks with prayers for all 12 steps</li>
+                        <li><strong>📚 Literature Search</strong> - Searchable Big Book, 12&12, pamphlets, and personal stories</li>
+                        <li><strong>🚨 Crisis Support</strong> - Immediate access to emergency resources</li>
+                        <li><strong>🔐 Privacy-First</strong> - Anonymous sessions with complete data deletion</li>
+                    </ul>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="#" style="background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Join Beta Now
+                        </a>
+                    </div>
+                    
+                    <p><strong>Getting Started:</strong></p>
+                    <ol style="margin-left: 20px;">
+                        <li>Visit the beta platform</li>
+                        <li>Click "Register" and enter your beta code</li>
+                        <li>Create your account</li>
+                        <li>Start exploring AI-enhanced recovery support!</li>
+                    </ol>
+                    
+                    <p style="font-size: 0.9rem; color: #718096; margin-top: 15px;">
+                        <strong>Note:</strong> Your beta code expires in 7 days and is for your personal use only.
+                    </p>
+                </div>
+            `;
+        }
+
+        function sendEmail() {
+            if (!window.currentInvitation) return;
+            
+            const invitation = window.currentInvitation;
+            
+            // Simulate sending email (in production, this would call the backend service)
+            showGenerateMessage('📧 Sending email invitation...', 'info');
+            
+            setTimeout(() => {
+                // Mark as sent
+                const index = generatedInvitations.findIndex(inv => inv.code === invitation.code);
+                if (index >= 0) {
+                    generatedInvitations[index].sent = true;
+                    sessionStats.sent++;
+                    saveSessionData();
+                    updateStats();
+                    updateHistory();
+                }
+                
+                showGenerateMessage(`✅ Email invitation sent to ${invitation.email}!`, 'success');
+                
+                // Show email preview
+                document.getElementById('emailPreview').style.display = 'block';
+            }, 1000);
+        }
+
+        function copyInviteCode() {
+            if (!window.currentInvitation) return;
+            
+            const code = window.currentInvitation.code;
+            navigator.clipboard.writeText(code).then(() => {
+                showGenerateMessage('📋 Invitation code copied to clipboard!', 'info');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showGenerateMessage('📋 Invitation code copied to clipboard!', 'info');
+            });
+        }
+
+        function showGenerateMessage(text, type) {
+            const messageEl = document.getElementById('generateMessage');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            if (type !== 'info') {
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('⚙️ Digital Sponsor Admin Panel loaded');
+            loadSessionData();
+        });
+    </script>
+</body>
+</html>
