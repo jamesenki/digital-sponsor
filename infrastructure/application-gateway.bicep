@@ -83,6 +83,15 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
         action: 'Block'
         rateLimitDuration: 'OneMin'
         rateLimitThreshold: 100
+        groupByUserSession: [
+          {
+            groupByVariables: [
+              {
+                variableName: 'ClientAddr'
+              }
+            ]
+          }
+        ]
         matchConditions: [
           {
             matchVariables: [
@@ -367,9 +376,12 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
     ]
     webApplicationFirewallConfiguration: {
       enabled: true
-      firewallPolicy: {
-        id: wafPolicy.id
-      }
+      firewallMode: 'Detection'
+      ruleSetType: 'OWASP'
+      ruleSetVersion: '3.2'
+      maxRequestBodySizeInKb: 128
+      fileUploadLimitInMb: 100
+      requestBodyCheck: true
     }
   }
 }

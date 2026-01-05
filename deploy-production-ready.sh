@@ -10,7 +10,7 @@ echo "=========================================="
 
 # Configuration
 RESOURCE_GROUP="rg-digitalsponsor-new"
-LOCATION="centralus"
+LOCATION="eastus2"
 ENVIRONMENT="prod"
 
 # Color codes for output
