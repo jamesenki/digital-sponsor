@@ -74,7 +74,7 @@ jobs:
         run: cd frontend && npm run build
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: frontend/coverage/lcov.info
           flags: frontend
@@ -143,7 +143,7 @@ jobs:
         run: cd backend && npm run test:integration
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: backend/coverage/lcov.info
           flags: backend
@@ -184,7 +184,7 @@ jobs:
         run: cd ai && python -m pytest tests/rag --verbose
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ai/coverage.xml
           flags: ai
