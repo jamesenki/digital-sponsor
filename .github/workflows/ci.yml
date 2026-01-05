@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, refactor]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, refactor]
 
 env:
   NODE_VERSION: '20.x'
@@ -151,3 +151,90 @@ jobs:
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --debug --only-verified
+
+  # Container Service Validation
+  container-validation:
+    name: Container Services Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Validate container services
+        run: |
+          echo "🔍 Validating container service structure..."
+
+          # Check Auth service structure
+          if [ -d "containers/auth-service" ] || [ -f "/tmp/digitalsponsor-auth-app/app.js" ]; then
+            echo "✅ Auth service found"
+          else
+            echo "⚠️ Auth service not found in expected locations"
+          fi
+
+          # Check Literature service
+          if [ -f "containers/literature-service/app_massive.py" ]; then
+            echo "✅ Literature service found"
+            python -m py_compile containers/literature-service/app_massive.py
+          else
+            echo "⚠️ Literature service not found"
+          fi
+
+          # Check Chat service
+          if [ -f "containers/chat-service/app.py" ]; then
+            echo "✅ Chat service found" 
+            python -m py_compile containers/chat-service/app.py
+          else
+            echo "⚠️ Chat service not found"
+          fi
+
+          # Check Dockerfiles
+          echo "🐳 Validating Dockerfiles..."
+          find containers/ -name "Dockerfile*" -type f | while read dockerfile; do
+            echo "Validating $dockerfile..."
+            # Basic Dockerfile validation
+            if grep -q "FROM" "$dockerfile"; then
+              echo "✅ $dockerfile has valid FROM statement"
+            else
+              echo "❌ $dockerfile missing FROM statement"
+            fi
+          done
+
+      - name: Validate frontend structure
+        run: |
+          echo "🌐 Validating frontend structure..."
+
+          required_files=(
+            "public/index.html"
+            "public/admin.html" 
+            "public/staticwebapp.config.json"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file exists"
+              
+              # Validate HTML files
+              if [[ "$file" == *.html ]]; then
+                if grep -q "<!DOCTYPE html>" "$file"; then
+                  echo "✅ $file has valid DOCTYPE"
+                else
+                  echo "⚠️ $file missing DOCTYPE declaration"
+                fi
+              fi
+              
+              # Validate JSON files
+              if [[ "$file" == *.json ]]; then
+                python -m json.tool "$file" > /dev/null && echo "✅ $file is valid JSON" || echo "❌ $file has invalid JSON"
+              fi
+            else
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done

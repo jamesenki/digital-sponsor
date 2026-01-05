@@ -1,0 +1,536 @@
+name: Deploy Production Containers & Frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_auth:
+        description: 'Deploy Auth Service'
+        required: true
+        default: true
+        type: boolean
+      deploy_literature:
+        description: 'Deploy Literature Service'
+        required: true
+        default: true
+        type: boolean
+      deploy_chat:
+        description: 'Deploy Chat Service'
+        required: true
+        default: true
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy Frontend'
+        required: true
+        default: true
+        type: boolean
+      force_restart:
+        description: 'Force restart all services'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - 'containers/**'
+      - 'public/**'
+      - '.github/workflows/cd-production-containers.yml'
+  workflow_run:
+    workflows: ['Continuous Integration']
+    types:
+      - completed
+    branches: [main, refactor]
+
+env:
+  AZURE_RESOURCE_GROUP: 'rg-digitalsponsor-new'
+  AZURE_LOCATION: 'centralus'
+  CONTAINER_REGISTRY: 'crdigitalsponsor.azurecr.io'
+
+jobs:
+  # Pre-deployment Security Check
+  security-review:
+    name: Security & Quality Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          skip-dirs: 'node_modules,dist,build'
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --fail
+
+  # Deploy Auth Service (Node.js)
+  deploy-auth:
+    name: Deploy Auth Service
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    if: ${{ github.event.inputs.deploy_auth != 'false' }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Package Auth Service
+        run: |
+          echo "📦 Packaging Auth Service for deployment..."
+
+          # Create deployment package from auth app
+          if [ -d "/tmp/digitalsponsor-auth-app" ]; then
+            cd /tmp/digitalsponsor-auth-app
+            zip -r auth-deployment.zip . -x "*.git*" "*.DS_Store*" "node_modules/*"
+            mv auth-deployment.zip $GITHUB_WORKSPACE/
+          else
+            echo "❌ Auth service source not found"
+            exit 1
+          fi
+
+      - name: Deploy Auth Service to Container Instance
+        run: |
+          echo "🚀 Deploying Auth Service to Azure Container Instance..."
+
+          # Create container from deployment package
+          az container create \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-auth-prod \
+            --image node:18-alpine \
+            --cpu 1 \
+            --memory 2 \
+            --restart-policy Always \
+            --ports 8080 \
+            --location ${{ env.AZURE_LOCATION }} \
+            --environment-variables \
+              NODE_ENV=production \
+              PORT=8080 \
+              COSMOS_CONNECTION_STRING='${{ secrets.COSMOS_CONNECTION_STRING }}' \
+              ADMIN_KEY='${{ secrets.ADMIN_KEY }}' \
+            --command-line "sh -c 'npm install && npm start'" \
+            --ip-address Public \
+            --dns-name-label digitalsponsor-auth-prod-${{ github.run_number }} \
+            --os-type Linux
+
+          echo "✅ Auth Service deployment initiated"
+
+  # Deploy Literature Service (Python)
+  deploy-literature:
+    name: Deploy Literature Service
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    if: ${{ github.event.inputs.deploy_literature != 'false' }}
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Deploy Literature Service
+        run: |
+          echo "🚀 Building and deploying Literature Service..."
+
+          cd containers/literature-service
+
+          # Build Docker image
+          az acr build \
+            --registry ${{ env.CONTAINER_REGISTRY }} \
+            --image digital-sponsor-literature:latest \
+            --image digital-sponsor-literature:${{ github.sha }} \
+            --file Dockerfile.massive \
+            .
+
+          # Deploy to Container Instance
+          az container create \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-literature-massive \
+            --image ${{ env.CONTAINER_REGISTRY }}/digital-sponsor-literature:${{ github.sha }} \
+            --cpu 2 \
+            --memory 4 \
+            --restart-policy Always \
+            --ports 3002 \
+            --location ${{ env.AZURE_LOCATION }} \
+            --ip-address Public \
+            --dns-name-label digitalsponsor-literature-massive-${{ github.run_number }} \
+            --registry-login-server ${{ env.CONTAINER_REGISTRY }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --os-type Linux
+
+          echo "✅ Literature Service deployment completed"
+
+  # Deploy Chat Service (Python)
+  deploy-chat:
+    name: Deploy Chat Service
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    if: ${{ github.event.inputs.deploy_chat != 'false' }}
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Deploy Chat Service
+        run: |
+          echo "🚀 Building and deploying Chat Service..."
+
+          cd containers/chat-service
+
+          # Build Docker image
+          az acr build \
+            --registry ${{ env.CONTAINER_REGISTRY }} \
+            --image digital-sponsor-chat:latest \
+            --image digital-sponsor-chat:${{ github.sha }} \
+            --file Dockerfile \
+            .
+
+          # Deploy to Container Instance
+          az container create \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-chat-v2 \
+            --image ${{ env.CONTAINER_REGISTRY }}/digital-sponsor-chat:${{ github.sha }} \
+            --cpu 1 \
+            --memory 2 \
+            --restart-policy Always \
+            --ports 3003 \
+            --location ${{ env.AZURE_LOCATION }} \
+            --environment-variables \
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
+              LITERATURE_SERVICE_URL='http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002' \
+            --ip-address Public \
+            --dns-name-label digitalsponsor-chat-v2-${{ github.run_number }} \
+            --registry-login-server ${{ env.CONTAINER_REGISTRY }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --os-type Linux
+
+          echo "✅ Chat Service deployment completed"
+
+  # Deploy Frontend to Static Web App
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    if: ${{ github.event.inputs.deploy_frontend != 'false' }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: '/public'
+          api_location: ''
+          output_location: ''
+
+      - name: Verify frontend deployment
+        run: |
+          echo "🔍 Verifying frontend deployment..."
+          sleep 30
+
+          # Check if the frontend is responding
+          for i in {1..5}; do
+            echo "Frontend check attempt $i/5..."
+            if curl -f -s "https://white-sea-050cef30f.1.azurestaticapps.net/index.html" > /dev/null; then
+              echo "✅ Frontend is responding"
+              break
+            else
+              echo "⚠️ Frontend not responding, waiting..."
+              sleep 30
+            fi
+          done
+
+  # Comprehensive Health Checks
+  health-validation:
+    name: Production Health Validation
+    runs-on: ubuntu-latest
+    needs: [deploy-auth, deploy-literature, deploy-chat, deploy-frontend]
+    if: always()
+    timeout-minutes: 20
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Wait for services to stabilize
+        run: |
+          echo "⏳ Waiting for all services to stabilize..."
+          sleep 120
+
+      - name: Get container IP addresses
+        run: |
+          echo "🔍 Getting container IP addresses..."
+
+          # Get Auth Service IP
+          AUTH_IP=$(az container show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-auth-prod \
+            --query ipAddress.ip \
+            --output tsv 2>/dev/null || echo "not_found")
+
+          # Get Literature Service IP
+          LIT_IP=$(az container show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-literature-massive \
+            --query ipAddress.ip \
+            --output tsv 2>/dev/null || echo "not_found")
+
+          # Get Chat Service IP
+          CHAT_IP=$(az container show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name digitalsponsor-chat-v2 \
+            --query ipAddress.ip \
+            --output tsv 2>/dev/null || echo "not_found")
+
+          echo "AUTH_IP=$AUTH_IP" >> $GITHUB_ENV
+          echo "LIT_IP=$LIT_IP" >> $GITHUB_ENV
+          echo "CHAT_IP=$CHAT_IP" >> $GITHUB_ENV
+
+          echo "📍 Service IPs:"
+          echo "  Auth: $AUTH_IP"
+          echo "  Literature: $LIT_IP"
+          echo "  Chat: $CHAT_IP"
+
+      - name: Health Check - Auth Service
+        if: ${{ github.event.inputs.deploy_auth != 'false' }}
+        run: |
+          echo "🔍 Health checking Auth Service..."
+
+          FAILED=0
+          for i in {1..10}; do
+            echo "Auth health check attempt $i/10..."
+            
+            if [ "$AUTH_IP" != "not_found" ] && curl -f -s "http://$AUTH_IP:8080/health" > /dev/null; then
+              echo "✅ Auth Service health check passed"
+              AUTH_RESPONSE=$(curl -s "http://$AUTH_IP:8080/health")
+              echo "Auth Response: $AUTH_RESPONSE"
+              break
+            else
+              echo "⚠️ Auth Service health check failed"
+              if [ $i -eq 10 ]; then
+                FAILED=1
+              else
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Auth Service health checks failed"
+            exit 1
+          fi
+
+      - name: Health Check - Literature Service
+        if: ${{ github.event.inputs.deploy_literature != 'false' }}
+        run: |
+          echo "🔍 Health checking Literature Service..."
+
+          FAILED=0
+          for i in {1..10}; do
+            echo "Literature health check attempt $i/10..."
+            
+            if [ "$LIT_IP" != "not_found" ] && curl -f -s "http://$LIT_IP:3002/health" > /dev/null; then
+              echo "✅ Literature Service health check passed"
+              LIT_RESPONSE=$(curl -s "http://$LIT_IP:3002/health")
+              echo "Literature Stats: $(echo $LIT_RESPONSE | jq -r '.databaseStats.total_literature_items // "N/A"') items"
+              break
+            else
+              echo "⚠️ Literature Service health check failed"
+              if [ $i -eq 10 ]; then
+                FAILED=1
+              else
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Literature Service health checks failed"
+            exit 1
+          fi
+
+      - name: Health Check - Chat Service
+        if: ${{ github.event.inputs.deploy_chat != 'false' }}
+        run: |
+          echo "🔍 Health checking Chat Service..."
+
+          FAILED=0
+          for i in {1..10}; do
+            echo "Chat health check attempt $i/10..."
+            
+            if [ "$CHAT_IP" != "not_found" ] && curl -f -s "http://$CHAT_IP:3003/health" > /dev/null; then
+              echo "✅ Chat Service health check passed"
+              CHAT_RESPONSE=$(curl -s "http://$CHAT_IP:3003/health")
+              echo "Chat Response: $CHAT_RESPONSE"
+              break
+            else
+              echo "⚠️ Chat Service health check failed"
+              if [ $i -eq 10 ]; then
+                FAILED=1
+              else
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Chat Service health checks failed"
+            exit 1
+          fi
+
+      - name: Health Check - Frontend
+        if: ${{ github.event.inputs.deploy_frontend != 'false' }}
+        run: |
+          echo "🔍 Health checking Frontend..."
+
+          FAILED=0
+          for i in {1..5}; do
+            echo "Frontend health check attempt $i/5..."
+            
+            # Check main app
+            if curl -f -s "https://white-sea-050cef30f.1.azurestaticapps.net/index.html" | grep -q "Digital Sponsor"; then
+              echo "✅ Frontend main page accessible"
+              
+              # Check admin page
+              if curl -f -s "https://white-sea-050cef30f.1.azurestaticapps.net/admin.html" | grep -q "Admin Panel"; then
+                echo "✅ Frontend admin page accessible"
+                break
+              else
+                echo "⚠️ Frontend admin page not accessible"
+                if [ $i -eq 5 ]; then
+                  FAILED=1
+                fi
+              fi
+            else
+              echo "⚠️ Frontend main page not accessible"
+              if [ $i -eq 5 ]; then
+                FAILED=1
+              else
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Frontend health checks failed"
+            exit 1
+          fi
+
+      - name: Integration Test - End-to-End Workflow
+        run: |
+          echo "🧪 Running end-to-end integration test..."
+
+          # Test invitation generation and validation workflow
+          if [ "$AUTH_IP" != "not_found" ]; then
+            echo "Testing invitation workflow..."
+            
+            # Generate invitation
+            INVITE_RESPONSE=$(curl -s -X POST \
+              "http://$AUTH_IP:8080/api/admin/send-invitation" \
+              -H "Content-Type: application/json" \
+              -d '{"adminKey":"${{ secrets.ADMIN_KEY }}","email":"test@example.com","firstName":"Test","type":"general"}')
+            
+            if echo "$INVITE_RESPONSE" | grep -q '"success":true'; then
+              INVITE_CODE=$(echo "$INVITE_RESPONSE" | jq -r '.invitation_code')
+              echo "✅ Invitation generated: $INVITE_CODE"
+              
+              # Validate invitation
+              VALIDATE_RESPONSE=$(curl -s "http://$AUTH_IP:8080/api/validate-invitation?code=$INVITE_CODE")
+              
+              if echo "$VALIDATE_RESPONSE" | grep -q '"valid":true'; then
+                echo "✅ Invitation validation successful"
+              else
+                echo "❌ Invitation validation failed"
+                exit 1
+              fi
+            else
+              echo "❌ Invitation generation failed"
+              echo "Response: $INVITE_RESPONSE"
+              exit 1
+            fi
+          fi
+
+  # Deployment Summary and Notification
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs:
+      [
+        deploy-auth,
+        deploy-literature,
+        deploy-chat,
+        deploy-frontend,
+        health-validation,
+      ]
+    if: always()
+    steps:
+      - name: Generate Deployment Summary
+        run: |
+          echo "## 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment ID:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| Auth Service | ${{ needs.deploy-auth.result == 'success' && '✅ Deployed' || (needs.deploy-auth.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} | http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Literature Service | ${{ needs.deploy-literature.result == 'success' && '✅ Deployed' || (needs.deploy-literature.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} | http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chat Service | ${{ needs.deploy-chat.result == 'success' && '✅ Deployed' || (needs.deploy-chat.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} | http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.deploy-frontend.result == 'success' && '✅ Deployed' || (needs.deploy-frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} | https://digitalsponsor.commonsolution.org |" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Checks | ${{ needs.health-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} | All services validated |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.health-validation.result }}" == "success" ]]; then
+            echo "🎉 **Production deployment completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Production deployment failed or has issues!**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Deployment Success
+        if: needs.health-validation.result == 'success'
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "🌐 Digital Sponsor Platform is live:"
+          echo "  Frontend: https://digitalsponsor.commonsolution.org"
+          echo "  Admin: https://digitalsponsor.commonsolution.org/admin"
+          echo "  Auth API: http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080"
+          echo "  Literature API: http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002"
+          echo "  Chat API: http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003"
+
+      - name: Deployment Failure Handling
+        if: needs.health-validation.result == 'failure'
+        run: |
+          echo "❌ Production deployment failed!"
+          echo "Please check the deployment logs and service health status."
+          echo "Consider rolling back to the previous stable version."
+          exit 1
