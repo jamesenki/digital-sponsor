@@ -1,0 +1,286 @@
+name: Deploy New Architecture
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/**'
+      - 'infrastructure/**'
+      - 'packages/**'
+
+env:
+  NODE_VERSION: '20.x'
+  AZURE_RESOURCE_GROUP: 'rg-digitalsponsor-new'
+  AZURE_LOCATION: 'eastus2'
+
+jobs:
+  security-review:
+    name: Security & Quality Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting and type checking
+        run: |
+          npm run lint
+          npm run type-check
+
+      - name: Run comprehensive security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          skip-dirs: 'node_modules,dist'
+
+      - name: Verify no secrets in code
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --fail
+
+      - name: Run unit tests
+        run: npm test
+
+  build-and-deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [security-review]
+    timeout-minutes: 30
+
+    outputs:
+      resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      container-registry: ${{ steps.deploy.outputs.containerRegistryName }}
+      container-environment: ${{ steps.deploy.outputs.containerEnvironmentName }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RESOURCE_GROUP }} \
+            --location ${{ env.AZURE_LOCATION }} \
+            --tags project=digitalsponsor environment=${{ inputs.environment || 'staging' }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="infrastructure-$(date +%Y%m%d-%H%M%S)"
+
+          az deployment group create \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file infrastructure/main.bicep \
+            --parameters environment=${{ inputs.environment || 'staging' }} \
+            --name $DEPLOYMENT_NAME \
+            --verbose
+
+          # Get outputs
+          OUTPUTS=$(az deployment group show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name $DEPLOYMENT_NAME \
+            --query properties.outputs \
+            --output json)
+
+          # Extract specific outputs
+          ACR_NAME=$(echo $OUTPUTS | jq -r '.containerRegistryName.value // empty')
+          CAE_NAME=$(echo $OUTPUTS | jq -r '.containerEnvironmentName.value // empty')
+
+          echo "containerRegistryName=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "containerEnvironmentName=$CAE_NAME" >> $GITHUB_OUTPUT
+
+          echo "🎯 Deployed infrastructure successfully!"
+          echo "📦 Container Registry: $ACR_NAME"
+          echo "🌍 Container Environment: $CAE_NAME"
+
+  build-and-deploy-services:
+    name: Build & Deploy Services
+    runs-on: ubuntu-latest
+    needs: [build-and-deploy-infrastructure]
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        service: [auth] # Add more services as they're implemented
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Push Container Image
+        run: |
+          SERVICE_NAME="${{ matrix.service }}"
+          SERVICE_PATH="services/${SERVICE_NAME}"
+          IMAGE_TAG="${{ github.sha }}"
+          ENVIRONMENT="${{ inputs.environment || 'staging' }}"
+
+          echo "🔨 Building $SERVICE_NAME service..."
+
+          # Build and push to Azure Container Registry
+          az acr build \
+            --registry ${{ needs.build-and-deploy-infrastructure.outputs.container-registry }} \
+            --image digitalsponsor-${SERVICE_NAME}:${IMAGE_TAG} \
+            --image digitalsponsor-${SERVICE_NAME}:${ENVIRONMENT}-latest \
+            --file ${SERVICE_PATH}/Dockerfile \
+            ${SERVICE_PATH}
+
+      - name: Deploy to Container Apps
+        run: |
+          SERVICE_NAME="${{ matrix.service }}"
+          IMAGE_TAG="${{ github.sha }}"
+          REGISTRY="${{ needs.build-and-deploy-infrastructure.outputs.container-registry }}"
+
+          echo "🚀 Deploying $SERVICE_NAME to Container Apps..."
+
+          # Deploy or update container app
+          az containerapp up \
+            --name "ca-digitalsponsor-${SERVICE_NAME}" \
+            --resource-group ${{ needs.build-and-deploy-infrastructure.outputs.resource-group }} \
+            --environment ${{ needs.build-and-deploy-infrastructure.outputs.container-environment }} \
+            --image ${REGISTRY}.azurecr.io/digitalsponsor-${SERVICE_NAME}:${IMAGE_TAG} \
+            --target-port 3000 \
+            --ingress external \
+            --min-replicas 1 \
+            --max-replicas 5 \
+            --cpu 0.5 \
+            --memory 1Gi \
+            --env-vars \
+              NODE_ENV=production \
+              PORT=3000 \
+              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
+              B2C_TENANT_NAME="${{ secrets.B2C_TENANT_NAME }}" \
+              B2C_CLIENT_ID="${{ secrets.B2C_CLIENT_ID }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              REDIS_URL="${{ secrets.REDIS_URL }}"
+
+  health-check:
+    name: Health Check & Validation
+    runs-on: ubuntu-latest
+    needs: [build-and-deploy-services]
+    timeout-minutes: 15
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App URLs
+        id: get-urls
+        run: |
+          echo "🔍 Getting container app URLs..."
+
+          AUTH_URL=$(az containerapp show \
+            --name "ca-digitalsponsor-auth" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+
+          echo "auth-url=https://$AUTH_URL" >> $GITHUB_OUTPUT
+          echo "🔗 Auth Service URL: https://$AUTH_URL"
+
+      - name: Wait for deployment to stabilize
+        run: |
+          echo "⏳ Waiting for deployment to stabilize..."
+          sleep 60
+
+      - name: Health Check - Auth Service
+        run: |
+          AUTH_URL="${{ steps.get-urls.outputs.auth-url }}"
+
+          echo "🏥 Testing auth service health..."
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+            
+            if curl -f -s "$AUTH_URL/health" > /dev/null; then
+              echo "✅ Auth service health check passed"
+              break
+            else
+              if [ $i -eq 10 ]; then
+                echo "❌ Auth service health check failed after 10 attempts"
+                exit 1
+              fi
+              echo "⏳ Waiting 30 seconds before retry..."
+              sleep 30
+            fi
+          done
+
+      - name: Basic API Tests
+        run: |
+          AUTH_URL="${{ steps.get-urls.outputs.auth-url }}"
+
+          echo "🧪 Running basic API tests..."
+
+          # Test root endpoint
+          curl -f -s "$AUTH_URL/" | jq '.service' | grep -q "Digital Sponsor Authentication Service"
+          echo "✅ Root endpoint test passed"
+
+          # Test readiness endpoint
+          curl -f -s "$AUTH_URL/health/ready" | jq '.status' | grep -q "ready"
+          echo "✅ Readiness test passed"
+
+  notify-deployment:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [health-check]
+    if: always()
+
+    steps:
+      - name: Deployment Success Notification
+        if: needs.health-check.result == 'success'
+        run: |
+          echo "🎉 Digital Sponsor deployment successful!"
+          echo "🌍 Environment: ${{ inputs.environment || 'staging' }}"
+          echo "📦 Version: ${{ github.sha }}"
+          echo "⏰ Deployed at: $(date -u)"
+
+      - name: Deployment Failure Notification
+        if: needs.health-check.result == 'failure'
+        run: |
+          echo "❌ Digital Sponsor deployment failed!"
+          echo "🌍 Environment: ${{ inputs.environment || 'staging' }}"
+          echo "📦 Version: ${{ github.sha }}"
+          echo "⏰ Failed at: $(date -u)"
+          exit 1

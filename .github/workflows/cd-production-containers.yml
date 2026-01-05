@@ -89,42 +89,44 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Package Auth Service
+      - name: Build Python Auth Service
         run: |
-          echo "📦 Packaging Auth Service for deployment..."
+          echo "📦 Building Python Auth Service container..."
 
-          # Create deployment package from auth app
-          if [ -d "/tmp/digitalsponsor-auth-app" ]; then
-            cd /tmp/digitalsponsor-auth-app
-            zip -r auth-deployment.zip . -x "*.git*" "*.DS_Store*" "node_modules/*"
-            mv auth-deployment.zip $GITHUB_WORKSPACE/
-          else
-            echo "❌ Auth service source not found"
-            exit 1
-          fi
+          cd containers/auth-service
+
+          # Build Docker image
+          az acr build \
+            --registry ${{ env.CONTAINER_REGISTRY }} \
+            --image digital-sponsor-auth:latest \
+            --image digital-sponsor-auth:${{ github.sha }} \
+            --file Dockerfile \
+            .
 
       - name: Deploy Auth Service to Container Instance
         run: |
           echo "🚀 Deploying Auth Service to Azure Container Instance..."
 
-          # Create container from deployment package
+          # Deploy containerized Python auth service
           az container create \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --name digitalsponsor-auth-prod \
-            --image node:18-alpine \
+            --image ${{ env.CONTAINER_REGISTRY }}/digital-sponsor-auth:${{ github.sha }} \
             --cpu 1 \
             --memory 2 \
             --restart-policy Always \
             --ports 8080 \
             --location ${{ env.AZURE_LOCATION }} \
             --environment-variables \
-              NODE_ENV=production \
               PORT=8080 \
               COSMOS_CONNECTION_STRING='${{ secrets.COSMOS_CONNECTION_STRING }}' \
               ADMIN_KEY='${{ secrets.ADMIN_KEY }}' \
-            --command-line "sh -c 'npm install && npm start'" \
+              JWT_SECRET='${{ secrets.JWT_SECRET }}' \
             --ip-address Public \
             --dns-name-label digitalsponsor-auth-prod-${{ github.run_number }} \
+            --registry-login-server ${{ env.CONTAINER_REGISTRY }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
             --os-type Linux
 
           echo "✅ Auth Service deployment initiated"

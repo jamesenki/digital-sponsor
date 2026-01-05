@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Digital Sponsor Auth Proxy</title>
+</head>
+<body>
+    <script>
+        // Simple client-side auth service for demo
+        // In production, this would be a real backend service
+        
+        const demoInvitations = {
+            'DS-GENERAL-DEMO2026': { 
+                valid: true, 
+                firstName: 'Demo User', 
+                type: 'general', 
+                email: 'demo@example.com',
+                used: false,
+                expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+            },
+            'DS-INVESTOR-INVEST01': { 
+                valid: true, 
+                firstName: 'John Investor', 
+                type: 'investor', 
+                email: 'investor@example.com',
+                used: false,
+                expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+            },
+            'DS-SPONSOR-SPONS001': { 
+                valid: true, 
+                firstName: 'Jane Sponsor', 
+                type: 'sponsor', 
+                email: 'sponsor@example.com',
+                used: false,
+                expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+            },
+            'DS-CLINICAL-CLINIC1': { 
+                valid: true, 
+                firstName: 'Dr. Clinical', 
+                type: 'clinical', 
+                email: 'clinical@example.com',
+                used: false,
+                expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+            }
+        };
+
+        const users = {};
+        const sessions = {};
+
+        // Handle cross-origin requests
+        function handleCORS() {
+            return {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            };
+        }
+
+        // Auth API endpoints
+        window.authAPI = {
+            validateInvitation: function(code) {
+                const invitation = demoInvitations[code];
+                
+                if (!invitation) {
+                    return {
+                        valid: false,
+                        message: 'Invalid invitation code'
+                    };
+                }
+                
+                if (invitation.used) {
+                    return {
+                        valid: false,
+                        message: 'Invitation code has already been used'
+                    };
+                }
+                
+                if (Date.now() > invitation.expires) {
+                    return {
+                        valid: false,
+                        message: 'Invitation code has expired'
+                    };
+                }
+                
+                return {
+                    valid: true,
+                    code: code,
+                    type: invitation.type,
+                    firstName: invitation.firstName,
+                    message: 'Valid invitation code - proceed with registration'
+                };
+            },
+
+            register: function(data) {
+                const { invitationCode, email } = data;
+                const invitation = demoInvitations[invitationCode];
+                
+                if (!invitation || invitation.used) {
+                    return {
+                        success: false,
+                        error: 'Invalid or used invitation code'
+                    };
+                }
+                
+                if (users[email]) {
+                    return {
+                        success: false,
+                        error: 'Email already registered'
+                    };
+                }
+                
+                // Mark invitation as used
+                invitation.used = true;
+                
+                // Create user
+                const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                users[email] = {
+                    id: userId,
+                    email: email,
+                    firstName: invitation.firstName,
+                    invitationType: invitation.type,
+                    registeredAt: Date.now()
+                };
+                
+                // Create session
+                const sessionToken = 'session_' + Math.random().toString(36).substr(2, 9);
+                sessions[sessionToken] = {
+                    userId: userId,
+                    email: email,
+                    createdAt: Date.now(),
+                    expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                };
+                
+                return {
+                    success: true,
+                    user: {
+                        id: userId,
+                        email: email,
+                        firstName: invitation.firstName,
+                        invitationType: invitation.type
+                    },
+                    session_token: sessionToken,
+                    message: `Welcome to Digital Sponsor Beta, ${invitation.firstName}! 🎉`
+                };
+            },
+
+            generateInvitation: function(data) {
+                const { adminKey, email, firstName, type = 'general' } = data;
+                
+                if (adminKey !== 'DS-ADMIN-2026-BETA') {
+                    return {
+                        success: false,
+                        error: 'Invalid admin key'
+                    };
+                }
+                
+                const invitationCode = `DS-${type.toUpperCase()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+                
+                demoInvitations[invitationCode] = {
+                    valid: true,
+                    firstName: firstName,
+                    type: type,
+                    email: email,
+                    used: false,
+                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                };
+                
+                return {
+                    success: true,
+                    invitation_code: invitationCode,
+                    email_sent: true,
+                    expires_at: demoInvitations[invitationCode].expires,
+                    message: `Beta invitation created for ${email}`
+                };
+            },
+
+            health: function() {
+                return {
+                    status: 'healthy',
+                    service: 'digital-sponsor-auth-proxy',
+                    version: '1.0-client-side',
+                    region: 'centralus',
+                    stats: {
+                        total_invitations: Object.keys(demoInvitations).length,
+                        registered_users: Object.keys(users).length,
+                        active_sessions: Object.keys(sessions).length
+                    }
+                };
+            }
+        };
+
+        // Simple message to indicate the proxy is loaded
+        console.log('🔥 Digital Sponsor Auth Proxy loaded - Central US');
+        console.log('Available invitation codes:', Object.keys(demoInvitations));
+        
+        // Post message to parent window when loaded
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'authProxyReady' }, '*');
+        }
+    </script>
+</body>
+</html>

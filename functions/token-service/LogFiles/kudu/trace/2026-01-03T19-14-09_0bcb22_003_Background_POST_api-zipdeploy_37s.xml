@@ -1,0 +1,110 @@
+<step title="BackgroundTrace" date="2026-01-03T19:14:09.286" instance="0bcb22" url="/api/zipdeploy" method="POST" >
+  <step title="Updating shutdown sentinel last write time" date="2026-01-03T19:14:09.332" SemaphoreCount="7" /><!-- duration: 16ms -->
+  <step title="LockFile &apos;C:\home\site\locks\deployments.lock&apos; acquired" date="2026-01-03T19:14:09.379" /><!-- duration: 16ms -->
+  <step title="Creating temporary deployment" date="2026-01-03T19:14:09.426" /><!-- duration: 203ms -->
+  <step title="Performing fetch based deployment" date="2026-01-03T19:14:09.661" >
+    <step title="Fetching changes." date="2026-01-03T19:14:09.911" /><!-- duration: 16ms -->
+    <step title="Starting LocalZipHandler" date="2026-01-03T19:14:09.957" /><!-- duration: 16ms -->
+    <step title="Cleaning up temp folders from previous zip deployments and extracting pushed zip file C:\local\Temp\zipdeploy\usuuv4p2.zip (2.65 MB) to C:\local\Temp\zipdeploy\extracted" date="2026-01-03T19:14:10.098" /><!-- duration: 31ms -->
+    <step title="Cleaning up temp folders from previous zip deployments and extracting pushed zip file C:\local\Temp\zipdeploy\usuuv4p2.zip (2.65 MB) to C:\local\Temp\zipdeploy\extracted" date="2026-01-03T19:14:10.145" >
+      <step title="Extracting 874 entries to C:\local\Temp\zipdeploy\extracted directory" date="2026-01-03T19:14:10.207" >
+        <step title="Extracting to C:\local\Temp\zipdeploy\extracted\validate\function.json ..." date="2026-01-03T19:14:10.223" /><!-- duration: 47ms -->
+        <step title="Extracting to C:\local\Temp\zipdeploy\extracted\validate\index.js ..." date="2026-01-03T19:14:10.301" /><!-- duration: 16ms -->
+        <step title="Extracting to C:\local\Temp\zipdeploy\extracted\host.json ..." date="2026-01-03T19:14:10.348" /><!-- duration: 16ms -->
+        <step title="Extracting to C:\local\Temp\zipdeploy\extracted\package.json ..." date="2026-01-03T19:14:10.395" /><!-- duration: 16ms -->
+        <step title="Extracting to C:\local\Temp\zipdeploy\extracted\node_modules\.package-lock.json ..." date="2026-01-03T19:14:10.442" /><!-- duration: 16ms -->
+        <step title="Omitting extracting file traces ..." date="2026-01-03T19:14:10.489" /><!-- duration: 16ms -->
+      </step><!-- duration: 1234ms -->
+    </step><!-- duration: 1312ms -->
+    <step title="Before sending BuildRequestReceived status to /api/updatedeploystatus" date="2026-01-03T19:14:11.489" /><!-- duration: 16ms -->
+    <step title="DeploymentManager.Deploy(id:145b6a968098484aaebb6be09c0613df)" date="2026-01-03T19:14:11.536" >
+      <step title="Collecting changeset information" date="2026-01-03T19:14:11.582" /><!-- duration: 187ms -->
+      <step title="Updating submodules" date="2026-01-03T19:14:11.817" >
+        <step title="Updating submodules." date="2026-01-03T19:14:12.004" /><!-- duration: 31ms -->
+      </step><!-- duration: 250ms -->
+      <step title="Preparing deployment for commit id &apos;145b6a9680&apos;." date="2026-01-03T19:14:12.286" /><!-- duration: 16ms -->
+      <step title="Determining deployment builder" date="2026-01-03T19:14:12.473" >
+        <step title="Builder is BasicBuilder" date="2026-01-03T19:14:12.489" /><!-- duration: 31ms -->
+      </step><!-- duration: 62ms -->
+      <step title="Copying SSH keys" date="2026-01-03T19:14:12.598" /><!-- duration: 31ms -->
+      <step title="Building" date="2026-01-03T19:14:12.661" >
+        <step title="Generating deployment script." date="2026-01-03T19:14:12.832" /><!-- duration: 16ms -->
+        <step title="Generating deployment script" date="2026-01-03T19:14:12.879" >
+          <step title="Using the following command to generate deployment script: &apos;azure site deploymentscript -y --no-dot-deployment -r &quot;C:\local\Temp\zipdeploy\extracted&quot; -o &quot;C:\home\site\deployments\tools&quot; --basic --sitePath &quot;C:\local\Temp\zipdeploy\extracted&quot;&apos;." date="2026-01-03T19:14:13.004" /><!-- duration: 31ms -->
+          <step title="Executing external process" date="2026-01-03T19:14:13.082" type="process" path="starter.cmd" arguments="&quot;C:\Program Files (x86)\SiteExtensions\Kudu\2025.11.1.1\bin\node_modules\.bin\kuduscript.cmd&quot; -y --no-dot-deployment -r &quot;C:\local\Temp\zipdeploy\extracted&quot; -o &quot;C:\home\site\deployments\tools&quot; --basic --sitePath &quot;C:\local\Temp\zipdeploy\extracted&quot;" >
+            <step title="Generating deployment script for Web Site" date="2026-01-03T19:14:13.457" /><!-- duration: 31ms -->
+            <step title="Generated deployment script files" date="2026-01-03T19:14:13.536" /><!-- duration: 16ms -->
+          </step><!-- duration: 500ms -->
+          <step title="Saved cached version of the deployment script for command -y --no-dot-deployment -r &quot;C:\local\Temp\zipdeploy\extracted&quot; -o &quot;C:\home\site\deployments\tools&quot; --basic --sitePath &quot;C:\local\Temp\zipdeploy\extracted&quot;" date="2026-01-03T19:14:13.629" /><!-- duration: 31ms -->
+        </step><!-- duration: 797ms -->
+        <step title="Running deployment command..." date="2026-01-03T19:14:13.911" /><!-- duration: 16ms -->
+        <step title="Command: &quot;C:\home\site\deployments\tools\deploy.cmd&quot;" date="2026-01-03T19:14:13.973" /><!-- duration: 16ms -->
+        <step title="Executing external process" date="2026-01-03T19:14:14.520" type="process" path="starter.cmd" arguments="&quot;C:\home\site\deployments\tools\deploy.cmd&quot;" >
+          <step title="Handling Basic Web Site deployment." date="2026-01-03T19:14:14.911" /><!-- duration: 16ms -->
+          <step title="Creating app_offline.htm" date="2026-01-03T19:14:16.207" /><!-- duration: 31ms -->
+          <step title="KuduSync.NET from: &apos;C:\local\Temp\zipdeploy\extracted&apos; to: &apos;C:\home\site\wwwroot&apos;" date="2026-01-03T19:14:16.286" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;host.json&apos;" date="2026-01-03T19:14:16.348" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;package.json&apos;" date="2026-01-03T19:14:16.426" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\.package-lock.json&apos;" date="2026-01-03T19:14:16.473" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\.bin\semver&apos;" date="2026-01-03T19:14:16.536" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\LICENSE&apos;" date="2026-01-03T19:14:16.598" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\package.json&apos;" date="2026-01-03T19:14:16.661" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\README.md&apos;" date="2026-01-03T19:14:16.723" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\dist\azure-functions.js&apos;" date="2026-01-03T19:14:16.786" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\dist\azure-functions.js.map&apos;" date="2026-01-03T19:14:16.832" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\dist\azure-functions.min.js&apos;" date="2026-01-03T19:14:16.895" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\dist\azure-functions.min.js.map&apos;" date="2026-01-03T19:14:16.957" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\addBindingName.ts&apos;" date="2026-01-03T19:14:17.020" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\app.ts&apos;" date="2026-01-03T19:14:17.082" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\constants.ts&apos;" date="2026-01-03T19:14:17.145" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\errors.ts&apos;" date="2026-01-03T19:14:17.207" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\index.ts&apos;" date="2026-01-03T19:14:17.270" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\input.ts&apos;" date="2026-01-03T19:14:17.332" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\InvocationContext.ts&apos;" date="2026-01-03T19:14:17.395" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\InvocationModel.ts&apos;" date="2026-01-03T19:14:17.457" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\output.ts&apos;" date="2026-01-03T19:14:17.504" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\ProgrammingModel.ts&apos;" date="2026-01-03T19:14:17.567" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\setup.ts&apos;" date="2026-01-03T19:14:17.645" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\trigger.ts&apos;" date="2026-01-03T19:14:17.707" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\fromRpcBindings.ts&apos;" date="2026-01-03T19:14:17.770" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\fromRpcContext.ts&apos;" date="2026-01-03T19:14:17.832" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\fromRpcNullable.ts&apos;" date="2026-01-03T19:14:17.911" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\fromRpcTriggerMetadata.ts&apos;" date="2026-01-03T19:14:17.973" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\fromRpcTypedData.ts&apos;" date="2026-01-03T19:14:18.036" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toCamelCase.ts&apos;" date="2026-01-03T19:14:18.098" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toCoreFunctionMetadata.ts&apos;" date="2026-01-03T19:14:18.176" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toMcpToolTriggerOptionsToRpc.ts&apos;" date="2026-01-03T19:14:18.254" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toRpcDuration.ts&apos;" date="2026-01-03T19:14:18.317" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toRpcHttp.ts&apos;" date="2026-01-03T19:14:18.395" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toRpcHttpCookie.ts&apos;" date="2026-01-03T19:14:18.457" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toRpcNullable.ts&apos;" date="2026-01-03T19:14:18.520" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\converters\toRpcTypedData.ts&apos;" date="2026-01-03T19:14:18.582" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\AppStartContext.ts&apos;" date="2026-01-03T19:14:18.645" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\AppTerminateContext.ts&apos;" date="2026-01-03T19:14:18.692" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\HookContext.ts&apos;" date="2026-01-03T19:14:18.754" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\InvocationHookContext.ts&apos;" date="2026-01-03T19:14:18.817" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\LogHookContext.ts&apos;" date="2026-01-03T19:14:18.879" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\PostInvocationContext.ts&apos;" date="2026-01-03T19:14:18.942" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\PreInvocationContext.ts&apos;" date="2026-01-03T19:14:19.004" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\hooks\registerHook.ts&apos;" date="2026-01-03T19:14:19.067" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\http\extractHttpUserFromHeaders.ts&apos;" date="2026-01-03T19:14:19.129" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\http\httpProxy.ts&apos;" date="2026-01-03T19:14:19.192" /><!-- duration: 16ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\http\HttpRequest.ts&apos;" date="2026-01-03T19:14:19.239" /><!-- duration: 31ms -->
+          <step title="Copying file: &apos;node_modules\@azure\functions\src\http\HttpResponse.ts&apos;" date="2026-01-03T19:14:19.301" /><!-- duration: 16ms -->
+          <step title="Omitting next output lines..." date="2026-01-03T19:14:19.364" /><!-- duration: 16ms -->
+          <step title="Processed 556 files..." date="2026-01-03T19:14:37.433" /><!-- duration: 31ms -->
+          <step title="Finished successfully." date="2026-01-03T19:14:44.432" /><!-- duration: 31ms -->
+        </step><!-- duration: 29959ms -->
+        <step title="Running post deployment command(s)..." date="2026-01-03T19:14:44.651" /><!-- duration: 31ms -->
+        <step title="Triggering recycle (preview mode disabled)." date="2026-01-03T19:14:44.885" /><!-- duration: 16ms -->
+        <step title="Ignoring FS watcher based recycle request as this is a classic Windows app." date="2026-01-03T19:14:44.917" /><!-- duration: 16ms -->
+        <step title="Deployment successful. DEPLOYMENTINFO: deploymentPath = Functions App ZipDeploy. Extract zip. , deployer = az_cli_functions, os = windows, sku = Dynamic, language = node, siteName = token-digitalsponsor-prod, slotName = Production, siteHostName = token-digitalsponsor-prod.azurewebsites.net, deploymentStatus = Success" date="2026-01-03T19:14:45.151" /><!-- duration: 16ms -->
+      </step><!-- duration: 32835ms -->
+    </step><!-- duration: 33991ms -->
+    <step title="Cleaning up temp files" date="2026-01-03T19:14:45.542" /><!-- duration: 16ms -->
+    <step title="Begin HttpPost https://token-digitalsponsor-prod.scm.azurewebsites.net/operations/settriggers, x-ms-request-id: 52eaebd2-e8d8-11f0-acf8-00155da155b0" date="2026-01-03T19:14:45.683" /><!-- duration: 16ms -->
+    <step title="End HttpPost, status: OK" date="2026-01-03T19:14:46.183" /><!-- duration: 16ms -->
+    <step title="Scheduling background sync triggers after delay" date="2026-01-03T19:14:46.214" /><!-- duration: 31ms -->
+  </step><!-- duration: 36663ms -->
+  <step title="LockFile &apos;C:\home\site\locks\deployments.lock&apos; released" date="2026-01-03T19:14:46.355" /><!-- duration: 16ms -->
+</step><!-- duration: 37132ms -->

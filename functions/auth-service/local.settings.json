@@ -1,0 +1,19 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "NODE_ENV": "development",
+    "B2C_TENANT_NAME": "your-b2c-tenant",
+    "B2C_TENANT_DOMAIN": "your-b2c-tenant.onmicrosoft.com",
+    "B2C_CLIENT_ID": "your-b2c-client-id",
+    "JWT_SECRET": "your-jwt-secret-for-local-development",
+    "REDIS_URL": "redis://localhost:6379",
+    "LOG_LEVEL": "info",
+    "AA_TRADITIONS_COMPLIANT": "true"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}

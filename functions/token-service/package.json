@@ -1,0 +1,17 @@
+{
+  "name": "@digital-sponsor/token-service",
+  "version": "1.0.0",
+  "description": "Digital Sponsor Token Validation Microservice",
+  "main": "validate/index.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-client": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

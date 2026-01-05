@@ -102,3 +102,12 @@ Do what has been asked; nothing more, nothing less. NEVER create files unless th
 necessary for achieving your goal. ALWAYS prefer editing an existing file to creating a new one.
 NEVER proactively create documentation files (\*.md) or README files. Only create documentation
 files if explicitly requested by the User.
+
+# Azure Region Configuration
+
+**CRITICAL**: All Azure deployments MUST use **Central US** region. Never deploy to East US or any
+other region without explicit authorization.
+
+- Primary region: `centralus`
+- Backup region: `centraluseuap` (if needed)
+- All container instances, app services, storage accounts, and other resources must be in Central US

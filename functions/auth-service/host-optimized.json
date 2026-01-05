@@ -1,0 +1,41 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true
+      }
+    },
+    "logLevel": {
+      "default": "Warning",
+      "Host.Results": "Warning",
+      "Function": "Warning",
+      "Host.Aggregator": "Error"
+    }
+  },
+  "functionTimeout": "00:10:00",
+  "healthMonitor": {
+    "enabled": true,
+    "healthCheckInterval": "00:00:30",
+    "healthCheckWindow": "00:05:00",
+    "healthCheckThreshold": 3,
+    "counterThreshold": 0.6
+  },
+  "http": {
+    "routePrefix": "",
+    "maxOutstandingRequests": 50,
+    "maxConcurrentRequests": 25,
+    "dynamicThrottlesEnabled": false
+  },
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[4.*, 5.0.0)"
+  },
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 3,
+    "minimumInterval": "00:00:02",
+    "maximumInterval": "00:00:30"
+  },
+  "functionAppScaleLimit": 10
+}

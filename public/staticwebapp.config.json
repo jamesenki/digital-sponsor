@@ -2,7 +2,7 @@
   "routes": [
     {
       "route": "/api/*",
-      "rewrite": "http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080/api/"
+      "rewrite": "https://api.digitalsponsor.commonsolution.org/api/"
     },
     {
       "route": "/admin",
@@ -37,7 +37,7 @@
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080 http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002 http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003 https://digitalsponsor.commonsolution.org;"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.digitalsponsor.commonsolution.org https://digitalsponsor.commonsolution.org;"
   },
   "mimeTypes": {
     ".json": "application/json",

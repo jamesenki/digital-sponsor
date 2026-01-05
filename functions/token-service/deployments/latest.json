@@ -1,0 +1,8 @@
+{
+  "TimeStamp": "2026-01-03T19:14:45Z",
+  "SiteName": "token-digitalsponsor-prod",
+  "RequestId": "52eaebd2-e8d8-11f0-acf8-00155da155b0",
+  "Kind": "az_cli_functions",
+  "Status": "Success",
+  "Details": "{\"Id\":\"145b6a968098484aaebb6be09c0613df\",\"Status\":4,\"StatusText\":\"\",\"AuthorEmail\":\"N/A\",\"Author\":\"N/A\",\"Message\":\"Created via a push deployment\",\"Progress\":\"\",\"Deployer\":\"az_cli_functions\",\"ReceivedTime\":\"2026-01-03T19:14:11.6766861Z\",\"StartTime\":\"2026-01-03T19:14:12.3798027Z\",\"EndTime\":\"2026-01-03T19:14:45.2306313Z\",\"LastSuccessEndTime\":\"2026-01-03T19:14:45.2306313Z\",\"Complete\":true,\"IsTemporary\":false,\"IsReadOnly\":true,\"SiteName\":\"token-digitalsponsor-prod\",\"HostName\":\"token-digitalsponsor-prod.scm.azurewebsites.net\",\"ProjectType\":\"BASIC\",\"VsProjectId\":null}"
+}

@@ -1,0 +1,13 @@
+# Exclude archived TypeScript enterprise services
+archived-enterprise-services/
+functions/
+beta-platform/
+
+# Exclude build outputs and dependencies
+node_modules/
+dist/
+*.d.ts
+
+# Exclude generated files
+public/
+frontend/frontend/

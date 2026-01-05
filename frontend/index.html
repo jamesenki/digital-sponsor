@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Sponsor - Step Work</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .services-status {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .service-card {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            min-width: 200px;
+        }
+
+        .service-healthy {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .service-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .step-work-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .step-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .step-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step-button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .step-button.active {
+            background: #764ba2;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .ai-guidance {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .ai-guidance h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ai-guidance .ai-icon {
+            margin-right: 8px;
+        }
+
+        .progress-tracker {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #667eea;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .prayer-section {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .entry-list {
+            margin-top: 20px;
+        }
+
+        .entry-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .entry-item h5 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .step-selector {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Digital Sponsor</h1>
+            <p>AI-Powered Step Work with RAG Integration</p>
+        </div>
+
+        <div class="services-status" id="servicesStatus">
+            <h3>Service Status</h3>
+            <div id="serviceCards">
+                <div class="loading">Checking services...</div>
+            </div>
+        </div>
+
+        <div class="step-work-section">
+            <h2>Interactive Step Work</h2>
+            
+            <div class="progress-tracker" id="progressTracker" style="display: none;">
+                <h4>Your Progress</h4>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <p id="progressText">Get started on your step work journey</p>
+            </div>
+
+            <div class="step-selector">
+                <button class="step-button" data-step="1">Step 1<br><small>Powerlessness</small></button>
+                <button class="step-button" data-step="2">Step 2<br><small>Higher Power</small></button>
+                <button class="step-button" data-step="3">Step 3<br><small>Surrender</small></button>
+                <button class="step-button active" data-step="4">Step 4<br><small>Moral Inventory</small></button>
+                <button class="step-button" data-step="5">Step 5<br><small>Admission</small></button>
+                <button class="step-button" data-step="6">Step 6<br><small>Willingness</small></button>
+                <button class="step-button" data-step="7">Step 7<br><small>Humility</small></button>
+                <button class="step-button" data-step="8">Step 8<br><small>Amends List</small></button>
+                <button class="step-button" data-step="9">Step 9<br><small>Direct Amends</small></button>
+                <button class="step-button" data-step="10">Step 10<br><small>Daily Inventory</small></button>
+                <button class="step-button" data-step="11">Step 11<br><small>Prayer/Meditation</small></button>
+                <button class="step-button" data-step="12">Step 12<br><small>Service</small></button>
+            </div>
+
+            <!-- Step 4 Content -->
+            <div class="step-content active" id="step4Content">
+                <h3>Step 4: Moral Inventory</h3>
+                <p><em>"Made a searching and fearless moral inventory of ourselves"</em></p>
+                
+                <div class="prayer-section">
+                    <h4>🙏 Step 4 Prayer</h4>
+                    <p><em>Dear God, it is I who has made my life a mess. I have done it, but I cannot undo it. My mistakes are mine, and I will begin a searching and fearless moral inventory. I will write down my wrongs, but I will also include that which is good. I pray for the strength to complete this inventory with rigorous honesty. Amen.</em></p>
+                </div>
+
+                <div id="sessionSection">
+                    <button class="btn" id="startSessionBtn">Start Step Work Session</button>
+                    <button class="btn btn-secondary" id="loadSessionBtn" style="display: none;">Resume Previous Session</button>
+                </div>
+
+                <div id="inventoryForms" style="display: none;">
+                    <h4>Resentment Inventory</h4>
+                    <form id="resentmentForm">
+                        <div class="form-group">
+                            <label for="personInstitution">I'm resentful at (person, institution, or principle):</label>
+                            <input type="text" id="personInstitution" placeholder="e.g., My boss, My ex-spouse, The government">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="theCause">The cause (what they did):</label>
+                            <textarea id="theCause" placeholder="Describe what happened that caused the resentment"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>This affects my:</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="selfEsteem" value="Self-esteem">
+                                    <label for="selfEsteem">Self-esteem (pride, ego)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="security" value="Security">
+                                    <label for="security">Security (safety, money, job)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="ambitions" value="Ambitions">
+                                    <label for="ambitions">Ambitions (goals, dreams)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="personalRelations" value="Personal relations">
+                                    <label for="personalRelations">Personal relations</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="sexRelations" value="Sex relations">
+                                    <label for="sexRelations">Sex relations</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="myPart">My part (what did I do wrong?):</label>
+                            <textarea id="myPart" placeholder="Be honest about your role in this situation"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Character defects revealed:</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="fear" value="Fear">
+                                    <label for="fear">Fear</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="selfishness" value="Selfishness">
+                                    <label for="selfishness">Selfishness</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="dishonesty" value="Dishonesty">
+                                    <label for="dishonesty">Dishonesty</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="inconsideration" value="Inconsideration">
+                                    <label for="inconsideration">Inconsideration</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="pride" value="Pride">
+                                    <label for="pride">Pride</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn">Save Resentment</button>
+                        <button type="button" class="btn btn-secondary" id="getResentmentGuidance">Get AI Guidance</button>
+                    </form>
+
+                    <div id="aiGuidanceSection" class="ai-guidance" style="display: none;">
+                        <h4><span class="ai-icon">🤖</span> AI Spiritual Guidance</h4>
+                        <div id="aiGuidanceContent"></div>
+                    </div>
+
+                    <div class="entry-list" id="resentmentList">
+                        <h4>Your Resentments</h4>
+                        <div id="resentmentEntries"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            stepWorkService: 'http://digitalsponsor-stepwork-v3.centralus.azurecontainer.io:3003',
+            literatureService: 'http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002',
+            chatService: 'http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003'
+        };
+
+        // Global state
+        let currentSession = null;
+        let currentStep = 4;
+        let userProgress = {};
+
+        // UI Elements
+        const servicesStatus = document.getElementById('servicesStatus');
+        const serviceCards = document.getElementById('serviceCards');
+        const startSessionBtn = document.getElementById('startSessionBtn');
+        const inventoryForms = document.getElementById('inventoryForms');
+        const resentmentForm = document.getElementById('resentmentForm');
+        const progressTracker = document.getElementById('progressTracker');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+
+        // Service Health Check
+        async function checkServices() {
+            serviceCards.innerHTML = '<div class="loading">Checking services...</div>';
+            
+            const services = [
+                { name: 'Step Work Service', url: config.stepWorkService + '/health' },
+                { name: 'Literature Service', url: config.literatureService + '/health' },
+                { name: 'Chat Service', url: config.chatService + '/health' }
+            ];
+
+            let healthyCount = 0;
+            let cards = '';
+
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        cards += `
+                            <div class="service-card service-healthy">
+                                <strong>${service.name}</strong><br>
+                                <small>✅ ${data.status || 'Healthy'}</small>
+                            </div>
+                        `;
+                        healthyCount++;
+                    } else {
+                        cards += `
+                            <div class="service-card service-error">
+                                <strong>${service.name}</strong><br>
+                                <small>❌ Error ${response.status}</small>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    cards += `
+                        <div class="service-card service-error">
+                            <strong>${service.name}</strong><br>
+                            <small>❌ Connection failed</small>
+                        </div>
+                    `;
+                }
+            }
+
+            serviceCards.innerHTML = cards;
+
+            if (healthyCount === services.length) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // Create Session
+        async function createSession() {
+            try {
+                const response = await fetch(config.stepWorkService + '/api/session/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ anonymous: true })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSession = data.session.session_id;
+                    showMessage('✅ Session created successfully!', 'success');
+                    inventoryForms.style.display = 'block';
+                    startSessionBtn.style.display = 'none';
+                    progressTracker.style.display = 'block';
+                    return true;
+                } else {
+                    showMessage('❌ Failed to create session', 'error');
+                    return false;
+                }
+            } catch (error) {
+                showMessage('❌ Connection error: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Save Resentment
+        async function saveResentment(resentmentData) {
+            try {
+                const response = await fetch(config.stepWorkService + '/api/step4/resentment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: currentSession,
+                        ...resentmentData
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showMessage('✅ Resentment saved successfully!', 'success');
+                    updateProgress();
+                    clearResentmentForm();
+                    return data;
+                } else {
+                    showMessage('❌ Failed to save resentment', 'error');
+                    return null;
+                }
+            } catch (error) {
+                showMessage('❌ Connection error: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        // Get AI Guidance
+        async function getAIGuidance(resentmentDescription) {
+            try {
+                const encodedDesc = encodeURIComponent(resentmentDescription);
+                const response = await fetch(`${config.stepWorkService}/api/guidance/resentment?description=${encodedDesc}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayAIGuidance(data.guidance, data.literature_sources);
+                        return data;
+                    }
+                } else {
+                    showMessage('❌ Failed to get AI guidance', 'error');
+                }
+                return null;
+            } catch (error) {
+                showMessage('❌ Connection error: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        // Display AI Guidance
+        function displayAIGuidance(guidance, sources) {
+            const guidanceSection = document.getElementById('aiGuidanceSection');
+            const guidanceContent = document.getElementById('aiGuidanceContent');
+            
+            let sourcesHtml = '';
+            if (sources && sources.length > 0) {
+                sourcesHtml = '<h5>📚 Literature Sources:</h5><ul>';
+                sources.forEach(source => {
+                    sourcesHtml += `<li><strong>${source.title}</strong>: ${source.description}</li>`;
+                });
+                sourcesHtml += '</ul>';
+            }
+            
+            guidanceContent.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <div style="white-space: pre-wrap; line-height: 1.6;">${guidance}</div>
+                </div>
+                ${sourcesHtml}
+            `;
+            
+            guidanceSection.style.display = 'block';
+        }
+
+        // Update Progress
+        async function updateProgress() {
+            if (!currentSession) return;
+
+            try {
+                const response = await fetch(`${config.stepWorkService}/api/step4/progress/${currentSession}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const progress = data.progress;
+                    
+                    progressFill.style.width = progress.completion_percentage + '%';
+                    progressText.textContent = `${progress.completion_percentage}% complete • ${progress.total_entries} entries • Next: ${progress.next_recommended_section}`;
+                }
+            } catch (error) {
+                console.error('Failed to update progress:', error);
+            }
+        }
+
+        // Clear Form
+        function clearResentmentForm() {
+            resentmentForm.reset();
+            document.getElementById('aiGuidanceSection').style.display = 'none';
+        }
+
+        // Show Message
+        function showMessage(message, type) {
+            const existingMessage = document.querySelector('.error-message, .success-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.textContent = message;
+            
+            inventoryForms.insertBefore(messageDiv, inventoryForms.firstChild);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Get Form Data
+        function getResentmentFormData() {
+            const affectsMyChecked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .filter(cb => ['selfEsteem', 'security', 'ambitions', 'personalRelations', 'sexRelations'].includes(cb.id))
+                .map(cb => cb.value);
+
+            const characterDefectsChecked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .filter(cb => ['fear', 'selfishness', 'dishonesty', 'inconsideration', 'pride'].includes(cb.id))
+                .map(cb => cb.value);
+
+            return {
+                person_institution: document.getElementById('personInstitution').value,
+                the_cause: document.getElementById('theCause').value,
+                affects_my: affectsMyChecked,
+                my_part: document.getElementById('myPart').value,
+                character_defect: characterDefectsChecked
+            };
+        }
+
+        // Event Listeners
+        startSessionBtn.addEventListener('click', createSession);
+
+        resentmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = getResentmentFormData();
+            
+            if (!formData.person_institution.trim() || !formData.the_cause.trim()) {
+                showMessage('Please fill in the person/institution and cause fields', 'error');
+                return;
+            }
+
+            await saveResentment(formData);
+        });
+
+        document.getElementById('getResentmentGuidance').addEventListener('click', async () => {
+            const formData = getResentmentFormData();
+            if (!formData.person_institution.trim() || !formData.the_cause.trim()) {
+                showMessage('Please fill in the person/institution and cause before getting guidance', 'error');
+                return;
+            }
+
+            const description = `${formData.person_institution}: ${formData.the_cause}`;
+            await getAIGuidance(description);
+        });
+
+        // Step buttons
+        document.querySelectorAll('.step-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const step = parseInt(button.dataset.step);
+                if (step !== 4) {
+                    showMessage('Only Step 4 is available in this demo', 'error');
+                    return;
+                }
+                
+                // Update active button
+                document.querySelectorAll('.step-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Show step content (currently only Step 4)
+                currentStep = step;
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔥 Digital Sponsor Step Work - Loading...');
+            
+            // Check service health
+            const servicesHealthy = await checkServices();
+            
+            if (!servicesHealthy) {
+                showMessage('⚠️ Some services are not responding. You may experience limited functionality.', 'error');
+            }
+            
+            console.log('✅ Digital Sponsor Step Work - Ready!');
+            console.log('🤖 RAG-enhanced step work with:', {
+                stepWork: config.stepWorkService,
+                literature: config.literatureService,
+                chat: config.chatService
+            });
+        });
+    </script>
+</body>
+</html>

@@ -322,6 +322,36 @@ export const validate = {
 };
 
 /**
+ * Authentication Request Validation
+ */
+export const authLoginSchema = Joi.object({
+  b2cToken: Joi.string().required(),
+});
+
+/**
+ * Session Preferences Validation
+ */
+export const sessionPreferencesSchema = Joi.object({
+  anonymousMode: Joi.boolean().optional(),
+  preferredName: Joi.string().max(50).optional(),
+  dataRetentionChoice: Joi.string()
+    .valid('session', '30days', '90days', 'never')
+    .optional(),
+});
+
+/**
+ * Validation utility functions (additional)
+ */
+export const validateAuth = {
+  authLogin: (data: unknown) => authLoginSchema.validate(data),
+  sessionPreferences: (data: unknown) =>
+    sessionPreferencesSchema.validate(data),
+};
+
+// Extend existing validate object
+Object.assign(validate, validateAuth);
+
+/**
  * Validation middleware helper
  */
 export function createValidationMiddleware(schema: Joi.ObjectSchema) {
