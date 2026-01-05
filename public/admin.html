@@ -316,6 +316,11 @@
     </div>
 
     <script>
+        // Configuration - Central US deployment
+        const config = {
+            authService: 'http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080'
+        };
+
         // In-memory storage for this session
         let generatedInvitations = [];
         let sessionStats = {
