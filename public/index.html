@@ -972,9 +972,606 @@
             };
         };
 
+        // =====================================================================
+        // AD MANAGER - Phase 1 Ad-Primary Revenue Model Implementation
+        // =====================================================================
+        
+        class AdManager {
+            constructor(config = {}) {
+                this.config = {
+                    adServiceUrl: config.adServiceUrl || 'http://digitalsponsor-ad-service.centralus.azurecontainer.io:8000',
+                    paymentServiceUrl: config.paymentServiceUrl || 'http://digitalsponsor-payment-service.centralus.azurecontainer.io:8001',
+                    subscriptionServiceUrl: config.subscriptionServiceUrl || 'http://digitalsponsor-subscription-service.centralus.azurecontainer.io:8002',
+                    maxAdsPerSession: config.maxAdsPerSession || 3,
+                    minAdInterval: config.minAdInterval || 600000, // 10 minutes
+                    enableInProduction: config.enableInProduction || true,
+                    debugMode: config.debugMode || false
+                };
+                
+                this.adsShownThisSession = 0;
+                this.lastAdTime = null;
+                this.currentUser = null;
+                this.sessionId = this.generateSessionId();
+                this.crisisMode = false;
+                this.userPreferences = this.loadUserPreferences();
+                
+                this.init();
+            }
+            
+            init() {
+                // Add ad container styles
+                this.addAdStyles();
+                
+                // Create ad containers in the DOM
+                this.createAdContainers();
+                
+                // Set up crisis mode detection
+                this.setupCrisisDetection();
+                
+                // Log initialization
+                if (this.config.debugMode) {
+                    console.log('🎯 AdManager initialized:', {
+                        sessionId: this.sessionId,
+                        maxAdsPerSession: this.config.maxAdsPerSession,
+                        minInterval: this.config.minAdInterval + 'ms'
+                    });
+                }
+            }
+            
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            loadUserPreferences() {
+                const stored = localStorage.getItem('ad_preferences');
+                return stored ? JSON.parse(stored) : {
+                    frequency: 'normal', // normal, reduced, minimal
+                    categories: ['recovery_literature', 'therapy_services', 'meditation_apps']
+                };
+            }
+            
+            saveUserPreferences() {
+                localStorage.setItem('ad_preferences', JSON.stringify(this.userPreferences));
+            }
+            
+            addAdStyles() {
+                const styles = `
+                    <style id="digital-sponsor-ad-styles">
+                    .recovery-ad-container {
+                        background: #f8fafe;
+                        border: 1px solid #e1e8f0;
+                        border-radius: 12px;
+                        margin: 20px 0;
+                        padding: 20px;
+                        max-width: 400px;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        position: relative;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .recovery-ad-container:hover {
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        transform: translateY(-1px);
+                    }
+                    
+                    .recovery-ad-label {
+                        font-size: 0.75rem;
+                        color: #6b7280;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        margin-bottom: 8px;
+                        font-weight: 500;
+                    }
+                    
+                    .recovery-ad-title {
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                        color: #1f2937;
+                        margin-bottom: 8px;
+                        line-height: 1.4;
+                    }
+                    
+                    .recovery-ad-description {
+                        font-size: 0.9rem;
+                        color: #4b5563;
+                        margin-bottom: 15px;
+                        line-height: 1.5;
+                    }
+                    
+                    .recovery-ad-cta {
+                        display: inline-flex;
+                        align-items: center;
+                        background: #3b82f6;
+                        color: white;
+                        text-decoration: none;
+                        padding: 10px 16px;
+                        border-radius: 8px;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        transition: background-color 0.2s ease;
+                    }
+                    
+                    .recovery-ad-cta:hover {
+                        background: #2563eb;
+                        text-decoration: none;
+                        color: white;
+                    }
+                    
+                    .recovery-ad-dismiss {
+                        position: absolute;
+                        top: 12px;
+                        right: 12px;
+                        background: none;
+                        border: none;
+                        font-size: 1.2rem;
+                        color: #9ca3af;
+                        cursor: pointer;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .recovery-ad-dismiss:hover {
+                        background: #f3f4f6;
+                        color: #6b7280;
+                    }
+                    
+                    .recovery-ad-loading {
+                        background: #f9fafb;
+                        border: 1px dashed #d1d5db;
+                        border-radius: 8px;
+                        padding: 20px;
+                        text-align: center;
+                        color: #6b7280;
+                        font-style: italic;
+                        margin: 15px 0;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .recovery-ad-container {
+                            max-width: 100%;
+                            margin: 15px 0;
+                            padding: 15px;
+                        }
+                        
+                        .recovery-ad-title {
+                            font-size: 1rem;
+                        }
+                        
+                        .recovery-ad-description {
+                            font-size: 0.85rem;
+                        }
+                    }
+                    
+                    .ad-controls {
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid #e5e7eb;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        font-size: 0.75rem;
+                        color: #9ca3af;
+                    }
+                    
+                    .ad-feedback {
+                        background: none;
+                        border: none;
+                        color: #6b7280;
+                        text-decoration: underline;
+                        cursor: pointer;
+                        font-size: 0.75rem;
+                    }
+                    
+                    .ad-feedback:hover {
+                        color: #4b5563;
+                    }
+                    </style>
+                `;
+                
+                if (!document.getElementById('digital-sponsor-ad-styles')) {
+                    document.head.insertAdjacentHTML('beforeend', styles);
+                }
+            }
+            
+            createAdContainers() {
+                // Create ad containers at strategic locations
+                const containers = [
+                    { id: 'ad-post-chat', selector: '#chatContainer', position: 'afterend' },
+                    { id: 'ad-post-literature', selector: '#resultsContainer', position: 'afterend' },
+                    { id: 'ad-step-work', selector: '.step-grid', position: 'afterend' }
+                ];
+                
+                containers.forEach(container => {
+                    const targetElement = document.querySelector(container.selector);
+                    if (targetElement && !document.getElementById(container.id)) {
+                        const adContainer = document.createElement('div');
+                        adContainer.id = container.id;
+                        adContainer.className = 'ad-placement-zone';
+                        targetElement.insertAdjacentElement(container.position, adContainer);
+                    }
+                });
+            }
+            
+            setupCrisisDetection() {
+                // Monitor for crisis-related keywords in chat
+                const crisisKeywords = [
+                    'suicide', 'kill myself', 'end my life', 'want to die', 'not worth living',
+                    'give up', 'hopeless', 'can\'t go on', 'overdose', 'self harm'
+                ];
+                
+                // Add event listener to chat input
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.addEventListener('input', (e) => {
+                        const text = e.target.value.toLowerCase();
+                        const containsCrisisKeyword = crisisKeywords.some(keyword => 
+                            text.includes(keyword)
+                        );
+                        
+                        if (containsCrisisKeyword && !this.crisisMode) {
+                            this.enterCrisisMode();
+                        }
+                    });
+                }
+            }
+            
+            enterCrisisMode() {
+                this.crisisMode = true;
+                this.clearAllAds();
+                
+                if (this.config.debugMode) {
+                    console.log('🚨 Entered crisis mode - ads disabled');
+                }
+                
+                // Exit crisis mode after 1 hour
+                setTimeout(() => {
+                    this.crisisMode = false;
+                    if (this.config.debugMode) {
+                        console.log('✅ Exited crisis mode - ads re-enabled');
+                    }
+                }, 3600000);
+            }
+            
+            clearAllAds() {
+                const adContainers = document.querySelectorAll('.recovery-ad-container');
+                adContainers.forEach(container => container.remove());
+            }
+            
+            async requestAd(context, location = 'ad-general') {
+                try {
+                    // Check if ads should be shown
+                    if (!this.shouldShowAd()) {
+                        return null;
+                    }
+                    
+                    // Get current user ID
+                    const userId = this.getCurrentUserId();
+                    if (!userId) {
+                        if (this.config.debugMode) {
+                            console.log('❌ No user ID available for ad request');
+                        }
+                        return null;
+                    }
+                    
+                    // Prepare ad request
+                    const adRequest = {
+                        user_id: userId,
+                        context: context,
+                        crisis_mode: this.crisisMode,
+                        session_id: this.sessionId,
+                        location: this.getUserLocation()
+                    };
+                    
+                    if (this.config.debugMode) {
+                        console.log('🎯 Requesting ad:', adRequest);
+                    }
+                    
+                    // Request ad from service
+                    const response = await fetch(`${this.config.adServiceUrl}/api/request-ad`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(adRequest)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Ad request failed: ${response.status}`);
+                    }
+                    
+                    const adData = await response.json();
+                    
+                    if (adData) {
+                        // Track impression
+                        this.trackImpression(adData, context);
+                        
+                        // Display ad
+                        this.displayAd(adData, location);
+                        
+                        // Update frequency tracking
+                        this.adsShownThisSession++;
+                        this.lastAdTime = new Date();
+                        
+                        return adData;
+                    }
+                    
+                    return null;
+                    
+                } catch (error) {
+                    if (this.config.debugMode) {
+                        console.error('❌ Ad request failed:', error);
+                    }
+                    return null;
+                }
+            }
+            
+            shouldShowAd() {
+                // Crisis mode check
+                if (this.crisisMode) {
+                    return false;
+                }
+                
+                // Session limit check
+                if (this.adsShownThisSession >= this.config.maxAdsPerSession) {
+                    if (this.config.debugMode) {
+                        console.log('⏸️ Session ad limit reached');
+                    }
+                    return false;
+                }
+                
+                // Frequency interval check
+                if (this.lastAdTime) {
+                    const timeSinceLastAd = Date.now() - this.lastAdTime.getTime();
+                    if (timeSinceLastAd < this.config.minAdInterval) {
+                        if (this.config.debugMode) {
+                            console.log('⏸️ Too soon since last ad');
+                        }
+                        return false;
+                    }
+                }
+                
+                // User preferences check
+                if (this.userPreferences.frequency === 'minimal' && Math.random() < 0.5) {
+                    return false;
+                }
+                
+                if (this.userPreferences.frequency === 'reduced' && Math.random() < 0.3) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            getCurrentUserId() {
+                // Get user ID from currentUser or localStorage
+                if (this.currentUser && this.currentUser.id) {
+                    return this.currentUser.id;
+                }
+                
+                // Check localStorage for user session
+                const userSession = localStorage.getItem('userSession');
+                if (userSession) {
+                    try {
+                        const session = JSON.parse(userSession);
+                        return session.userId || session.id;
+                    } catch (e) {
+                        // Ignore parse errors
+                    }
+                }
+                
+                // Generate anonymous user ID
+                let anonymousId = localStorage.getItem('anonymous_user_id');
+                if (!anonymousId) {
+                    anonymousId = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('anonymous_user_id', anonymousId);
+                }
+                
+                return anonymousId;
+            }
+            
+            getUserLocation() {
+                // TODO: Implement geo-location detection
+                return 'United States';
+            }
+            
+            displayAd(adData, containerId) {
+                const container = document.getElementById(containerId) || document.querySelector('.ad-placement-zone');
+                
+                if (!container) {
+                    if (this.config.debugMode) {
+                        console.log('❌ No ad container found');
+                    }
+                    return;
+                }
+                
+                const adElement = this.createAdElement(adData);
+                container.appendChild(adElement);
+                
+                // Add smooth appearance animation
+                setTimeout(() => {
+                    adElement.style.opacity = '1';
+                    adElement.style.transform = 'translateY(0)';
+                }, 100);
+            }
+            
+            createAdElement(adData) {
+                const adElement = document.createElement('div');
+                adElement.className = 'recovery-ad-container';
+                adElement.style.opacity = '0';
+                adElement.style.transform = 'translateY(10px)';
+                adElement.style.transition = 'all 0.3s ease';
+                
+                adElement.innerHTML = `
+                    <div class="recovery-ad-label">Helpful Resource</div>
+                    <button class="recovery-ad-dismiss" onclick="adManager.dismissAd('${adData.ad_id}', this.parentElement)" aria-label="Close ad">×</button>
+                    <h3 class="recovery-ad-title">${this.escapeHtml(adData.title)}</h3>
+                    <p class="recovery-ad-description">${this.escapeHtml(adData.description)}</p>
+                    <a href="${adData.url}" 
+                       class="recovery-ad-cta"
+                       onclick="adManager.trackClick('${adData.ad_id}', '${adData.url}')"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        Learn More
+                    </a>
+                    <div class="ad-controls">
+                        <span>by ${this.escapeHtml(adData.provider)}</span>
+                        <button class="ad-feedback" onclick="adManager.showAdFeedback('${adData.ad_id}')">
+                            Why this ad?
+                        </button>
+                    </div>
+                `;
+                
+                return adElement;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            async trackImpression(adData, context) {
+                try {
+                    const impressionData = {
+                        user_id: this.getCurrentUserId(),
+                        ad_id: adData.ad_id,
+                        timestamp: new Date().toISOString(),
+                        context: context,
+                        session_id: this.sessionId
+                    };
+                    
+                    await fetch(`${this.config.adServiceUrl}/api/track-impression`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(impressionData)
+                    });
+                    
+                    if (this.config.debugMode) {
+                        console.log('📊 Tracked impression:', impressionData);
+                    }
+                    
+                } catch (error) {
+                    if (this.config.debugMode) {
+                        console.error('❌ Failed to track impression:', error);
+                    }
+                }
+            }
+            
+            async trackClick(adId, destinationUrl) {
+                try {
+                    const clickData = {
+                        user_id: this.getCurrentUserId(),
+                        ad_id: adId,
+                        impression_id: `${this.getCurrentUserId()}_${adId}_${Date.now()}`,
+                        destination_url: destinationUrl,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    await fetch(`${this.config.adServiceUrl}/api/track-click`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(clickData)
+                    });
+                    
+                    if (this.config.debugMode) {
+                        console.log('🖱️ Tracked click:', clickData);
+                    }
+                    
+                } catch (error) {
+                    if (this.config.debugMode) {
+                        console.error('❌ Failed to track click:', error);
+                    }
+                }
+            }
+            
+            dismissAd(adId, adElement) {
+                if (adElement) {
+                    adElement.style.opacity = '0';
+                    adElement.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        adElement.remove();
+                    }, 300);
+                }
+                
+                if (this.config.debugMode) {
+                    console.log('❌ Ad dismissed:', adId);
+                }
+                
+                // TODO: Track dismissal for optimization
+            }
+            
+            showAdFeedback(adId) {
+                alert(`This ad was shown because it matches your current activity and interests within the recovery community.\\n\\nAd ID: ${adId}\\n\\nWe only show recovery-appropriate content that may be helpful to your journey.\\n\\nYou can adjust your ad preferences in settings.`);
+            }
+            
+            // Public methods for integration
+            
+            setUser(user) {
+                this.currentUser = user;
+                if (this.config.debugMode) {
+                    console.log('👤 User set:', user);
+                }
+            }
+            
+            // Trigger ad requests for different contexts
+            async showAdAfterChat() {
+                setTimeout(() => {
+                    this.requestAd('chat_completion', 'ad-post-chat');
+                }, 3000); // 3 second delay after chat
+            }
+            
+            async showAdAfterLiteratureSearch() {
+                setTimeout(() => {
+                    this.requestAd('literature_search', 'ad-post-literature');
+                }, 1000); // 1 second delay after search
+            }
+            
+            async showAdAfterStepWork() {
+                this.requestAd('step_work', 'ad-step-work');
+            }
+            
+            async showGeneralAd() {
+                this.requestAd('general', 'ad-general');
+            }
+        }
+
+        // Initialize AdManager globally
+        const adManager = new AdManager({
+            debugMode: true, // Enable for beta testing
+            adServiceUrl: 'http://digitalsponsor-ad-service.centralus.azurecontainer.io:8000',
+            paymentServiceUrl: 'http://digitalsponsor-payment-service.centralus.azurecontainer.io:8001',
+            subscriptionServiceUrl: 'http://digitalsponsor-subscription-service.centralus.azurecontainer.io:8002'
+        });
+
+        // Integrate with existing functions
+        const originalSendMessage = sendMessage;
+        sendMessage = async function() {
+            await originalSendMessage();
+            // Show ad after chat completion
+            adManager.showAdAfterChat();
+        };
+
+        const originalSearchLiterature = searchLiterature;
+        searchLiterature = async function() {
+            await originalSearchLiterature();
+            // Show ad after literature search
+            adManager.showAdAfterLiteratureSearch();
+        };
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🔥 Digital Sponsor Beta Platform loaded');
+            console.log('🎯 AdManager initialized for Phase 1 revenue model');
             console.log('🎫 Demo invitation codes available:');
             console.log('   - DS-GENERAL-DEMO2026 (General Beta)');
             console.log('   - DS-INVESTOR-INVEST01 (Investor Demo)');
