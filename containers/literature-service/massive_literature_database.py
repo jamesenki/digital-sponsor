@@ -389,24 +389,56 @@ def get_massive_literature_database():
 def get_all_literature_items():
     """Return all literature items in a single list for search"""
     all_items = []
-    
-    # Add Big Book content
+
+    # Import content-rich items from original literature database
+    try:
+        from literature_database import TWELVE_STEPS, TWELVE_TRADITIONS, RECOVERY_CONCEPTS, CRISIS_RESOURCES
+        # These have actual text content in the 'content' field
+        all_items.extend(TWELVE_STEPS)
+        all_items.extend(TWELVE_TRADITIONS)
+        all_items.extend(RECOVERY_CONCEPTS)
+        all_items.extend(CRISIS_RESOURCES)
+    except ImportError:
+        pass
+
+    # Add Big Book content (metadata - full text is copyrighted)
     all_items.extend(BIG_BOOK_CHAPTERS)
-    
+
     # Add Twelve and Twelve content
     all_items.extend(TWELVE_AND_TWELVE_CHAPTERS)
-    
+
     # Add pamphlets
     all_items.extend(AA_PAMPHLETS)
-    
+
     # Add personal story sections (representing 100+ individual stories)
     for section in PERSONAL_STORIES_SECTIONS:
         all_items.append(section)
-    
+
     # Add grapevine categories (representing 2000+ individual articles)
     for category in AA_GRAPEVINE_CATEGORIES:
         all_items.append(category)
-    
+
+    # Add PDF-extracted full-text content (Big Book, 12&12, Joe & Charlie)
+    try:
+        from pdf_literature_content import PDF_LITERATURE_ITEMS
+        all_items.extend(PDF_LITERATURE_ITEMS)
+    except ImportError:
+        pass  # PDF content not available
+
+    # Add Grapevine articles (Bill W. writings from Silkworth.net)
+    try:
+        from grapevine_content import GRAPEVINE_ARTICLES
+        all_items.extend(GRAPEVINE_ARTICLES)
+    except ImportError:
+        pass  # Grapevine content not available
+
+    # Add Grapevine subscription articles (Step/Tradition classics)
+    try:
+        from grapevine_subscription_content import GRAPEVINE_SUBSCRIPTION_ARTICLES
+        all_items.extend(GRAPEVINE_SUBSCRIPTION_ARTICLES)
+    except ImportError:
+        pass  # Subscription content not available
+
     return all_items
 
 def get_database_statistics():

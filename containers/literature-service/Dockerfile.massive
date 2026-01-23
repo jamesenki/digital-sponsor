@@ -5,6 +5,10 @@ WORKDIR /app
 COPY app_massive.py ./app.py
 COPY massive_literature_database.py .
 COPY advanced_literature_engine.py .
+COPY literature_database.py .
+COPY pdf_literature_content.py .
+COPY grapevine_content.py .
+COPY grapevine_subscription_content.py .
 
 EXPOSE 3002
 

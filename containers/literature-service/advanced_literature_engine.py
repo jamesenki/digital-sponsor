@@ -66,10 +66,22 @@ class AdvancedLiteratureEngine:
             if term in item.get('title', '').lower():
                 score += 5
                 
-        # Description matching  
+        # Description matching
         for term in query_terms:
             if term in item.get('description', '').lower():
                 score += 3
+
+        # Content matching (full text search for PDF-extracted content)
+        content = item.get('content', '').lower()
+        if content:
+            for term in query_terms:
+                if term in content:
+                    score += 2
+                    # Bonus for exact phrase matches in content
+                    if len(query_terms) > 2:
+                        query_phrase = ' '.join(query_terms)
+                        if query_phrase in content:
+                            score += 5
                 
         # Keywords matching
         if 'keywords' in item:
