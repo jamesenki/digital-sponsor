@@ -15,6 +15,21 @@
       "statusCode": 200
     },
     {
+      "route": "/privacy",
+      "serve": "/privacy.html",
+      "statusCode": 200
+    },
+    {
+      "route": "/terms",
+      "serve": "/terms.html",
+      "statusCode": 200
+    },
+    {
+      "route": "/contact",
+      "serve": "/contact.html",
+      "statusCode": 200
+    },
+    {
       "route": "/*",
       "serve": "/index.html",
       "statusCode": 200
@@ -36,16 +51,13 @@
   },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.digitalsponsor.commonsolution.org https://digitalsponsor.commonsolution.org;"
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com https://tpc.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com; connect-src 'self' https://*.azurecontainerapps.io https://*.azurecontainer.io https://api.digitalsponsor.commonsolution.org https://digitalsponsor.commonsolution.org https://pagead2.googlesyndication.com;"
   },
   "mimeTypes": {
     ".json": "application/json",
     ".js": "application/javascript",
     ".css": "text/css",
     ".html": "text/html"
-  },
-  "defaultHeaders": {
-    "Cache-Control": "public, max-age=31536000, immutable"
   }
 }

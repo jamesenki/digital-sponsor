@@ -224,15 +224,33 @@
             padding: 20px;
             border-top: 1px solid #e2e8f0;
             display: flex;
+            flex-direction: column;
             gap: 10px;
+        }
+
+        .chat-send-btn {
+            align-self: flex-end;
+            width: auto;
+            padding: 8px 20px;
+            font-size: 14px;
         }
 
         .chat-input {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            resize: none;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            resize: vertical;
+            min-height: 80px;
+            font-size: 16px;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .message-bubble {
@@ -332,7 +350,31 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Footer Styles */
+        .site-footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .site-footer a {
+            color: #4a90d9;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
     </style>
+
+    <!-- Google AdSense - Replace ca-pub-XXXXXXX with your Publisher ID after approval -->
+    <!-- INSTRUCTIONS: Uncomment after AdSense approval and replace YOUR_PUBLISHER_ID -->
+    <!--
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+    -->
 </head>
 <body>
     <div class="container">
@@ -445,8 +487,8 @@
                         </div>
                     </div>
                     <div class="chat-input-container">
-                        <textarea class="chat-input" id="chatInput" placeholder="Ask about Step work, sponsorship, recovery topics..." rows="2"></textarea>
-                        <button class="btn" onclick="sendMessage()" id="sendBtn">Send</button>
+                        <textarea class="chat-input" id="chatInput" placeholder="Ask about Step work, sponsorship, recovery topics... (Press Enter to send)" rows="4"></textarea>
+                        <button class="btn chat-send-btn" onclick="sendMessage()" id="sendBtn">Send</button>
                     </div>
                 </div>
             </div>
@@ -570,14 +612,39 @@
     </div>
 
     <script>
-        // Configuration - Central US deployment - FIXED HTTPS
+        // Configuration - Central US deployment - PRODUCTION with HTTPS
         const config = {
-            authService: 'https://auth.commonsolution.org',
-            apiGateway: 'https://auth.commonsolution.org',
-            literatureService: 'http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002',
-            chatService: 'http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003',
+            // Auth still uses demo mode until we migrate it to Container Apps
+            authService: 'http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080',
+            apiGateway: 'http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080',
+            // PRODUCTION HTTPS endpoints (Azure Container Apps)
+            literatureService: 'https://ca-literature-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
+            chatService: 'https://ca-chat-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
             region: 'centralus',
-            customDomain: 'digitalsponsor.commonsolution.org'
+            customDomain: 'digitalsponsor.commonsolution.org',
+            // Demo mode only for auth - chat and literature are LIVE
+            demoMode: window.location.hostname.includes('commonsolution.org') ||
+                      window.location.hostname.includes('azurestaticapps.net'),
+            // Feature flags
+            useLiveChat: true,
+            useLiveLiterature: true
+        };
+
+        // Big Book page number mapping (4th Edition)
+        const bigBookPages = {
+            'big_book_chapter_1': { pages: '1-16', title: "Bill's Story", url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_2': { pages: '17-29', title: 'There Is A Solution', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_3': { pages: '30-43', title: 'More About Alcoholism', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_4': { pages: '44-57', title: 'We Agnostics', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_5': { pages: '58-71', title: 'How It Works', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_6': { pages: '72-88', title: 'Into Action', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_7': { pages: '89-103', title: 'Working With Others', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_8': { pages: '104-121', title: 'To Wives', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_9': { pages: '122-135', title: 'The Family Afterward', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_10': { pages: '136-150', title: 'To Employers', url: 'https://www.aa.org/the-big-book' },
+            'big_book_chapter_11': { pages: '151-164', title: 'A Vision For You', url: 'https://www.aa.org/the-big-book' },
+            'twelve_steps_twelve_traditions': { pages: 'varies', title: '12 Steps & 12 Traditions', url: 'https://www.aa.org/twelve-steps-twelve-traditions' },
+            'daily_reflections': { pages: 'daily', title: 'Daily Reflections', url: 'https://www.aa.org/daily-reflections' }
         };
 
         // Global state
@@ -669,30 +736,57 @@
                 return;
             }
 
+            const email = document.getElementById('registerEmail').value;
+
+            // Check if using demo invitation code - bypass auth service
+            if (demoInvitations[invitationCode]) {
+                showMessage('Creating your account...', 'info');
+                const demoUser = demoInvitations[invitationCode];
+
+                // Simulate successful registration for demo
+                setTimeout(() => {
+                    showMessage(`🎉 Welcome to Digital Sponsor Beta, ${demoUser.firstName}!`, 'success');
+                    currentUser = {
+                        id: 'demo-' + Date.now(),
+                        email: email,
+                        firstName: demoUser.firstName,
+                        type: demoUser.type
+                    };
+                    sessionToken = 'demo-token-' + Date.now();
+                    localStorage.setItem('demoUser', JSON.stringify(currentUser));
+                    localStorage.setItem('demoToken', sessionToken);
+
+                    setTimeout(() => {
+                        showMainApp();
+                    }, 1500);
+                }, 500);
+                return;
+            }
+
             const formData = {
                 invitationCode: invitationCode,
-                email: document.getElementById('registerEmail').value,
+                email: email,
                 authProvider: 'aad'
             };
-            
+
             showMessage('Creating your account...', 'info');
-            
+
             try {
                 const response = await fetch(config.authService + '/api/register', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formData)
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showMessage(`🎉 ${data.message}`, 'success');
-                    
+
                     // For demo purposes, simulate login since Azure AD isn't fully configured
                     currentUser = data.user;
                     sessionToken = data.session_token || 'demo-token';
-                    
+
                     setTimeout(() => {
                         showMainApp();
                     }, 2000);
@@ -708,21 +802,56 @@
         // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const formData = {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            };
-            
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            // Check for demo mode
+            if (config.demoMode) {
+                // Demo mode - check localStorage for demo user or allow any login
+                const storedUser = localStorage.getItem('demoUser');
+
+                showMessage('Logging in...', 'info');
+
+                setTimeout(() => {
+                    if (storedUser) {
+                        const user = JSON.parse(storedUser);
+                        if (user.email === email) {
+                            currentUser = user;
+                            sessionToken = localStorage.getItem('demoToken') || 'demo-token';
+                            showMessage('Welcome back! 🎉', 'success');
+                            setTimeout(() => showMainApp(), 1000);
+                            return;
+                        }
+                    }
+
+                    // Allow demo login with any email (for demo purposes)
+                    currentUser = {
+                        id: 'demo-' + Date.now(),
+                        email: email,
+                        firstName: email.split('@')[0],
+                        type: 'general'
+                    };
+                    sessionToken = 'demo-token-' + Date.now();
+                    localStorage.setItem('demoUser', JSON.stringify(currentUser));
+                    localStorage.setItem('demoToken', sessionToken);
+                    showMessage('Welcome to Digital Sponsor Beta! 🎉', 'success');
+                    setTimeout(() => showMainApp(), 1000);
+                }, 500);
+                return;
+            }
+
+            const formData = { email, password };
+
             try {
                 const response = await fetch(config.authService + '/api/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formData)
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showMessage('Login successful! Welcome back!', 'success');
                     currentUser = data.user;
@@ -765,16 +894,37 @@
         // Service Status Check
         async function checkServiceStatus() {
             const statusContainer = document.getElementById('serviceStatus');
+
+            // Show demo mode status
+            if (config.demoMode) {
+                statusContainer.innerHTML = `
+                    <div class="service-card service-healthy">
+                        <strong>Auth Service</strong><br>
+                        <small>🎭 Demo Mode</small>
+                    </div>
+                    <div class="service-card service-healthy">
+                        <strong>Literature Service</strong><br>
+                        <small>🎭 Demo Mode</small>
+                    </div>
+                    <div class="service-card service-healthy">
+                        <strong>Chat Service</strong><br>
+                        <small>🎭 Demo Mode</small>
+                    </div>
+                `;
+                console.log('Running in demo mode (HTTPS frontend with HTTP backends)');
+                return;
+            }
+
             statusContainer.innerHTML = '<div class="service-card">Checking services...</div>';
-            
+
             const services = [
                 {name: 'Auth Service', url: config.authService + '/health'},
                 {name: 'Literature Service', url: config.literatureService + '/health'},
                 {name: 'Chat Service', url: config.chatService + '/health'}
             ];
-            
+
             let statusHtml = '';
-            
+
             for (const service of services) {
                 try {
                     const response = await fetch(service.url);
@@ -803,25 +953,368 @@
                     `;
                 }
             }
-            
+
             statusContainer.innerHTML = statusHtml;
+        }
+
+        // =====================================================================
+        // DEMO MODE DATA - Full offline functionality
+        // =====================================================================
+
+        // Enhanced chat responses with context awareness
+        const demoResponses = {
+            general: [
+                "Thank you for sharing. Recovery is a journey, and every step counts. How are you feeling today?",
+                "That's a great question. The 12 steps provide a framework for personal growth. Would you like to explore any specific step?",
+                "I hear you. It's normal to have challenging days. What has helped you stay grounded in the past?",
+                "Remember, you're not alone in this. Many have walked this path before. What support do you have around you?",
+                "One day at a time. That's the key. What's one small thing you can do today for your recovery?",
+                "Your honesty is powerful. Sharing our struggles helps us heal. Is there anything specific on your mind?",
+                "The Big Book reminds us that we are not saints. Progress, not perfection, is our goal.",
+                "Have you been to a meeting recently? Connection with others in recovery can be incredibly powerful.",
+                "What does your sponsor say about this? If you don't have one, finding a sponsor could be a great next step."
+            ],
+            step1: [
+                "Step 1 is about admitting powerlessness over alcohol and that our lives had become unmanageable. This isn't weakness—it's the foundation of recovery. What does powerlessness mean to you?",
+                "The First Step asks us to be honest about our relationship with alcohol. Many find freedom in finally admitting what they knew deep down. What brought you to consider this step?",
+                "Unmanageability can show up in many ways—relationships, work, health, finances. Where have you seen it in your life?"
+            ],
+            step2: [
+                "Step 2 is about coming to believe that a Power greater than ourselves could restore us to sanity. This doesn't require any specific religious belief. What does a Higher Power mean to you?",
+                "Many struggle with Step 2 if they've had negative experiences with religion. The good news is your Higher Power can be anything greater than yourself—even the group or the universe.",
+                "The 'insanity' in Step 2 often refers to doing the same thing expecting different results. Have you experienced this pattern?"
+            ],
+            step3: [
+                "Step 3 is about making a decision to turn our will and our lives over to the care of God as we understood Him. It's a decision, not perfection. Have you made this decision?",
+                "The Third Step Prayer is: 'God, I offer myself to Thee—to build with me and to do with me as Thou wilt. Relieve me of the bondage of self, that I may better do Thy will.'",
+                "Many find Step 3 challenging because we like control. What would it look like to let go just a little bit today?"
+            ],
+            step4: [
+                "Step 4 is a searching and fearless moral inventory. This isn't about beating yourself up—it's about understanding your patterns so you can change them.",
+                "The inventory typically covers resentments, fears, and harms to others. Many use columns to list the person/institution, the cause, and how it affected them.",
+                "Remember, we're not doing this alone. Your sponsor and Higher Power are with you through this process."
+            ],
+            struggling: [
+                "I hear that you're struggling right now. That takes courage to admit. Have you reached out to your sponsor or another person in recovery?",
+                "When we're struggling, it's important to remember H.A.L.T.—are you Hungry, Angry, Lonely, or Tired? Taking care of basics helps.",
+                "The urge to drink or use will pass. Can you get to a meeting or call someone in the program right now?",
+                "You've made it this far. Whatever you're facing, you don't have to face it alone or pick up a drink over it."
+            ],
+            gratitude: [
+                "Gratitude is such a powerful part of recovery! What are you grateful for today?",
+                "An attitude of gratitude can transform our perspective. Many find keeping a gratitude list helpful for tough days.",
+                "That's wonderful to hear! Celebrating our wins, big and small, helps reinforce our recovery."
+            ],
+            prayer: [
+                "Prayer and meditation are central to Step 11. The Serenity Prayer is a great place to start: 'God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.'",
+                "The Third Step Prayer and Seventh Step Prayer are powerful tools. Would you like me to share them?",
+                "Many find that starting each day with prayer and ending with reflection helps maintain conscious contact with their Higher Power."
+            ],
+            sponsor: [
+                "A sponsor is someone who has worked the steps and can guide you through them. They share their experience, strength, and hope.",
+                "Finding a sponsor: Look for someone who has what you want in recovery, attends meetings regularly, and has worked all 12 steps.",
+                "The sponsor-sponsee relationship is one of the most valuable parts of the program. It's okay to ask someone to be your sponsor."
+            ]
+        };
+
+        // Demo literature database
+        const demoLiterature = [
+            {
+                title: "Big Book - Chapter 5: How It Works",
+                source: "Alcoholics Anonymous, p. 58-60",
+                content: "Rarely have we seen a person fail who has thoroughly followed our path. Those who do not recover are people who cannot or will not completely give themselves to this simple program, usually men and women who are constitutionally incapable of being honest with themselves.",
+                keywords: ["how it works", "rarely", "fail", "honest", "simple program"]
+            },
+            {
+                title: "Big Book - The Promises",
+                source: "Alcoholics Anonymous, p. 83-84",
+                content: "If we are painstaking about this phase of our development, we will be amazed before we are half way through. We are going to know a new freedom and a new happiness. We will not regret the past nor wish to shut the door on it.",
+                keywords: ["promises", "freedom", "happiness", "amazed", "regret"]
+            },
+            {
+                title: "Big Book - Chapter 3: More About Alcoholism",
+                source: "Alcoholics Anonymous, p. 30",
+                content: "Most of us have been unwilling to admit we were real alcoholics. No person likes to think he is bodily and mentally different from his fellows. Therefore, it is not surprising that our drinking careers have been characterized by countless vain attempts to prove we could drink like other people.",
+                keywords: ["alcoholism", "admit", "different", "drinking", "denial"]
+            },
+            {
+                title: "The Serenity Prayer",
+                source: "Traditional",
+                content: "God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
+                keywords: ["serenity", "prayer", "accept", "courage", "wisdom", "change"]
+            },
+            {
+                title: "Third Step Prayer",
+                source: "Alcoholics Anonymous, p. 63",
+                content: "God, I offer myself to Thee—to build with me and to do with me as Thou wilt. Relieve me of the bondage of self, that I may better do Thy will. Take away my difficulties, that victory over them may bear witness to those I would help of Thy Power, Thy Love, and Thy Way of life. May I do Thy will always!",
+                keywords: ["third step", "prayer", "offer", "bondage", "self", "will"]
+            },
+            {
+                title: "Seventh Step Prayer",
+                source: "Alcoholics Anonymous, p. 76",
+                content: "My Creator, I am now willing that you should have all of me, good and bad. I pray that you now remove from me every single defect of character which stands in the way of my usefulness to you and my fellows. Grant me strength, as I go out from here, to do your bidding. Amen.",
+                keywords: ["seventh step", "prayer", "defects", "character", "willing", "remove"]
+            },
+            {
+                title: "Big Book - Chapter 4: We Agnostics",
+                source: "Alcoholics Anonymous, p. 44-45",
+                content: "We found that as soon as we were able to lay aside prejudice and express even a willingness to believe in a Power greater than ourselves, we commenced to get results, even though it was impossible for any of us to fully define or comprehend that Power.",
+                keywords: ["agnostic", "believe", "higher power", "willing", "prejudice"]
+            },
+            {
+                title: "12x12 - Step One",
+                source: "Twelve Steps and Twelve Traditions, p. 21",
+                content: "Who cares to admit complete defeat? Practically no one, of course. Every natural instinct cries out against the idea of personal powerlessness. It is truly awful to admit that, glass in hand, we have warped our minds into such an obsession for destructive drinking that only an act of Providence can remove it.",
+                keywords: ["step one", "defeat", "powerless", "admit", "obsession"]
+            },
+            {
+                title: "Big Book - A Vision For You",
+                source: "Alcoholics Anonymous, p. 164",
+                content: "Abandon yourself to God as you understand God. Admit your faults to Him and to your fellows. Clear away the wreckage of your past. Give freely of what you find and join us. We shall be with you in the Fellowship of the Spirit, and you will surely meet some of us as you trudge the Road of Happy Destiny.",
+                keywords: ["vision", "abandon", "god", "fellowship", "happy destiny"]
+            },
+            {
+                title: "Big Book - Doctor's Opinion",
+                source: "Alcoholics Anonymous, p. xxviii",
+                content: "We believe, and so suggested a few years ago, that the action of alcohol on these chronic alcoholics is a manifestation of an allergy; that the phenomenon of craving is limited to this class and never occurs in the average temperate drinker.",
+                keywords: ["doctor", "allergy", "craving", "chronic", "phenomenon"]
+            }
+        ];
+
+        // Step work content
+        const stepContent = {
+            1: {
+                title: "Step 1: Powerlessness",
+                principle: "Honesty",
+                prayer: "Higher Power, help me to see and admit the truth about my powerlessness over alcohol and the unmanageability of my life.",
+                reading: "We admitted we were powerless over alcohol—that our lives had become unmanageable.",
+                questions: [
+                    "What examples show that I cannot control my drinking once I start?",
+                    "How has my life become unmanageable due to alcohol?",
+                    "What have I lost or damaged because of my drinking?",
+                    "When did I first realize I might have a problem?",
+                    "What keeps me from fully admitting my powerlessness?"
+                ],
+                literature: "Big Book Chapter 1-3, 12x12 Step One"
+            },
+            2: {
+                title: "Step 2: Hope",
+                principle: "Hope",
+                prayer: "Higher Power, help me to be open-minded and willing to believe that you can restore me to sanity.",
+                reading: "Came to believe that a Power greater than ourselves could restore us to sanity.",
+                questions: [
+                    "What does 'sanity' mean to me in the context of recovery?",
+                    "What are examples of my 'insane' thinking or behavior around alcohol?",
+                    "What is my concept of a Higher Power?",
+                    "What barriers do I have to believing in something greater than myself?",
+                    "Where have I seen evidence of a Higher Power working in others' lives?"
+                ],
+                literature: "Big Book Chapter 4, 12x12 Step Two"
+            },
+            3: {
+                title: "Step 3: Faith",
+                principle: "Faith",
+                prayer: "God, I offer myself to Thee—to build with me and to do with me as Thou wilt. Relieve me of the bondage of self, that I may better do Thy will. Take away my difficulties, that victory over them may bear witness to those I would help of Thy Power, Thy Love, and Thy Way of life. May I do Thy will always!",
+                reading: "Made a decision to turn our will and our lives over to the care of God as we understood Him.",
+                questions: [
+                    "What does it mean to turn my will over to a Higher Power?",
+                    "In what areas of my life do I struggle to let go of control?",
+                    "How do I practice this decision on a daily basis?",
+                    "What fears come up when I think about surrendering control?",
+                    "How is my life different when I trust my Higher Power?"
+                ],
+                literature: "Big Book p. 60-63, 12x12 Step Three"
+            },
+            4: {
+                title: "Step 4: Courage",
+                principle: "Courage",
+                prayer: "Higher Power, give me the courage to look honestly at myself. Help me see my part in my resentments, fears, and harms to others.",
+                reading: "Made a searching and fearless moral inventory of ourselves.",
+                questions: [
+                    "Who/what do I resent and why?",
+                    "What fears do I have?",
+                    "How have my fears affected my life?",
+                    "Who have I harmed and how?",
+                    "What patterns do I see in my behavior?"
+                ],
+                literature: "Big Book p. 64-71, 12x12 Step Four"
+            },
+            5: {
+                title: "Step 5: Integrity",
+                principle: "Integrity",
+                prayer: "Higher Power, give me the strength to share my inventory honestly and completely with another person.",
+                reading: "Admitted to God, to ourselves, and to another human being the exact nature of our wrongs.",
+                questions: [
+                    "Am I ready to share my inventory completely?",
+                    "Who is the right person to hear my Fifth Step?",
+                    "What am I most afraid to share?",
+                    "How do I feel after completing this step?",
+                    "What did I learn about myself?"
+                ],
+                literature: "Big Book p. 72-75, 12x12 Step Five"
+            },
+            6: {
+                title: "Step 6: Willingness",
+                principle: "Willingness",
+                prayer: "Higher Power, I am willing to have you remove all my defects of character. Help me be entirely ready.",
+                reading: "Were entirely ready to have God remove all these defects of character.",
+                questions: [
+                    "What character defects did my inventory reveal?",
+                    "Which defects am I most attached to?",
+                    "Am I truly willing to have all of them removed?",
+                    "What would my life look like without these defects?",
+                    "What is blocking my willingness?"
+                ],
+                literature: "Big Book p. 76, 12x12 Step Six"
+            },
+            7: {
+                title: "Step 7: Humility",
+                principle: "Humility",
+                prayer: "My Creator, I am now willing that you should have all of me, good and bad. I pray that you now remove from me every single defect of character which stands in the way of my usefulness to you and my fellows. Grant me strength, as I go out from here, to do your bidding. Amen.",
+                reading: "Humbly asked Him to remove our shortcomings.",
+                questions: [
+                    "What does humility mean to me?",
+                    "How is humility different from humiliation?",
+                    "Have I sincerely asked my Higher Power to remove my defects?",
+                    "What defects am I still holding onto?",
+                    "How can I practice humility daily?"
+                ],
+                literature: "Big Book p. 76, 12x12 Step Seven"
+            },
+            8: {
+                title: "Step 8: Brotherly Love",
+                principle: "Brotherly Love",
+                prayer: "Higher Power, help me become willing to make amends to all those I have harmed.",
+                reading: "Made a list of all persons we had harmed, and became willing to make amends to them all.",
+                questions: [
+                    "Who have I harmed directly or indirectly?",
+                    "What was my part in each situation?",
+                    "Am I willing to make amends to each person?",
+                    "Who am I unwilling to put on my list and why?",
+                    "Have I included myself on this list?"
+                ],
+                literature: "Big Book p. 76-77, 12x12 Step Eight"
+            },
+            9: {
+                title: "Step 9: Justice",
+                principle: "Justice",
+                prayer: "Higher Power, guide me as I make amends. Help me know when to speak and when to remain silent.",
+                reading: "Made direct amends to such people wherever possible, except when to do so would injure them or others.",
+                questions: [
+                    "Which amends can I make now?",
+                    "Which amends require more preparation?",
+                    "Would any amends cause harm to others?",
+                    "How do I make amends for things I cannot fix?",
+                    "What are living amends?"
+                ],
+                literature: "Big Book p. 77-84, 12x12 Step Nine"
+            },
+            10: {
+                title: "Step 10: Perseverance",
+                principle: "Perseverance",
+                prayer: "Higher Power, help me continue to take personal inventory and promptly admit when I am wrong.",
+                reading: "Continued to take personal inventory and when we were wrong promptly admitted it.",
+                questions: [
+                    "How do I practice daily inventory?",
+                    "When was the last time I promptly admitted being wrong?",
+                    "What situations tend to bring out my defects?",
+                    "Am I holding onto any current resentments?",
+                    "How has regular inventory improved my life?"
+                ],
+                literature: "Big Book p. 84-85, 12x12 Step Ten"
+            },
+            11: {
+                title: "Step 11: Spirituality",
+                principle: "Spiritual Awareness",
+                prayer: "Lord, make me a channel of thy peace—that where there is hatred, I may bring love—that where there is wrong, I may bring the spirit of forgiveness—that where there is discord, I may bring harmony—that where there is error, I may bring truth—that where there is doubt, I may bring faith—that where there is despair, I may bring hope—that where there are shadows, I may bring light—that where there is sadness, I may bring joy. Lord, grant that I may seek rather to comfort than to be comforted—to understand, than to be understood—to love, than to be loved. For it is by self-forgetting that one finds. It is by forgiving that one is forgiven. It is by dying that one awakens to Eternal Life. Amen.",
+                reading: "Sought through prayer and meditation to improve our conscious contact with God as we understood Him, praying only for knowledge of His will for us and the power to carry that out.",
+                questions: [
+                    "What is my current prayer and meditation practice?",
+                    "How do I seek to know my Higher Power's will?",
+                    "What obstacles prevent me from regular practice?",
+                    "How has my conscious contact improved?",
+                    "What forms of meditation work for me?"
+                ],
+                literature: "Big Book p. 85-88, 12x12 Step Eleven"
+            },
+            12: {
+                title: "Step 12: Service",
+                principle: "Service",
+                prayer: "Higher Power, help me carry the message to others and practice these principles in all my affairs.",
+                reading: "Having had a spiritual awakening as the result of these steps, we tried to carry this message to alcoholics, and to practice these principles in all our affairs.",
+                questions: [
+                    "What has been my spiritual awakening?",
+                    "How do I carry the message to others?",
+                    "In what ways do I practice these principles daily?",
+                    "How has service improved my recovery?",
+                    "What more can I do to help others?"
+                ],
+                literature: "Big Book p. 89-103, 12x12 Step Twelve"
+            }
+        };
+
+        // User's step work progress (stored in localStorage)
+        function getStepProgress() {
+            const saved = localStorage.getItem('stepProgress');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveStepProgress(stepNum, data) {
+            const progress = getStepProgress();
+            progress[stepNum] = { ...progress[stepNum], ...data, lastUpdated: new Date().toISOString() };
+            localStorage.setItem('stepProgress', JSON.stringify(progress));
+        }
+
+        // Smart chat response selection
+        function getSmartResponse(message) {
+            const lowerMsg = message.toLowerCase();
+
+            // Check for step-specific questions
+            for (let i = 1; i <= 12; i++) {
+                if (lowerMsg.includes(`step ${i}`) || lowerMsg.includes(`step${i}`)) {
+                    const stepResponses = demoResponses[`step${i}`] || demoResponses.general;
+                    return stepResponses[Math.floor(Math.random() * stepResponses.length)];
+                }
+            }
+
+            // Check for emotional content
+            if (lowerMsg.match(/struggl|hard|difficult|can't|cant|relapse|drink|craving|urge/)) {
+                return demoResponses.struggling[Math.floor(Math.random() * demoResponses.struggling.length)];
+            }
+
+            if (lowerMsg.match(/grateful|thankful|happy|blessed|good day|great day/)) {
+                return demoResponses.gratitude[Math.floor(Math.random() * demoResponses.gratitude.length)];
+            }
+
+            if (lowerMsg.match(/pray|prayer|meditat|serenity/)) {
+                return demoResponses.prayer[Math.floor(Math.random() * demoResponses.prayer.length)];
+            }
+
+            if (lowerMsg.match(/sponsor|sponsee|guide|mentor/)) {
+                return demoResponses.sponsor[Math.floor(Math.random() * demoResponses.sponsor.length)];
+            }
+
+            // Default to general responses
+            return demoResponses.general[Math.floor(Math.random() * demoResponses.general.length)];
         }
 
         // Chat functionality
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
-            
+
             if (!message) return;
-            
+
             // Add user message to chat
             addMessageToChat(message, 'user');
             input.value = '';
-            
+
             // Show typing indicator
             addMessageToChat('Thinking...', 'assistant', 'typing');
-            
+
+            // Always try live chat service first (HTTPS Container Apps)
             try {
+                console.log('Calling live chat service:', config.chatService);
                 const response = await fetch(config.chatService + '/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -830,23 +1323,30 @@
                         history: []
                     })
                 });
-                
+
                 const data = await response.json();
-                
-                // Remove typing indicator
+                console.log('Chat response:', data);
+
                 const typingMsg = document.querySelector('.typing');
                 if (typingMsg) typingMsg.remove();
-                
-                if (data.success) {
+
+                if (data.response) {
                     addMessageToChat(data.response, 'assistant');
-                } else {
-                    addMessageToChat('Sorry, I encountered an error. Please try again.', 'assistant');
+                    return;
+                } else if (data.error) {
+                    addMessageToChat('Error: ' + data.error, 'assistant');
+                    return;
                 }
             } catch (error) {
-                const typingMsg = document.querySelector('.typing');
-                if (typingMsg) typingMsg.remove();
-                addMessageToChat('Connection error. Please check your internet connection.', 'assistant');
+                console.error('Live chat error:', error);
+                // Fall through to demo mode
             }
+
+            // Fallback to demo mode only if live service fails
+            const typingMsg = document.querySelector('.typing');
+            if (typingMsg) typingMsg.remove();
+            const smartResponse = getSmartResponse(message);
+            addMessageToChat(smartResponse + '\n\n_(Demo mode - live service temporarily unavailable)_', 'assistant');
         }
 
         function addMessageToChat(message, sender, className = '') {
@@ -868,10 +1368,121 @@
         async function searchLiterature() {
             const query = document.getElementById('literatureSearch').value.trim();
             if (!query) return;
-            
+
             const resultsContainer = document.getElementById('literatureResults');
             resultsContainer.innerHTML = '<div>Searching literature...</div>';
-            
+
+            // Use live literature service (HTTPS enabled)
+            if (config.useLiveLiterature) {
+                try {
+                    const response = await fetch(config.literatureService + '/api/search', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            query: query,
+                            maxResults: 5
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.results && data.results.length > 0) {
+                        let resultsHtml = `<h3>📚 Found ${data.totalCount || data.results.length} results from AA Literature:</h3>`;
+
+                        data.results.forEach((result, index) => {
+                            // Build source info
+                            const section = result.section ? result.section.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+                            const stepInfo = result.step_number ? `Step ${result.step_number}` : '';
+                            const contentType = result.content_type ? result.content_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+
+                            // Get page numbers from mapping
+                            const bookInfo = bigBookPages[result.id] || {};
+                            const pageRef = bookInfo.pages ? `pp. ${bookInfo.pages}` : (result.page_number ? `p. ${result.page_number}` : '');
+                            const aaLink = bookInfo.url || 'https://www.aa.org/the-big-book';
+
+                            // Build keywords/themes display
+                            const themes = result.themes ? result.themes.slice(0, 3).join(', ') : '';
+
+                            // Relevance indicator
+                            const relevance = result.relevanceScore ? Math.round(result.relevanceScore * 100) :
+                                             result.searchScore ? Math.min(100, Math.round(result.searchScore * 4)) : 0;
+                            const relevanceColor = relevance >= 80 ? '#38a169' : relevance >= 50 ? '#d69e2e' : '#718096';
+
+                            // Check if we have actual content text
+                            const hasContent = result.content && result.content.length > 50;
+                            const contentPreview = hasContent ? result.content : null;
+
+                            resultsHtml += `
+                                <div style="background: #ffffff; padding: 20px; margin: 15px 0; border-radius: 12px; border-left: 5px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                        <h4 style="margin: 0; color: #2d3748; font-size: 1.1em;">${index + 1}. ${result.title}</h4>
+                                        <span style="background: ${relevanceColor}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold;">${relevance}% match</span>
+                                    </div>
+                                    ${contentPreview ? `
+                                        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #667eea;">
+                                            <p style="color: #2d3748; margin: 0; line-height: 1.7; font-size: 0.95em;">${contentPreview}</p>
+                                        </div>
+                                    ` : `
+                                        <p style="color: #4a5568; margin: 10px 0; line-height: 1.6;">${result.description || 'AA literature content related to your search.'}</p>
+                                    `}
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                                        ${section ? `<span style="background: #e2e8f0; padding: 4px 10px; border-radius: 6px; font-size: 0.85em;">📖 ${section}</span>` : ''}
+                                        ${stepInfo ? `<span style="background: #e9d8fd; padding: 4px 10px; border-radius: 6px; font-size: 0.85em;">🔢 ${stepInfo}</span>` : ''}
+                                        ${contentType ? `<span style="background: #bee3f8; padding: 4px 10px; border-radius: 6px; font-size: 0.85em;">📝 ${contentType}</span>` : ''}
+                                        ${pageRef ? `<span style="background: #feebc8; padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">📄 ${pageRef}</span>` : ''}
+                                        ${hasContent ? `<span style="background: #c6f6d5; padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">✅ Full Text</span>` : ''}
+                                    </div>
+                                    ${themes ? `<p style="color: #718096; font-size: 0.85em; margin-top: 10px;"><strong>Topics:</strong> ${themes}</p>` : ''}
+                                    ${!hasContent ? `
+                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                                            <a href="${aaLink}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 0.9em; font-weight: 500;">
+                                                📚 Read full text at AA.org →
+                                            </a>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        });
+
+                        resultsContainer.innerHTML = resultsHtml;
+                        return;
+                    }
+                } catch (error) {
+                    console.log('Live literature search failed, using demo:', error.message);
+                }
+            }
+
+            // Fallback to demo mode
+            setTimeout(() => {
+                const lowerQuery = query.toLowerCase();
+                const results = demoLiterature.filter(item => {
+                    return item.title.toLowerCase().includes(lowerQuery) ||
+                           item.content.toLowerCase().includes(lowerQuery) ||
+                           item.keywords.some(kw => lowerQuery.includes(kw) || kw.includes(lowerQuery));
+                });
+
+                if (results.length > 0) {
+                    let resultsHtml = `<h3>Found ${results.length} results:</h3><p style="color: #718096; font-size: 0.9em;">📚 Showing sample AA literature</p>`;
+
+                    results.forEach((result) => {
+                        resultsHtml += `
+                            <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <h4>${result.title}</h4>
+                                <p style="font-style: italic; color: #4a5568;">"${result.content}"</p>
+                                <small><strong>Source:</strong> ${result.source}</small>
+                            </div>
+                        `;
+                    });
+
+                    resultsContainer.innerHTML = resultsHtml;
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div>No results found for "${query}". Try keywords like: step, prayer, serenity, promises, powerless, sponsor</div>
+                    `;
+                }
+            }, 500);
+            return;
+
             try {
                 const response = await fetch(config.literatureService + '/api/search', {
                     method: 'POST',
@@ -881,12 +1492,12 @@
                         maxResults: 5
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.results && data.results.length > 0) {
                     let resultsHtml = `<h3>Found ${data.totalCount} results:</h3>`;
-                    
+
                     data.results.forEach((result, index) => {
                         resultsHtml += `
                             <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -896,7 +1507,7 @@
                             </div>
                         `;
                     });
-                    
+
                     resultsContainer.innerHTML = resultsHtml;
                 } else {
                     resultsContainer.innerHTML = '<div>No results found. Try different keywords.</div>';
@@ -944,19 +1555,12 @@
             'DS-CLINICAL-CLINIC1': { valid: true, firstName: 'Dr. Clinical', type: 'clinical', email: 'clinical@example.com' }
         };
 
-        // Override validation for demo if auth service is down
+        // Override validation for demo if auth service is down or returns invalid
         const originalValidateInvitationCode = validateInvitationCode;
         validateInvitationCode = async function(code) {
-            try {
-                // Try real service first
-                const result = await originalValidateInvitationCode(code);
-                if (result.valid) return result;
-            } catch (error) {
-                console.log('Auth service unavailable, using demo validation');
-            }
-            
-            // Fallback to demo validation
+            // Check demo codes FIRST for instant validation
             if (demoInvitations[code]) {
+                console.log('Using demo validation for:', code);
                 return {
                     valid: true,
                     code: code,
@@ -965,7 +1569,15 @@
                     message: 'Valid invitation code - proceed with registration'
                 };
             }
-            
+
+            try {
+                // Try real service for non-demo codes
+                const result = await originalValidateInvitationCode(code);
+                if (result.valid) return result;
+            } catch (error) {
+                console.log('Auth service unavailable:', error.message);
+            }
+
             return {
                 valid: false,
                 message: 'Invalid invitation code. Try: DS-GENERAL-DEMO2026, DS-INVESTOR-INVEST01, DS-SPONSOR-SPONS001, or DS-CLINICAL-CLINIC1'
@@ -1579,5 +2191,15 @@
             console.log('   - DS-CLINICAL-CLINIC1 (Clinical Trial)');
         });
     </script>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p style="margin-top: 10px;">&copy; 2026 Digital Sponsor. Not affiliated with Alcoholics Anonymous World Services.</p>
+    </footer>
 </body>
 </html>
