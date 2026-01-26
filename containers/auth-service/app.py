@@ -8,145 +8,141 @@ import socketserver
 import json
 import os
 import hashlib
-import hmac
 import time
 import uuid
-import urllib.request
-import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
+
+# Import shared Cosmos DB client
+import sys
+sys.path.insert(0, '/app')
+from shared.cosmos_client import UserRepository, CosmosDBClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Azure Configuration - will be moved to Key Vault
-COSMOS_CONNECTION_STRING = os.environ.get('COSMOS_CONNECTION_STRING', '')
+# Azure Configuration
 ADMIN_KEY = os.environ.get('ADMIN_KEY', 'DS-ADMIN-2026-BETA')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'temporary-secret-key')
 PORT = int(os.environ.get('PORT', 8080))
 
+
 class AuthService:
     def __init__(self):
-        self.users = {}
-        self.invitations = {}
-        self.sessions = {}
+        # Initialize Cosmos DB repositories
+        self.cosmos_client = CosmosDBClient()
+        self.user_repo = UserRepository(self.cosmos_client)
+
+        # Track stats
         self.stats = {
             'total_invitations': 0,
-            'used_invitations': 0, 
+            'used_invitations': 0,
             'registered_users': 0,
             'active_sessions': 0
         }
+
+        # Initialize demo data if needed
         self.init_demo_data()
-    
+
     def init_demo_data(self):
         """Initialize with demo invitations and admin user"""
-        demo_invitations = {
-            'DS-GENERAL-DEMO2026': {
-                'code': 'DS-GENERAL-DEMO2026',
+        # Check if admin user exists
+        admin_email = 'jamesenki@digitalsponsor.ai'
+        admin = self.user_repo.get_user_by_email(admin_email)
+
+        if not admin:
+            logger.info("Creating admin user...")
+            admin = self.user_repo.create_user(
+                email=admin_email,
+                first_name='James',
+                last_name='Enki',
+                password_hash=self.hash_password('Pamala2018*'),
+                roles=['admin', 'invite_manager'],
+                invitation_type='admin',
+                auth_provider='local'
+            )
+            self.stats['registered_users'] = 1
+            logger.info("Admin user created")
+        else:
+            logger.info("Admin user already exists")
+            self.stats['registered_users'] += 1
+
+        # Check if demo invitation exists
+        demo_code = 'DS-GENERAL-DEMO2026'
+        demo_invitation = self.user_repo.get_invitation_by_code(demo_code)
+
+        if not demo_invitation:
+            logger.info("Creating demo invitation...")
+            # Create demo invitation manually with specific code
+            invitation_id = f"inv_{demo_code}"
+            demo_inv = {
+                'id': invitation_id,
+                'docType': 'invitation',
+                'userId': invitation_id,
+                'code': demo_code,
                 'type': 'general',
                 'email': 'demo@example.com',
                 'firstName': 'Demo User',
                 'used': False,
-                'createdAt': time.time(),
+                'usedBy': None,
+                'usedAt': None,
                 'expiresAt': time.time() + (7 * 24 * 60 * 60)
-            },
-            'DS-ADMIN-SETUP001': {
-                'code': 'DS-ADMIN-SETUP001', 
+            }
+            self.cosmos_client.create('UserSessions', demo_inv)
+            self.stats['total_invitations'] = 1
+            logger.info("Demo invitation created: DS-GENERAL-DEMO2026")
+        else:
+            logger.info("Demo invitation already exists")
+            self.stats['total_invitations'] += 1
+
+        # Check if admin setup invitation exists
+        admin_code = 'DS-ADMIN-SETUP001'
+        admin_invitation = self.user_repo.get_invitation_by_code(admin_code)
+
+        if not admin_invitation:
+            logger.info("Creating admin setup invitation...")
+            invitation_id = f"inv_{admin_code}"
+            admin_inv = {
+                'id': invitation_id,
+                'docType': 'invitation',
+                'userId': invitation_id,
+                'code': admin_code,
                 'type': 'admin',
                 'email': 'jamesenki@digitalsponsor.ai',
                 'firstName': 'James',
                 'used': False,
-                'createdAt': time.time(),
+                'usedBy': None,
+                'usedAt': None,
                 'expiresAt': time.time() + (30 * 24 * 60 * 60)
             }
-        }
-        
-        self.invitations.update(demo_invitations)
-        self.stats['total_invitations'] = len(demo_invitations)
-        
-        # Create admin user
-        admin_user = {
-            'id': str(uuid.uuid4()),
-            'email': 'jamesenki@digitalsponsor.ai',
-            'firstName': 'James',
-            'lastName': 'Enki',
-            'roles': ['admin', 'invite_manager'],
-            'permissions': ['invite_create', 'user_manage'],
-            'passwordHash': self.hash_password('Pamala2018*'),
-            'profile': {
-                'betaAccess': True,
-                'isAdmin': True
-            },
-            'createdAt': time.time(),
-            'isActive': True
-        }
-        
-        self.users[admin_user['email']] = admin_user
-        self.stats['registered_users'] = 1
-        
-        logger.info("✅ Demo data initialized with admin user")
+            self.cosmos_client.create('UserSessions', admin_inv)
+            self.stats['total_invitations'] += 1
+            logger.info("Admin setup invitation created: DS-ADMIN-SETUP001")
+
+        logger.info("Demo data initialized")
 
     def hash_password(self, password: str) -> str:
         """Hash password using SHA256"""
         return hashlib.sha256(password.encode()).hexdigest()
 
-    def generate_session_token(self) -> str:
-        """Generate secure session token"""
-        return str(uuid.uuid4())
-
     def validate_invitation(self, code: str) -> Dict[str, Any]:
         """Validate invitation code"""
-        if not code:
-            return {'valid': False, 'message': 'Invalid invitation code'}
-        
-        invitation = self.invitations.get(code)
-        if not invitation:
-            return {'valid': False, 'message': 'Invalid invitation code'}
-        
-        if invitation['used']:
-            return {'valid': False, 'message': 'Invitation code has already been used'}
-        
-        if time.time() > invitation['expiresAt']:
-            return {'valid': False, 'message': 'Invitation code has expired'}
-        
-        return {
-            'valid': True,
-            'code': code,
-            'type': invitation['type'],
-            'firstName': invitation['firstName'],
-            'message': 'Valid invitation code - proceed with registration'
-        }
+        return self.user_repo.validate_invitation(code)
 
     def create_invitation(self, email: str, firstName: str, invitation_type: str = 'general') -> Dict[str, Any]:
         """Create new invitation code"""
-        code = f"DS-{invitation_type.upper()}-{self.generate_unique_id()}"
-        
-        invitation = {
-            'code': code,
-            'type': invitation_type,
-            'email': email,
-            'firstName': firstName,
-            'used': False,
-            'createdAt': time.time(),
-            'expiresAt': time.time() + (7 * 24 * 60 * 60)  # 7 days
-        }
-        
-        self.invitations[code] = invitation
+        invitation = self.user_repo.create_invitation(email, firstName, invitation_type)
         self.stats['total_invitations'] += 1
-        
+
         return {
             'success': True,
-            'invitation_code': code,
+            'invitation_code': invitation['code'],
             'email_sent': True,
             'expires_at': invitation['expiresAt'],
             'message': f'Beta invitation created for {email}'
         }
-
-    def generate_unique_id(self) -> str:
-        """Generate unique ID for invitation codes"""
-        return ''.join([c.upper() for c in str(uuid.uuid4()).replace('-', '')[:8]])
 
     def register_user(self, invitation_code: str, email: str, auth_provider: str = 'aad') -> Dict[str, Any]:
         """Register new user with invitation code"""
@@ -154,83 +150,63 @@ class AuthService:
         validation = self.validate_invitation(invitation_code)
         if not validation['valid']:
             return {'success': False, 'error': validation['message']}
-        
+
         # Check if user already exists
-        if email in self.users:
+        existing = self.user_repo.get_user_by_email(email)
+        if existing:
             return {'success': False, 'error': 'User already registered'}
-        
-        # Mark invitation as used
-        invitation = self.invitations[invitation_code]
-        invitation['used'] = True
-        self.stats['used_invitations'] += 1
-        
+
+        # Get invitation details
+        invitation = self.user_repo.get_invitation_by_code(invitation_code)
+
         # Create user
-        user_id = str(uuid.uuid4())
-        user = {
-            'id': user_id,
-            'email': email,
-            'firstName': invitation['firstName'],
-            'roles': ['user'],
-            'permissions': [],
-            'invitationType': invitation['type'],
-            'authProvider': auth_provider,
-            'profile': {
-                'betaAccess': True,
-                'isAdmin': False
-            },
-            'createdAt': time.time(),
-            'isActive': True
-        }
-        
-        self.users[email] = user
+        user = self.user_repo.create_user(
+            email=email,
+            first_name=invitation['firstName'],
+            roles=['user'],
+            invitation_type=invitation['type'],
+            auth_provider=auth_provider
+        )
+
+        # Mark invitation as used
+        self.user_repo.mark_invitation_used(invitation_code, user['id'])
+        self.stats['used_invitations'] += 1
         self.stats['registered_users'] += 1
-        
+
         # Create session
-        session_token = self.generate_session_token()
-        self.sessions[session_token] = {
-            'userId': user_id,
-            'email': email,
-            'createdAt': time.time(),
-            'expiresAt': time.time() + (24 * 60 * 60)  # 24 hours
-        }
+        session = self.user_repo.create_session(user['id'], email)
         self.stats['active_sessions'] += 1
-        
+
         return {
             'success': True,
             'user': {
-                'id': user_id,
+                'id': user['id'],
                 'email': email,
                 'firstName': invitation['firstName'],
                 'invitationType': invitation['type']
             },
-            'session_token': session_token,
-            'message': f"Welcome to Digital Sponsor Beta, {invitation['firstName']}! 🎉"
+            'session_token': session['id'],
+            'message': f"Welcome to Digital Sponsor Beta, {invitation['firstName']}!"
         }
 
     def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
         """Authenticate user with email and password"""
-        user = self.users.get(email)
+        user = self.user_repo.get_user_by_email(email)
         if not user:
             return {'success': False, 'error': 'Invalid credentials'}
-        
-        # For demo purposes, check if password hash matches
-        if 'passwordHash' not in user:
+
+        # Check if password hash matches
+        if 'passwordHash' not in user or not user['passwordHash']:
             return {'success': False, 'error': 'Password not set - please register'}
-        
+
         password_hash = self.hash_password(password)
         if user['passwordHash'] != password_hash:
             return {'success': False, 'error': 'Invalid credentials'}
-        
+
         # Create session
-        session_token = self.generate_session_token()
-        self.sessions[session_token] = {
-            'userId': user['id'],
-            'email': email,
-            'createdAt': time.time(),
-            'expiresAt': time.time() + (24 * 60 * 60)  # 24 hours
-        }
+        session = self.user_repo.create_session(user['id'], email)
         self.stats['active_sessions'] += 1
-        
+
         return {
             'success': True,
             'user': {
@@ -239,7 +215,7 @@ class AuthService:
                 'firstName': user['firstName'],
                 'roles': user['roles']
             },
-            'session_token': session_token,
+            'session_token': session['id'],
             'message': 'Login successful - welcome back!'
         }
 
@@ -247,13 +223,14 @@ class AuthService:
         """Check if request has admin/invite permissions"""
         if admin_key and admin_key == ADMIN_KEY:
             return True
-        
+
         if user_email:
-            user = self.users.get(user_email)
+            user = self.user_repo.get_user_by_email(user_email)
             if user and ('admin' in user.get('roles', []) or 'invite_manager' in user.get('roles', [])):
                 return True
-        
+
         return False
+
 
 class AuthHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, auth_service: AuthService, **kwargs):
@@ -274,6 +251,8 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             self.handle_health()
         elif self.path.startswith('/api/validate-invitation'):
             self.handle_validate_invitation()
+        elif self.path.startswith('/api/user/') and '/history' in self.path:
+            self.handle_get_user_history()
         else:
             self.send_error(404, "Endpoint not found")
 
@@ -288,17 +267,26 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404, "Endpoint not found")
 
+    def do_DELETE(self):
+        """Handle DELETE requests"""
+        if self.path.startswith('/api/user/') and '/history' in self.path:
+            self.handle_delete_user_history()
+        else:
+            self.send_error(404, "Endpoint not found")
+
     def handle_health(self):
         """Health check endpoint"""
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        
+
+        db_health = self.auth_service.cosmos_client.health_check()
+
         response = {
             'status': 'healthy',
             'service': 'Digital Sponsor Auth Service',
-            'version': '3.0.0-python',
+            'version': '4.0.0-cosmos',
             'environment': 'production',
             'region': 'centralus',
             'timestamp': datetime.utcnow().isoformat() + 'Z',
@@ -307,23 +295,24 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
                 'user_authentication',
                 'session_management',
                 'role_based_access',
-                'admin_management'
+                'admin_management',
+                'cosmos_db_persistence'
             ],
+            'database': db_health,
             'stats': self.auth_service.stats
         }
-        
+
         self.wfile.write(json.dumps(response).encode())
 
     def handle_validate_invitation(self):
         """Validate invitation code"""
-        # Parse query parameters
         from urllib.parse import urlparse, parse_qs
         parsed_url = urlparse(self.path)
         params = parse_qs(parsed_url.query)
         code = params.get('code', [None])[0]
-        
+
         result = self.auth_service.validate_invitation(code)
-        
+
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -335,24 +324,24 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
-            
+
             invitation_code = post_data.get('invitationCode')
             email = post_data.get('email')
             auth_provider = post_data.get('authProvider', 'aad')
-            
+
             if not invitation_code or not email:
                 self.send_error(400, "Missing invitationCode or email")
                 return
-            
+
             result = self.auth_service.register_user(invitation_code, email, auth_provider)
-            
+
             status_code = 201 if result['success'] else 400
             self.send_response(status_code)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
-            
+
         except Exception as e:
             logger.error(f"Registration error: {str(e)}")
             self.send_error(500, f"Registration failed: {str(e)}")
@@ -362,23 +351,23 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
-            
+
             email = post_data.get('email')
             password = post_data.get('password')
-            
+
             if not email or not password:
                 self.send_error(400, "Missing email or password")
                 return
-            
+
             result = self.auth_service.authenticate_user(email, password)
-            
+
             status_code = 200 if result['success'] else 401
             self.send_response(status_code)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
-            
+
         except Exception as e:
             logger.error(f"Login error: {str(e)}")
             self.send_error(500, f"Login failed: {str(e)}")
@@ -388,33 +377,94 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
-            
+
             admin_key = post_data.get('adminKey')
             user_email = post_data.get('userEmail')
             email = post_data.get('email')
             first_name = post_data.get('firstName')
             invitation_type = post_data.get('type', 'general')
-            
+
             # Check permissions
             if not self.auth_service.check_admin_permission(admin_key, user_email):
                 self.send_error(403, "Insufficient permissions")
                 return
-            
+
             if not email or not first_name:
                 self.send_error(400, "Missing email or firstName")
                 return
-            
+
             result = self.auth_service.create_invitation(email, first_name, invitation_type)
-            
+
             self.send_response(201)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
-            
+
         except Exception as e:
             logger.error(f"Invitation creation error: {str(e)}")
             self.send_error(500, f"Invitation creation failed: {str(e)}")
+
+    def handle_get_user_history(self):
+        """Get user search and chat history"""
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(self.path)
+            # Path: /api/user/{userId}/history
+            parts = parsed_url.path.split('/')
+            user_id = parts[3] if len(parts) > 3 else None
+
+            if not user_id:
+                self.send_error(400, "Missing user ID")
+                return
+
+            history = self.auth_service.user_repo.get_user_history(user_id)
+
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': True,
+                'userId': user_id,
+                'history': history
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Get history error: {str(e)}")
+            self.send_error(500, f"Failed to get history: {str(e)}")
+
+    def handle_delete_user_history(self):
+        """Delete user search and chat history (GDPR)"""
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(self.path)
+            parts = parsed_url.path.split('/')
+            user_id = parts[3] if len(parts) > 3 else None
+
+            if not user_id:
+                self.send_error(400, "Missing user ID")
+                return
+
+            success = self.auth_service.user_repo.clear_user_history(user_id)
+
+            self.send_response(200 if success else 500)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': success,
+                'message': 'History cleared' if success else 'Failed to clear history'
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Delete history error: {str(e)}")
+            self.send_error(500, f"Failed to delete history: {str(e)}")
+
 
 def create_handler(auth_service: AuthService):
     """Factory to create handler with auth service instance"""
@@ -422,22 +472,26 @@ def create_handler(auth_service: AuthService):
         AuthHandler(*args, auth_service=auth_service, **kwargs)
     return handler
 
+
 if __name__ == "__main__":
     # Initialize auth service
     auth_service = AuthService()
-    
+
     # Create handler factory
     handler = create_handler(auth_service)
-    
-    print(f"🔐 Digital Sponsor Auth Service v3.0 (Python) starting...")
-    print(f"✅ Running on port {PORT}")
-    print(f"🌍 Region: Central US")
-    print(f"👥 Admin user: jamesenki@digitalsponsor.ai")
-    print(f"🎫 Demo invitation: DS-GENERAL-DEMO2026")
-    
+
+    db_mode = "Cosmos DB" if not auth_service.cosmos_client._in_memory_mode else "In-Memory"
+
+    print(f"Digital Sponsor Auth Service v4.0 (Python) starting...")
+    print(f"Running on port {PORT}")
+    print(f"Region: Central US")
+    print(f"Database: {db_mode}")
+    print(f"Admin user: jamesenki@digitalsponsor.ai")
+    print(f"Demo invitation: DS-GENERAL-DEMO2026")
+
     with socketserver.TCPServer(("", PORT), handler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
-            print("\n🛑 Auth Service shutting down...")
+            print("\nAuth Service shutting down...")
             logger.info("Auth service stopped")

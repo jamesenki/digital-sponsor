@@ -2,6 +2,7 @@
 """
 Digital Sponsor Step Work Data Model
 Comprehensive data structure for 12-step work with privacy-first design
+Now with Cosmos DB persistence and version control
 """
 
 from datetime import datetime
@@ -9,6 +10,23 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 import json
 import uuid
+import os
+import sys
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import shared Cosmos DB client (try to import, fall back to in-memory if not available)
+try:
+    sys.path.insert(0, '/app')
+    from shared.cosmos_client import StepWorkRepository, CosmosDBClient
+    COSMOS_AVAILABLE = True
+except ImportError:
+    COSMOS_AVAILABLE = False
+    logger.warning("Cosmos DB client not available - using in-memory storage")
+
 
 @dataclass
 class StepWorkSession:
@@ -20,7 +38,7 @@ class StepWorkSession:
     current_step: int
     step_progress: Dict[int, float]  # Step number -> completion percentage
     privacy_settings: Dict[str, bool]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'session_id': self.session_id,
@@ -31,6 +49,38 @@ class StepWorkSession:
             'step_progress': self.step_progress,
             'privacy_settings': self.privacy_settings
         }
+
+
+@dataclass
+class StepWorkVersion:
+    """Tracks each time a step is worked - enables history and reflection"""
+    id: str
+    user_id: str
+    step_number: int
+    version_number: int
+    previous_version_id: Optional[str]
+    status: str  # "in_progress", "completed"
+    started_at: datetime
+    completed_at: Optional[datetime]
+    responses: List[Dict[str, Any]]
+    reflection_responses: List[Dict[str, Any]]
+    notes: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'step_number': self.step_number,
+            'version_number': self.version_number,
+            'previous_version_id': self.previous_version_id,
+            'status': self.status,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'responses': self.responses,
+            'reflection_responses': self.reflection_responses,
+            'notes': self.notes
+        }
+
 
 @dataclass
 class ResentmentEntry:
@@ -44,6 +94,7 @@ class ResentmentEntry:
     created_at: datetime
     last_modified: datetime
 
+
 @dataclass
 class FearEntry:
     """Individual fear for Step 4 inventory"""
@@ -54,6 +105,7 @@ class FearEntry:
     new_thought_pattern: str  # Replacement thought
     created_at: datetime
     last_modified: datetime
+
 
 @dataclass
 class SexConductEntry:
@@ -67,6 +119,7 @@ class SexConductEntry:
     what_should_i_have_done: str
     created_at: datetime
     last_modified: datetime
+
 
 @dataclass
 class HarmEntry:
@@ -82,6 +135,7 @@ class HarmEntry:
     created_at: datetime
     last_modified: datetime
 
+
 @dataclass
 class Step4Inventory:
     """Complete Step 4 moral inventory"""
@@ -94,7 +148,7 @@ class Step4Inventory:
     assets_and_liabilities: str
     completion_date: Optional[datetime]
     is_complete: bool
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'session_id': self.session_id,
@@ -107,6 +161,7 @@ class Step4Inventory:
             'completion_date': self.completion_date.isoformat() if self.completion_date else None,
             'is_complete': self.is_complete
         }
+
 
 @dataclass
 class StepWorkEntry:
@@ -121,6 +176,7 @@ class StepWorkEntry:
     created_at: datetime
     last_modified: datetime
 
+
 @dataclass
 class StepPrayer:
     """Step-specific prayers and meditations"""
@@ -129,7 +185,7 @@ class StepPrayer:
     title: str
     text: str
     source: str  # "Big Book", "12&12", "Traditional"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'step_number': self.step_number,
@@ -139,13 +195,14 @@ class StepPrayer:
             'source': self.source
         }
 
+
 @dataclass
 class StepQuestionSet:
     """Q&A for step comprehension"""
     step_number: int
     section: str
     questions: List[Dict[str, Any]]  # {"question": str, "hint": str, "reflection_points": List[str]}
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'step_number': self.step_number,
@@ -153,19 +210,23 @@ class StepQuestionSet:
             'questions': self.questions
         }
 
+
 class StepWorkDataManager:
-    """Manages step work data with privacy controls"""
-    
+    """
+    Manages step work data with privacy controls.
+    This is the in-memory version for backward compatibility.
+    """
+
     def __init__(self):
         self.sessions: Dict[str, StepWorkSession] = {}
         self.step4_inventories: Dict[str, Step4Inventory] = {}
         self.step_entries: Dict[str, List[StepWorkEntry]] = {}
-    
+
     def create_session(self, user_id: Optional[str] = None, anonymous: bool = True) -> StepWorkSession:
         """Create new step work session"""
         session_id = str(uuid.uuid4())
         now = datetime.now()
-        
+
         session = StepWorkSession(
             session_id=session_id,
             user_id=user_id if not anonymous else None,
@@ -180,29 +241,29 @@ class StepWorkDataManager:
                 'encrypted_storage': True
             }
         )
-        
+
         self.sessions[session_id] = session
         return session
-    
+
     def delete_all_user_data(self, session_id: str) -> bool:
         """Complete data deletion - privacy first"""
         try:
             # Remove session
             if session_id in self.sessions:
                 del self.sessions[session_id]
-            
+
             # Remove Step 4 inventory
             if session_id in self.step4_inventories:
                 del self.step4_inventories[session_id]
-            
+
             # Remove all step entries
             if session_id in self.step_entries:
                 del self.step_entries[session_id]
-            
+
             return True
         except Exception:
             return False
-    
+
     def save_step4_entry(self, session_id: str, entry_type: str, data: Dict[str, Any]) -> str:
         """Save Step 4 inventory entry"""
         if session_id not in self.step4_inventories:
@@ -217,10 +278,10 @@ class StepWorkDataManager:
                 completion_date=None,
                 is_complete=False
             )
-        
+
         entry_id = str(uuid.uuid4())
         now = datetime.now()
-        
+
         if entry_type == "resentment":
             entry = ResentmentEntry(
                 id=entry_id,
@@ -233,7 +294,7 @@ class StepWorkDataManager:
                 last_modified=now
             )
             self.step4_inventories[session_id].resentments.append(entry)
-        
+
         elif entry_type == "fear":
             entry = FearEntry(
                 id=entry_id,
@@ -245,13 +306,13 @@ class StepWorkDataManager:
                 last_modified=now
             )
             self.step4_inventories[session_id].fears.append(entry)
-        
+
         return entry_id
-    
+
     def get_step4_inventory(self, session_id: str) -> Optional[Step4Inventory]:
         """Get complete Step 4 inventory"""
         return self.step4_inventories.get(session_id)
-    
+
     def export_step_work(self, session_id: str, format: str = "json") -> str:
         """Export step work for user download"""
         data = {
@@ -260,11 +321,178 @@ class StepWorkDataManager:
             'step_entries': [entry.__dict__ for entry in self.step_entries.get(session_id, [])],
             'export_date': datetime.now().isoformat()
         }
-        
+
         if format == "json":
             return json.dumps(data, indent=2, default=str)
-        
+
         return str(data)
+
+
+class CosmosDBDataManager:
+    """
+    Step work data manager with Cosmos DB persistence.
+    Uses StepWorkRepository for persistent storage with version control.
+    """
+
+    def __init__(self):
+        if COSMOS_AVAILABLE:
+            self.cosmos_client = CosmosDBClient()
+            self.step_work_repo = StepWorkRepository(self.cosmos_client)
+            self._in_memory_mode = self.cosmos_client._in_memory_mode
+        else:
+            self.cosmos_client = None
+            self.step_work_repo = None
+            self._in_memory_mode = True
+
+        # Fallback in-memory storage for anonymous sessions
+        self._fallback_manager = StepWorkDataManager()
+
+    def create_step_work_session(self, user_id: str, step_number: int) -> Dict[str, Any]:
+        """
+        Create a new step work session for a specific step.
+        Tracks version number if user has worked this step before.
+        """
+        if not user_id or not self.step_work_repo:
+            # Fall back to in-memory for anonymous users
+            session = self._fallback_manager.create_session(anonymous=True)
+            return {
+                'session_id': session.session_id,
+                'step_number': step_number,
+                'version_number': 1,
+                'is_repeat': False,
+                'anonymous': True
+            }
+
+        # Check if user has worked this step before
+        previous = self.step_work_repo.get_latest_step_work(user_id, step_number)
+        previous_version_id = previous['id'] if previous else None
+
+        # Create new session in Cosmos DB
+        session = self.step_work_repo.create_step_work_session(
+            user_id=user_id,
+            step_number=step_number,
+            previous_version_id=previous_version_id
+        )
+
+        return {
+            'session_id': session['id'],
+            'step_number': step_number,
+            'version_number': session['versionNumber'],
+            'is_repeat': session['versionNumber'] > 1,
+            'previous_version_id': previous_version_id,
+            'anonymous': False
+        }
+
+    def get_step_work_history(self, user_id: str, step_number: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Get all step work history for a user"""
+        if not user_id or not self.step_work_repo:
+            return []
+
+        return self.step_work_repo.get_step_work_history(user_id, step_number)
+
+    def has_worked_step_before(self, user_id: str, step_number: int) -> bool:
+        """Check if user has completed this step before"""
+        if not user_id or not self.step_work_repo:
+            return False
+
+        return self.step_work_repo.has_worked_step_before(user_id, step_number)
+
+    def get_previous_responses(self, user_id: str, step_number: int) -> Dict[str, str]:
+        """
+        Get user's previous responses for a step (for reflection questions).
+        Returns dict mapping question_id to response text.
+        """
+        if not user_id or not self.step_work_repo:
+            return {}
+
+        history = self.step_work_repo.get_step_work_history(user_id, step_number)
+        if not history:
+            return {}
+
+        # Get the most recent completed version
+        completed = [h for h in history if h.get('status') == 'completed']
+        if not completed:
+            return {}
+
+        latest = completed[-1]
+        responses = latest.get('responses', [])
+
+        return {r['prompt'][:50]: r['response'] for r in responses}
+
+    def save_response(self, session_id: str, user_id: str,
+                      prompt: str, response: str, section: str = 'general') -> Dict[str, Any]:
+        """Save a Q&A response to a step work session"""
+        if not user_id or not self.step_work_repo:
+            # Fall back to in-memory
+            return {'success': True, 'mode': 'in_memory'}
+
+        result = self.step_work_repo.add_response(session_id, user_id, prompt, response, section)
+        return {'success': True, 'session': result}
+
+    def save_reflection_response(self, session_id: str, user_id: str,
+                                  question: str, response: str,
+                                  previous_response: str = '',
+                                  change_noted: str = '') -> Dict[str, Any]:
+        """Save a reflection response (for repeat step work)"""
+        if not user_id or not self.step_work_repo:
+            return {'success': True, 'mode': 'in_memory'}
+
+        result = self.step_work_repo.add_reflection_response(
+            session_id, user_id, question, response, previous_response, change_noted
+        )
+        return {'success': True, 'session': result}
+
+    def complete_step_work(self, session_id: str, user_id: str) -> Dict[str, Any]:
+        """Mark a step work session as complete"""
+        if not user_id or not self.step_work_repo:
+            return {'success': True, 'mode': 'in_memory'}
+
+        result = self.step_work_repo.complete_step_work_session(session_id, user_id)
+        return {'success': True, 'session': result}
+
+    def save_resentment(self, session_id: str, user_id: str, resentment: Dict[str, Any]) -> str:
+        """Save a resentment entry to Step 4 inventory"""
+        if not user_id or not self.step_work_repo:
+            return self._fallback_manager.save_step4_entry(session_id, 'resentment', resentment)
+
+        return self.step_work_repo.save_resentment(session_id, user_id, resentment)
+
+    def save_fear(self, session_id: str, user_id: str, fear: Dict[str, Any]) -> str:
+        """Save a fear entry to Step 4 inventory"""
+        if not user_id or not self.step_work_repo:
+            return self._fallback_manager.save_step4_entry(session_id, 'fear', fear)
+
+        return self.step_work_repo.save_fear(session_id, user_id, fear)
+
+    def get_inventory(self, session_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get the Step 4 inventory for a session"""
+        if not user_id or not self.step_work_repo:
+            inv = self._fallback_manager.get_step4_inventory(session_id)
+            return inv.to_dict() if inv else None
+
+        return self.step_work_repo.get_inventory(session_id, user_id)
+
+    def get_user_progress(self, user_id: str) -> Dict[str, Any]:
+        """Get overall step work progress for a user"""
+        if not user_id or not self.step_work_repo:
+            return {'totalSessions': 0, 'stepProgress': {}, 'currentSteps': [], 'completedSteps': []}
+
+        return self.step_work_repo.get_user_progress(user_id)
+
+    def delete_all_user_data(self, user_id: str) -> bool:
+        """Delete all step work data for a user (GDPR)"""
+        if not user_id or not self.step_work_repo:
+            return True
+
+        return self.step_work_repo.delete_all_user_data(user_id)
+
+    def health_check(self) -> Dict[str, Any]:
+        """Check database health"""
+        if not self.cosmos_client:
+            return {'healthy': True, 'mode': 'in_memory', 'message': 'Using in-memory fallback'}
+
+        return self.cosmos_client.health_check()
+
 
 # Step-specific prayer database
 STEP_PRAYERS = [
@@ -277,7 +505,7 @@ STEP_PRAYERS = [
     ),
     StepPrayer(
         step_number=2,
-        prayer_type="specific", 
+        prayer_type="specific",
         title="Step 2 Prayer",
         text="Higher Power, help me to believe that you can restore me to sanity. Open my mind to the possibility of hope. Help me to understand that I need a power greater than myself to overcome this disease. Remove my stubborn self-will and replace it with faith. Amen.",
         source="Traditional AA"
@@ -285,7 +513,7 @@ STEP_PRAYERS = [
     StepPrayer(
         step_number=3,
         prayer_type="specific",
-        title="Step 3 Prayer", 
+        title="Step 3 Prayer",
         text="God, I offer myself to Thee - to build with me and to do with me as Thou wilt. Relieve me of the bondage of self, that I may better do Thy will. Take away my difficulties, that victory over them may bear witness to those I would help of Thy Power, Thy Love, and Thy Way of life. May I do Thy will always!",
         source="Big Book Page 63"
     ),
@@ -298,7 +526,7 @@ STEP_PRAYERS = [
     ),
     StepPrayer(
         step_number=7,
-        prayer_type="specific", 
+        prayer_type="specific",
         title="Step 7 Prayer",
         text="My Creator, I am now willing that you should have all of me, good and bad. I pray that you now remove from me every single defect of character which stands in the way of my usefulness to you and my fellows. Grant me strength, as I go out from here, to do your bidding. Amen.",
         source="Big Book Page 76"
@@ -319,20 +547,23 @@ STEP_PRAYERS = [
     )
 ]
 
+
 def get_step_prayers(step_number: Optional[int] = None) -> List[StepPrayer]:
     """Get prayers for specific step or all prayers"""
     if step_number:
         return [prayer for prayer in STEP_PRAYERS if prayer.step_number == step_number]
     return STEP_PRAYERS
 
+
 if __name__ == "__main__":
     # Test the data model
+    print("Testing StepWorkDataManager (in-memory)...")
     manager = StepWorkDataManager()
-    
+
     # Create session
     session = manager.create_session(anonymous=True)
     print(f"Created session: {session.session_id}")
-    
+
     # Add Step 4 resentment
     resentment_data = {
         'person_institution': 'My boss',
@@ -341,17 +572,22 @@ if __name__ == "__main__":
         'my_part': 'I was defensive and argumentative instead of listening',
         'character_defect': ['Pride', 'Fear']
     }
-    
+
     entry_id = manager.save_step4_entry(session.session_id, "resentment", resentment_data)
     print(f"Saved resentment: {entry_id}")
-    
+
     # Get Step 4 inventory
     inventory = manager.get_step4_inventory(session.session_id)
     if inventory:
         print(f"Inventory has {len(inventory.resentments)} resentments")
-    
+
     # Get prayers for Step 1
     step1_prayers = get_step_prayers(1)
     print(f"Step 1 has {len(step1_prayers)} prayers")
     for prayer in step1_prayers:
         print(f"  - {prayer.title}")
+
+    print("\nTesting CosmosDBDataManager...")
+    cosmos_manager = CosmosDBDataManager()
+    health = cosmos_manager.health_check()
+    print(f"Database health: {health}")

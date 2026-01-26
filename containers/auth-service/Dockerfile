@@ -1,27 +1,25 @@
-FROM python:3.11-alpine
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S appuser && \
-    adduser -S appuser -G appuser -u 1001
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install required packages
-RUN apk add --no-cache curl
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy shared module
+COPY shared/ ./shared/
 
 # Copy application code
-COPY --chown=appuser:appuser app.py .
-
-# Switch to non-root user
-USER appuser
+COPY app.py .
 
 # Expose port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 # Start the application
 CMD ["python", "app.py"]
