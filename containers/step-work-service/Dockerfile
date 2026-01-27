@@ -18,6 +18,7 @@ COPY step11_meditation.py .
 COPY step12_service_tracker.py .
 COPY step8_list_builder.py .
 COPY step9_amends_tracker.py .
+COPY step10_daily_inventory.py .
 COPY app.py .
 
 # Expose port

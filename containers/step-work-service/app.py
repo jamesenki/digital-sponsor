@@ -9,7 +9,7 @@ import socketserver
 import json
 import os
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, date
 from step_work_data_model import StepWorkDataManager, CosmosDBDataManager, get_step_prayers
 from step4_workbook import Step4WorkbookGuide
 from rag_integration import StepWorkRAGIntegration
@@ -31,6 +31,7 @@ from step11_meditation import Step11MeditationGuide
 from step12_service_tracker import Step12ServiceTracker, ServiceCategory
 from step8_list_builder import Step8ListBuilder, get_step8_builder
 from step9_amends_tracker import Step9AmendsTracker, get_step9_tracker
+from step10_daily_inventory import Step10DailyInventoryManager, get_step10_manager
 
 
 class StepWorkHandler(http.server.BaseHTTPRequestHandler):
@@ -188,6 +189,39 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
             status = path.split('/')[-1]
             self.handle_step9_reflection_prompts(status)
 
+        # ========================================
+        # Step 10 Daily Inventory endpoints
+        # ========================================
+        elif path.startswith('/api/step10/today/'):
+            user_id = path.split('/')[-1]
+            self.handle_step10_get_today(user_id)
+
+        elif path.startswith('/api/step10/date/'):
+            # /api/step10/date/{user_id}/{date}
+            parts = path.split('/')
+            if len(parts) >= 5:
+                user_id = parts[4]
+                inv_date = parts[5] if len(parts) > 5 else None
+                self.handle_step10_get_for_date(user_id, inv_date)
+            else:
+                self.send_error(400)
+
+        elif path.startswith('/api/step10/history/'):
+            user_id = path.split('/')[-1]
+            self.handle_step10_get_history(user_id, query_params)
+
+        elif path == '/api/step10/prayer':
+            self.handle_step10_prayer()
+
+        elif path == '/api/step10/affects-options':
+            self.handle_step10_affects_options()
+
+        elif path == '/api/step10/evening-questions':
+            self.handle_step10_evening_questions()
+
+        elif path == '/api/step10/guidance':
+            self.handle_step10_guidance()
+
         else:
             self.send_error(404)
 
@@ -301,6 +335,33 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path == '/api/step9/session/complete':
             self.handle_step9_complete_session(data)
 
+        # ========================================
+        # Step 10 Daily Inventory POST endpoints
+        # ========================================
+        elif path == '/api/step10/resentment':
+            self.handle_step10_add_resentment(data)
+
+        elif path == '/api/step10/resentment/update':
+            self.handle_step10_update_resentment(data)
+
+        elif path == '/api/step10/fear':
+            self.handle_step10_add_fear(data)
+
+        elif path == '/api/step10/amend':
+            self.handle_step10_add_amend(data)
+
+        elif path == '/api/step10/amend/made':
+            self.handle_step10_mark_amend_made(data)
+
+        elif path == '/api/step10/selfishness':
+            self.handle_step10_update_selfishness(data)
+
+        elif path == '/api/step10/dishonesty':
+            self.handle_step10_update_dishonesty(data)
+
+        elif path == '/api/step10/evening-review':
+            self.handle_step10_save_evening_review(data)
+
         else:
             self.send_error(404)
 
@@ -323,6 +384,26 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path.startswith('/api/step9/entry/'):
             entry_id = path.split('/')[-1]
             self.handle_step9_delete_entry(entry_id)
+
+        elif path.startswith('/api/step10/resentment/'):
+            # /api/step10/resentment/{inventory_id}/{resentment_id}
+            parts = path.split('/')
+            if len(parts) >= 5:
+                inventory_id = parts[4]
+                resentment_id = parts[5] if len(parts) > 5 else None
+                self.handle_step10_delete_resentment(inventory_id, resentment_id)
+            else:
+                self.send_error(400)
+
+        elif path.startswith('/api/step10/fear/'):
+            # /api/step10/fear/{inventory_id}/{fear_id}
+            parts = path.split('/')
+            if len(parts) >= 5:
+                inventory_id = parts[4]
+                fear_id = parts[5] if len(parts) > 5 else None
+                self.handle_step10_delete_fear(inventory_id, fear_id)
+            else:
+                self.send_error(400)
 
         else:
             self.send_error(404)
@@ -1624,6 +1705,262 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404, 'Session not found')
 
+    # ========================================
+    # Step 10 Daily Inventory handlers
+    # ========================================
+
+    def handle_step10_get_today(self, user_id):
+        """Get or create today's inventory for a user"""
+        inventory = self.step10_manager.get_or_create_today(user_id)
+        response = {
+            'success': True,
+            'inventory': inventory.to_dict()
+        }
+        self.send_json_response(response)
+
+    def handle_step10_get_for_date(self, user_id, inv_date):
+        """Get inventory for a specific date"""
+        if not inv_date:
+            self.send_error(400, 'Date required')
+            return
+
+        inventory = self.step10_manager.get_user_inventory_for_date(user_id, inv_date)
+        if inventory:
+            response = {
+                'success': True,
+                'inventory': inventory.to_dict()
+            }
+        else:
+            response = {
+                'success': True,
+                'inventory': None,
+                'message': f'No inventory found for {inv_date}'
+            }
+        self.send_json_response(response)
+
+    def handle_step10_get_history(self, user_id, query_params):
+        """Get inventory history for a user"""
+        days = int(query_params.get('days', [30])[0])
+        history = self.step10_manager.get_user_history(user_id, days)
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'history': [inv.to_dict() for inv in history],
+            'count': len(history)
+        }
+        self.send_json_response(response)
+
+    def handle_step10_prayer(self):
+        """Get Step 10 prayer"""
+        prayer = self.step10_manager.get_step10_prayer()
+        response = {
+            'success': True,
+            'prayer': prayer
+        }
+        self.send_json_response(response)
+
+    def handle_step10_affects_options(self):
+        """Get 'affects my' options for resentment inventory"""
+        options = self.step10_manager.get_affects_options()
+        response = {
+            'success': True,
+            'options': options
+        }
+        self.send_json_response(response)
+
+    def handle_step10_evening_questions(self):
+        """Get evening review questions"""
+        questions = self.step10_manager.get_evening_review_questions()
+        response = {
+            'success': True,
+            'questions': questions
+        }
+        self.send_json_response(response)
+
+    def handle_step10_guidance(self):
+        """Get Step 10 guidance"""
+        guidance = self.step10_manager.get_step10_guidance()
+        response = {
+            'success': True,
+            'guidance': guidance
+        }
+        self.send_json_response(response)
+
+    def handle_step10_add_resentment(self, data):
+        """Add a resentment to today's inventory"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        resentment = self.step10_manager.add_resentment(inventory.id, data)
+
+        if resentment:
+            response = {
+                'success': True,
+                'resentment': resentment.to_dict(),
+                'inventory_id': inventory.id,
+                'message': 'Resentment added. Remember to ask God to remove it at once.'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(500, 'Failed to add resentment')
+
+    def handle_step10_update_resentment(self, data):
+        """Update a resentment"""
+        inventory_id = data.get('inventory_id')
+        resentment_id = data.get('resentment_id')
+
+        if not inventory_id or not resentment_id:
+            self.send_error(400, 'inventory_id and resentment_id required')
+            return
+
+        resentment = self.step10_manager.update_resentment(inventory_id, resentment_id, data)
+
+        if resentment:
+            response = {
+                'success': True,
+                'resentment': resentment.to_dict(),
+                'message': 'Resentment updated'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Resentment not found')
+
+    def handle_step10_delete_resentment(self, inventory_id, resentment_id):
+        """Delete a resentment"""
+        success = self.step10_manager.delete_resentment(inventory_id, resentment_id)
+
+        if success:
+            response = {
+                'success': True,
+                'message': 'Resentment deleted'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Resentment not found')
+
+    def handle_step10_add_fear(self, data):
+        """Add a fear to today's inventory"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        fear = self.step10_manager.add_fear(inventory.id, data)
+
+        if fear:
+            response = {
+                'success': True,
+                'fear': fear.to_dict(),
+                'inventory_id': inventory.id,
+                'message': 'Fear noted. What action can you take?'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(500, 'Failed to add fear')
+
+    def handle_step10_delete_fear(self, inventory_id, fear_id):
+        """Delete a fear"""
+        success = self.step10_manager.delete_fear(inventory_id, fear_id)
+
+        if success:
+            response = {
+                'success': True,
+                'message': 'Fear deleted'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Fear not found')
+
+    def handle_step10_add_amend(self, data):
+        """Add an amend owed today"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        amend = self.step10_manager.add_amend(inventory.id, data)
+
+        if amend:
+            response = {
+                'success': True,
+                'amend': amend.to_dict(),
+                'inventory_id': inventory.id,
+                'message': 'Amend noted. Make it promptly!'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(500, 'Failed to add amend')
+
+    def handle_step10_mark_amend_made(self, data):
+        """Mark an amend as made"""
+        inventory_id = data.get('inventory_id')
+        amend_id = data.get('amend_id')
+        how_made = data.get('how_made', '')
+
+        if not inventory_id or not amend_id:
+            self.send_error(400, 'inventory_id and amend_id required')
+            return
+
+        amend = self.step10_manager.mark_amend_made(inventory_id, amend_id, how_made)
+
+        if amend:
+            response = {
+                'success': True,
+                'amend': amend.to_dict(),
+                'message': 'Amend marked as made. Well done!'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Amend not found')
+
+    def handle_step10_update_selfishness(self, data):
+        """Update selfishness notes"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+        notes = data.get('notes', '')
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        success = self.step10_manager.update_selfishness_notes(inventory.id, notes)
+
+        response = {
+            'success': success,
+            'message': 'Selfishness notes updated'
+        }
+        self.send_json_response(response)
+
+    def handle_step10_update_dishonesty(self, data):
+        """Update dishonesty notes"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+        notes = data.get('notes', '')
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        success = self.step10_manager.update_dishonesty_notes(inventory.id, notes)
+
+        response = {
+            'success': success,
+            'message': 'Dishonesty notes updated'
+        }
+        self.send_json_response(response)
+
+    def handle_step10_save_evening_review(self, data):
+        """Save evening review"""
+        user_id = data.get('user_id')
+        inventory_date = data.get('date', date.today().isoformat())
+
+        inventory = self.step10_manager.get_or_create_for_date(user_id, inventory_date)
+        review = self.step10_manager.save_evening_review(inventory.id, data)
+
+        if review:
+            response = {
+                'success': True,
+                'review': review.to_dict(),
+                'inventory_id': inventory.id,
+                'message': 'Evening review saved. Rest well.'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(500, 'Failed to save evening review')
+
 
 # ========================================
 # Global services to persist across requests
@@ -1642,9 +1979,10 @@ GLOBAL_RAG_INTEGRATION = StepWorkRAGIntegration(LITERATURE_SERVICE_URL, CHAT_SER
 GLOBAL_STEP11_MEDITATION = Step11MeditationGuide()
 GLOBAL_STEP12_SERVICE_TRACKER = Step12ServiceTracker()
 
-# Step 8 List Builder and Step 9 Amends Tracker
+# Step 8 List Builder, Step 9 Amends Tracker, Step 10 Daily Inventory
 GLOBAL_STEP8_BUILDER = get_step8_builder()
 GLOBAL_STEP9_TRACKER = get_step9_tracker()
+GLOBAL_STEP10_MANAGER = get_step10_manager()
 
 
 class PersistentStepWorkHandler(StepWorkHandler):
@@ -1660,6 +1998,7 @@ class PersistentStepWorkHandler(StepWorkHandler):
         self.step12_service_tracker = GLOBAL_STEP12_SERVICE_TRACKER
         self.step8_builder = GLOBAL_STEP8_BUILDER
         self.step9_tracker = GLOBAL_STEP9_TRACKER
+        self.step10_manager = GLOBAL_STEP10_MANAGER
         # Don't call StepWorkHandler.__init__ to avoid creating new instances
         http.server.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
@@ -1766,6 +2105,25 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   POST /api/step9/entry/update - Update amend entry')
     print(f'   POST /api/step9/session/complete - Complete Step 9')
     print(f'   DELETE /api/step9/entry/{{entry_id}} - Delete entry')
+    print()
+    print(f'Step 10 Daily Inventory Endpoints:')
+    print(f'   GET  /api/step10/today/{{user_id}} - Get or create today\'s inventory')
+    print(f'   GET  /api/step10/date/{{user_id}}/{{date}} - Get inventory for specific date')
+    print(f'   GET  /api/step10/history/{{user_id}}?days=30 - Get inventory history')
+    print(f'   GET  /api/step10/prayer - Get Step 10 prayer')
+    print(f'   GET  /api/step10/affects-options - Get resentment affects options')
+    print(f'   GET  /api/step10/evening-questions - Get evening review questions')
+    print(f'   GET  /api/step10/guidance - Get Step 10 guidance')
+    print(f'   POST /api/step10/resentment - Add today\'s resentment')
+    print(f'   POST /api/step10/resentment/update - Update resentment')
+    print(f'   POST /api/step10/fear - Add today\'s fear')
+    print(f'   POST /api/step10/amend - Add amend owed today')
+    print(f'   POST /api/step10/amend/made - Mark amend as made')
+    print(f'   POST /api/step10/selfishness - Update selfishness notes')
+    print(f'   POST /api/step10/dishonesty - Update dishonesty notes')
+    print(f'   POST /api/step10/evening-review - Save evening review')
+    print(f'   DELETE /api/step10/resentment/{{inv_id}}/{{res_id}} - Delete resentment')
+    print(f'   DELETE /api/step10/fear/{{inv_id}}/{{fear_id}} - Delete fear')
     print()
 
     httpd.serve_forever()

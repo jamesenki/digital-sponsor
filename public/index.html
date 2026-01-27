@@ -2806,6 +2806,8 @@
                 await loadStep8ListBuilder();
             } else if (stepNumber === 9) {
                 await loadStep9AmendsTracker();
+            } else if (stepNumber === 10) {
+                await loadStep10DailyInventory();
             } else if (stepNumber === 11) {
                 await loadStep11Meditation();
             } else if (stepNumber === 12) {
@@ -4173,6 +4175,532 @@
 
         function saveStep9Data() {
             localStorage.setItem('step9_amends', JSON.stringify(step9Data));
+        }
+
+        // =====================================================================
+        // STEP 10: DAILY INVENTORY
+        // =====================================================================
+
+        let step10Data = {
+            inventoryId: null,
+            userId: 'demo-user',
+            date: new Date().toISOString().split('T')[0],
+            resentments: [],
+            fears: [],
+            selfishnessNotes: '',
+            dishonestyNotes: '',
+            amendsOwed: [],
+            eveningReview: null
+        };
+
+        async function loadStep10DailyInventory() {
+            // Load today's data from localStorage
+            const today = new Date().toISOString().split('T')[0];
+            const savedData = localStorage.getItem(`step10_${today}`);
+            if (savedData) {
+                step10Data = JSON.parse(savedData);
+            } else {
+                step10Data.date = today;
+                step10Data.resentments = [];
+                step10Data.fears = [];
+                step10Data.selfishnessNotes = '';
+                step10Data.dishonestyNotes = '';
+                step10Data.amendsOwed = [];
+                step10Data.eveningReview = null;
+            }
+
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStep10Section('resentments')">Resentments</button>
+                <button class="step-modal-tab" onclick="showStep10Section('fears')">Fears</button>
+                <button class="step-modal-tab" onclick="showStep10Section('character')">Self/Dishonest</button>
+                <button class="step-modal-tab" onclick="showStep10Section('amends')">Amends Owed</button>
+                <button class="step-modal-tab" onclick="showStep10Section('evening')">Evening Review</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            const contentHtml = `
+                <div class="step-section active" id="section-resentments">
+                    ${buildStep10ResentmentsSection()}
+                </div>
+                <div class="step-section" id="section-fears">
+                    ${buildStep10FearsSection()}
+                </div>
+                <div class="step-section" id="section-character">
+                    ${buildStep10CharacterSection()}
+                </div>
+                <div class="step-section" id="section-amends">
+                    ${buildStep10AmendsSection()}
+                </div>
+                <div class="step-section" id="section-evening">
+                    ${buildStep10EveningReviewSection()}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStep10Section(section) {
+            document.querySelectorAll('#stepModalTabs button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.step-section').forEach(sec => sec.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('section-' + section).classList.add('active');
+        }
+
+        function buildStep10ResentmentsSection() {
+            let rowsHtml = '';
+            step10Data.resentments.forEach((r, idx) => {
+                rowsHtml += `
+                    <tr>
+                        <td style="font-weight: 600;">${r.who}</td>
+                        <td style="font-size: 0.9em;">${r.what_happened}</td>
+                        <td style="font-size: 0.85em; color: #718096;">${(r.affects_what || []).join(', ')}</td>
+                        <td style="font-size: 0.9em; color: #553c9a;">${r.my_part || '-'}</td>
+                        <td>
+                            <button onclick="deleteStep10Resentment(${idx})" style="padding: 3px 8px; font-size: 0.8em; background: #e53e3e; color: white; border: none; border-radius: 4px; cursor: pointer;">X</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (rowsHtml === '') {
+                rowsHtml = '<tr><td colspan="5" style="text-align: center; color: #48bb78; padding: 20px;">No resentments today. Great job!</td></tr>';
+            }
+
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); border-left-color: #667eea; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0;">
+                        "Continue to watch for selfishness, dishonesty, resentment, and fear. When these crop up, we ask God at once to remove them."
+                    </p>
+                    <small style="color: #718096;">— Big Book, p. 84</small>
+                </div>
+
+                <h4 style="margin-bottom: 15px; color: #2d3748;">Today's Resentments</h4>
+
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+                        <thead>
+                            <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 10px; text-align: left;">Who</th>
+                                <th style="padding: 10px; text-align: left;">What Happened</th>
+                                <th style="padding: 10px; text-align: left;">Affects My</th>
+                                <th style="padding: 10px; text-align: left;">My Part</th>
+                                <th style="padding: 10px; text-align: left;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+
+                <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
+                    <h5 style="margin: 0 0 15px 0;">Add a Resentment</h5>
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">Who am I resentful at?</label>
+                            <input type="text" id="s10_res_who" placeholder="Person or institution"
+                                   style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">What happened?</label>
+                            <textarea id="s10_res_what" rows="2" placeholder="What did they do?"
+                                      style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">It affects my:</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <label><input type="checkbox" id="s10_aff_esteem" value="Self-Esteem"> Self-Esteem</label>
+                                <label><input type="checkbox" id="s10_aff_security" value="Security"> Security</label>
+                                <label><input type="checkbox" id="s10_aff_ambitions" value="Ambitions"> Ambitions</label>
+                                <label><input type="checkbox" id="s10_aff_relations" value="Personal Relations"> Personal Relations</label>
+                                <label><input type="checkbox" id="s10_aff_pride" value="Pride"> Pride</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">What was MY part?</label>
+                            <textarea id="s10_res_part" rows="2" placeholder="Be honest about your role..."
+                                      style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                        </div>
+                        <button onclick="addStep10Resentment()" style="padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Add Resentment
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildStep10FearsSection() {
+            let rowsHtml = '';
+            step10Data.fears.forEach((f, idx) => {
+                rowsHtml += `
+                    <tr>
+                        <td style="font-weight: 600;">${f.fear}</td>
+                        <td style="font-size: 0.9em;">${f.why_i_have_it || '-'}</td>
+                        <td style="font-size: 0.9em; color: #48bb78;">${f.action_to_take || '-'}</td>
+                        <td>
+                            <button onclick="deleteStep10Fear(${idx})" style="padding: 3px 8px; font-size: 0.8em; background: #e53e3e; color: white; border: none; border-radius: 4px; cursor: pointer;">X</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (rowsHtml === '') {
+                rowsHtml = '<tr><td colspan="4" style="text-align: center; color: #48bb78; padding: 20px;">No fears noted today.</td></tr>';
+            }
+
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #ed893620 0%, #dd6b2020 100%); border-left-color: #ed8936; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0;">
+                        "We ask Him to remove our fear and direct our attention to what He would have us be."
+                    </p>
+                    <small style="color: #718096;">— Big Book, p. 68</small>
+                </div>
+
+                <h4 style="margin-bottom: 15px; color: #2d3748;">Today's Fears</h4>
+
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+                        <thead>
+                            <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 10px; text-align: left;">Fear</th>
+                                <th style="padding: 10px; text-align: left;">Why I Have It</th>
+                                <th style="padding: 10px; text-align: left;">Action to Take</th>
+                                <th style="padding: 10px; text-align: left;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+
+                <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
+                    <h5 style="margin: 0 0 15px 0;">Add a Fear</h5>
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">What am I afraid of?</label>
+                            <input type="text" id="s10_fear" placeholder="Describe the fear"
+                                   style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">Why do I have this fear?</label>
+                            <textarea id="s10_fear_why" rows="2" placeholder="What's driving this fear?"
+                                      style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">What action can I take?</label>
+                            <textarea id="s10_fear_action" rows="2" placeholder="What positive action can address this?"
+                                      style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                        </div>
+                        <button onclick="addStep10Fear()" style="padding: 12px 20px; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Add Fear
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildStep10CharacterSection() {
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #9f7aea20 0%, #805ad520 100%); border-left-color: #9f7aea; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0;">
+                        "Continue to watch for selfishness, dishonesty, resentment, and fear."
+                    </p>
+                    <small style="color: #718096;">— Big Book, p. 84</small>
+                </div>
+
+                <div style="display: grid; gap: 25px;">
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; color: #d69e2e;">Was I Selfish Today?</h4>
+                        <textarea id="s10_selfish" rows="4" placeholder="How was I selfish? What did I want that I put ahead of others?"
+                                  style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;"
+                                  onchange="updateStep10Character('selfishness', this.value)">${step10Data.selfishnessNotes || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; color: #e53e3e;">Was I Dishonest Today?</h4>
+                        <textarea id="s10_dishonest" rows="4" placeholder="Where was I dishonest? Even small lies or omissions count."
+                                  style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;"
+                                  onchange="updateStep10Character('dishonesty', this.value)">${step10Data.dishonestyNotes || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildStep10AmendsSection() {
+            let rowsHtml = '';
+            step10Data.amendsOwed.forEach((a, idx) => {
+                const statusIcon = a.amend_made ? '✅' : '⏳';
+                rowsHtml += `
+                    <tr>
+                        <td>${statusIcon}</td>
+                        <td style="font-weight: 600;">${a.to_whom}</td>
+                        <td style="font-size: 0.9em;">${a.for_what}</td>
+                        <td>
+                            ${a.amend_made ? '<span style="color: #48bb78;">Made</span>' :
+                              `<button onclick="markStep10AmendMade(${idx})" style="padding: 4px 10px; font-size: 0.85em; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer;">Mark Made</button>`}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (rowsHtml === '') {
+                rowsHtml = '<tr><td colspan="4" style="text-align: center; color: #48bb78; padding: 20px;">No amends owed today!</td></tr>';
+            }
+
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #48bb7820 0%, #38a16920 100%); border-left-color: #48bb78; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0;">
+                        "We discuss them with someone immediately and make amends quickly if we have harmed anyone."
+                    </p>
+                    <small style="color: #718096;">— Big Book, p. 84</small>
+                </div>
+
+                <h4 style="margin-bottom: 15px; color: #2d3748;">Amends Owed Today</h4>
+
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+                        <thead>
+                            <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 10px; text-align: center; width: 40px;"></th>
+                                <th style="padding: 10px; text-align: left;">To Whom</th>
+                                <th style="padding: 10px; text-align: left;">For What</th>
+                                <th style="padding: 10px; text-align: left;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+
+                <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
+                    <h5 style="margin: 0 0 15px 0;">Add an Amend Owed</h5>
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">To whom do I owe an amend?</label>
+                            <input type="text" id="s10_amend_who" placeholder="Person's name"
+                                   style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 5px;">For what?</label>
+                            <textarea id="s10_amend_what" rows="2" placeholder="What did I do that requires amends?"
+                                      style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                        </div>
+                        <button onclick="addStep10Amend()" style="padding: 12px 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Add Amend
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildStep10EveningReviewSection() {
+            const review = step10Data.eveningReview || {};
+
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #4299e120 0%, #3182ce20 100%); border-left-color: #4299e1; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0;">
+                        "On awakening let us think about the twenty-four hours ahead... Before we begin, we ask God to direct our thinking... When we retire at night, we constructively review our day."
+                    </p>
+                    <small style="color: #718096;">— Big Book, p. 86</small>
+                </div>
+
+                <h4 style="margin-bottom: 20px; color: #2d3748;">Evening Review Questions</h4>
+
+                <div style="display: grid; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Was I resentful today?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_resentful" ${review.was_resentful ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_resentful_details" rows="2" placeholder="If yes, explain..."
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.resentful_details || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Was I selfish today?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_selfish" ${review.was_selfish ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_selfish_details" rows="2" placeholder="If yes, how?"
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.selfish_details || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Was I dishonest today?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_dishonest" ${review.was_dishonest ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_dishonest_details" rows="2" placeholder="If yes, in what way?"
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.dishonest_details || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Was I afraid today?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_afraid" ${review.was_afraid ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_afraid_details" rows="2" placeholder="If yes, of what?"
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.afraid_details || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Do I owe an apology?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_apology" ${review.owe_apology ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_apology_to" rows="2" placeholder="To whom and for what?"
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.apology_to_whom || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <label style="font-weight: 500;">Was I kind and loving?</label>
+                        <div>
+                            <label><input type="checkbox" id="s10_ev_kind" ${review.was_kind_loving !== false ? 'checked' : ''} onchange="updateEveningReview()"> Yes</label>
+                            <textarea id="s10_ev_kind_details" rows="2" placeholder="Reflect on your interactions..."
+                                      style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                      onchange="updateEveningReview()">${review.kind_details || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="padding: 15px; background: #c6f6d520; border-radius: 8px; border-left: 4px solid #48bb78;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">What could I have done better?</label>
+                        <textarea id="s10_ev_better" rows="3" placeholder="Think about your day..."
+                                  style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                  onchange="updateEveningReview()">${review.could_done_better || ''}</textarea>
+                    </div>
+
+                    <div style="padding: 15px; background: #fefcbf20; border-radius: 8px; border-left: 4px solid #d69e2e;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">What am I grateful for today?</label>
+                        <textarea id="s10_ev_gratitude" rows="3" placeholder="List 3-5 things..."
+                                  style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"
+                                  onchange="updateEveningReview()">${review.gratitude || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Step 10 action functions
+        function addStep10Resentment() {
+            const who = document.getElementById('s10_res_who').value.trim();
+            const what = document.getElementById('s10_res_what').value.trim();
+            const myPart = document.getElementById('s10_res_part').value.trim();
+
+            if (!who || !what) {
+                alert('Please enter who you are resentful at and what happened.');
+                return;
+            }
+
+            const affects = [];
+            if (document.getElementById('s10_aff_esteem').checked) affects.push('Self-Esteem');
+            if (document.getElementById('s10_aff_security').checked) affects.push('Security');
+            if (document.getElementById('s10_aff_ambitions').checked) affects.push('Ambitions');
+            if (document.getElementById('s10_aff_relations').checked) affects.push('Personal Relations');
+            if (document.getElementById('s10_aff_pride').checked) affects.push('Pride');
+
+            step10Data.resentments.push({
+                id: Date.now().toString(),
+                who: who,
+                what_happened: what,
+                affects_what: affects,
+                my_part: myPart
+            });
+
+            saveStep10Data();
+            document.getElementById('section-resentments').innerHTML = buildStep10ResentmentsSection();
+        }
+
+        function deleteStep10Resentment(idx) {
+            step10Data.resentments.splice(idx, 1);
+            saveStep10Data();
+            document.getElementById('section-resentments').innerHTML = buildStep10ResentmentsSection();
+        }
+
+        function addStep10Fear() {
+            const fear = document.getElementById('s10_fear').value.trim();
+            const why = document.getElementById('s10_fear_why').value.trim();
+            const action = document.getElementById('s10_fear_action').value.trim();
+
+            if (!fear) {
+                alert('Please describe the fear.');
+                return;
+            }
+
+            step10Data.fears.push({
+                id: Date.now().toString(),
+                fear: fear,
+                why_i_have_it: why,
+                action_to_take: action
+            });
+
+            saveStep10Data();
+            document.getElementById('section-fears').innerHTML = buildStep10FearsSection();
+        }
+
+        function deleteStep10Fear(idx) {
+            step10Data.fears.splice(idx, 1);
+            saveStep10Data();
+            document.getElementById('section-fears').innerHTML = buildStep10FearsSection();
+        }
+
+        function updateStep10Character(type, value) {
+            if (type === 'selfishness') {
+                step10Data.selfishnessNotes = value;
+            } else if (type === 'dishonesty') {
+                step10Data.dishonestyNotes = value;
+            }
+            saveStep10Data();
+        }
+
+        function addStep10Amend() {
+            const who = document.getElementById('s10_amend_who').value.trim();
+            const what = document.getElementById('s10_amend_what').value.trim();
+
+            if (!who || !what) {
+                alert('Please enter who you owe an amend to and why.');
+                return;
+            }
+
+            step10Data.amendsOwed.push({
+                id: Date.now().toString(),
+                to_whom: who,
+                for_what: what,
+                amend_made: false
+            });
+
+            saveStep10Data();
+            document.getElementById('section-amends').innerHTML = buildStep10AmendsSection();
+        }
+
+        function markStep10AmendMade(idx) {
+            step10Data.amendsOwed[idx].amend_made = true;
+            saveStep10Data();
+            document.getElementById('section-amends').innerHTML = buildStep10AmendsSection();
+        }
+
+        function updateEveningReview() {
+            step10Data.eveningReview = {
+                was_resentful: document.getElementById('s10_ev_resentful').checked,
+                resentful_details: document.getElementById('s10_ev_resentful_details').value,
+                was_selfish: document.getElementById('s10_ev_selfish').checked,
+                selfish_details: document.getElementById('s10_ev_selfish_details').value,
+                was_dishonest: document.getElementById('s10_ev_dishonest').checked,
+                dishonest_details: document.getElementById('s10_ev_dishonest_details').value,
+                was_afraid: document.getElementById('s10_ev_afraid').checked,
+                afraid_details: document.getElementById('s10_ev_afraid_details').value,
+                owe_apology: document.getElementById('s10_ev_apology').checked,
+                apology_to_whom: document.getElementById('s10_ev_apology_to').value,
+                was_kind_loving: document.getElementById('s10_ev_kind').checked,
+                kind_details: document.getElementById('s10_ev_kind_details').value,
+                could_done_better: document.getElementById('s10_ev_better').value,
+                gratitude: document.getElementById('s10_ev_gratitude').value
+            };
+            saveStep10Data();
+        }
+
+        function saveStep10Data() {
+            const today = new Date().toISOString().split('T')[0];
+            localStorage.setItem(`step10_${today}`, JSON.stringify(step10Data));
         }
 
         // =====================================================================
