@@ -1823,6 +1823,8 @@
             // PRODUCTION HTTPS endpoints (Azure Container Apps)
             literatureService: 'https://ca-literature-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
             chatService: 'https://ca-chat-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
+            // Knowledge Graph Service (Neo4j)
+            knowledgeGraphService: 'http://digitalsponsor-knowledge-graph.centralus.azurecontainer.io:3005',
             region: 'centralus',
             customDomain: 'digitalsponsor.commonsolution.org',
             // Demo mode only for auth - chat and literature are LIVE
@@ -2188,6 +2190,127 @@
             localStorage.clear();
             alert('All data has been deleted. The page will now reload.');
             window.location.reload();
+        }
+
+        // =====================================================================
+        // KNOWLEDGE GRAPH API (Neo4j)
+        // =====================================================================
+
+        /**
+         * Get step relationships from the knowledge graph
+         * Returns how steps connect to each other
+         */
+        async function getStepRelationships() {
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/steps/relationships`);
+                const data = await response.json();
+                return data.success ? data.relationships : getMockStepRelationships();
+            } catch (error) {
+                console.log('Knowledge graph unavailable, using mock data');
+                return getMockStepRelationships();
+            }
+        }
+
+        function getMockStepRelationships() {
+            return [
+                {from: 1, to: 2, relationship: 'FOLLOWS', explanation: 'Step 2 follows Step 1'},
+                {from: 2, to: 3, relationship: 'FOLLOWS', explanation: 'Step 3 follows Step 2'},
+                {from: 3, to: 4, relationship: 'FOLLOWS', explanation: 'Step 4 follows Step 3'},
+                {from: 4, to: 5, relationship: 'PREPARES_FOR', explanation: 'Step 4 prepares you for Step 5'},
+                {from: 4, to: 8, relationship: 'PROVIDES_INPUT_TO', explanation: 'Step 4 work feeds into Step 8'},
+                {from: 5, to: 6, relationship: 'FOLLOWS', explanation: 'Step 6 follows Step 5'},
+                {from: 6, to: 7, relationship: 'PREPARES_FOR', explanation: 'Step 6 prepares you for Step 7'},
+                {from: 8, to: 9, relationship: 'PREPARES_FOR', explanation: 'Step 8 prepares you for Step 9'},
+                {from: 9, to: 10, relationship: 'FOLLOWS', explanation: 'Step 10 follows Step 9'},
+                {from: 10, to: 11, relationship: 'FOLLOWS', explanation: 'Step 11 follows Step 10'},
+                {from: 11, to: 12, relationship: 'FOLLOWS', explanation: 'Step 12 follows Step 11'}
+            ];
+        }
+
+        /**
+         * Get concept details from knowledge graph
+         * @param {string} conceptName - e.g., "resentment", "fear"
+         */
+        async function getConcept(conceptName) {
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/concept/${encodeURIComponent(conceptName)}`);
+                const data = await response.json();
+                return data.success ? data.concept : null;
+            } catch (error) {
+                console.log('Knowledge graph unavailable for concept lookup');
+                return null;
+            }
+        }
+
+        /**
+         * Get remedy for a character defect
+         * @param {string} defectName - e.g., "pride", "fear"
+         */
+        async function getDefectRemedy(defectName) {
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/defect-remedy/${encodeURIComponent(defectName)}`);
+                const data = await response.json();
+                return data.success ? data.remedy : null;
+            } catch (error) {
+                console.log('Knowledge graph unavailable for remedy lookup');
+                return getMockRemedy(defectName);
+            }
+        }
+
+        function getMockRemedy(defectName) {
+            const remedies = {
+                'pride': {defect: 'Pride', remedy: 'Humility', stepsToWork: [6, 7], readings: ['p.76', '12&12 Step 7']},
+                'fear': {defect: 'Fear', remedy: 'Faith', stepsToWork: [2, 3, 11], readings: ['p.67-68', '12&12 Step 2']},
+                'resentment': {defect: 'Resentment', remedy: 'Acceptance', stepsToWork: [4, 10], readings: ['p.64-66', 'p.417']},
+                'selfishness': {defect: 'Selfishness', remedy: 'Service', stepsToWork: [12], readings: ['p.62', '12&12 Step 12']}
+            };
+            return remedies[defectName.toLowerCase()] || null;
+        }
+
+        /**
+         * Trace a concept across all literature
+         * @param {string} conceptName - concept to trace
+         */
+        async function traceConcept(conceptName) {
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/concept-trace/${encodeURIComponent(conceptName)}`);
+                const data = await response.json();
+                return data.success ? data.trace : [];
+            } catch (error) {
+                console.log('Knowledge graph unavailable for concept trace');
+                return [];
+            }
+        }
+
+        /**
+         * Display step relationship visualization in a container
+         * @param {string} containerId - ID of container element
+         */
+        async function displayStepRelationships(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const relationships = await getStepRelationships();
+
+            let html = '<div class="step-relationships-viz">';
+            html += '<h4>How the Steps Connect</h4>';
+            html += '<div class="step-flow">';
+
+            relationships.forEach(rel => {
+                const typeClass = rel.relationship.toLowerCase().replace('_', '-');
+                const arrow = rel.relationship === 'PROVIDES_INPUT_TO' ? '↗' : '→';
+                html += `
+                    <div class="step-connection ${typeClass}">
+                        <span class="step-num">Step ${rel.from}</span>
+                        <span class="connection-arrow">${arrow}</span>
+                        <span class="step-num">Step ${rel.to}</span>
+                        <span class="connection-label">${rel.explanation}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            container.innerHTML = html;
         }
 
         // Initialize dashboard when page loads

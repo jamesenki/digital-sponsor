@@ -1,0 +1,4 @@
+# Neo4j driver
+neo4j>=5.0.0
+
+# No other dependencies needed - using standard library for HTTP server
