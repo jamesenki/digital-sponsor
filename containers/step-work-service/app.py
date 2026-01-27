@@ -442,7 +442,7 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
                 'Cosmos DB Persistence',
                 'Step Work Version Control',
                 'Reflection Questions for Repeat Work',
-                'Step 11 Guided Meditation with Timer & Streak Tracking',
+                'Step 11 Meditation with Timer & Streak Tracking',
                 'Step 12 Service Tracker with Categories',
                 'Sponsorship Management',
                 'Twelfth Step Experience Journal'
@@ -2019,7 +2019,7 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   - Cosmos DB Persistence ({db_mode})')
     print(f'   - Step Work Version Control')
     print(f'   - Reflection Questions for Repeat Work')
-    print(f'   - Step 11 Guided Meditation with Timer & Streak Tracking')
+    print(f'   - Step 11 Meditation with Timer & Streak Tracking')
     print(f'   - Step 12 Service Tracker with Categories')
     print(f'   - Sponsorship Management')
     print(f'   - Twelfth Step Experience Journal')

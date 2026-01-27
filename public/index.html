@@ -4713,8 +4713,7 @@
 
             const tabsHtml = `
                 <button class="step-modal-tab active" onclick="showStep11Section('morning')">Morning Prayer</button>
-                <button class="step-modal-tab" onclick="showStep11Section('meditation')">Guided Meditation</button>
-                <button class="step-modal-tab" onclick="showStep11Section('evening')">Evening Review</button>
+                <button class="step-modal-tab" onclick="showStep11Section('meditation')">Meditation</button>
                 <button class="step-modal-tab" onclick="showStep11Section('journal')">Journal</button>
             `;
             document.getElementById('stepModalTabs').innerHTML = tabsHtml;
@@ -4725,9 +4724,6 @@
                 </div>
                 <div class="step-section" id="section-meditation">
                     ${buildMeditationTimerSection(meditationStats)}
-                </div>
-                <div class="step-section" id="section-evening">
-                    ${buildEveningReviewSection()}
                 </div>
                 <div class="step-section" id="section-journal">
                     ${buildStep11JournalSection()}

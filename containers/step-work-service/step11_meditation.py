@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Step 11 Guided Meditation Module
+Step 11 Meditation Module
 Provides meditation timer, tracking, prayers, and journaling for Step 11 practice
+Note: Evening Review has been moved to Step 10 Daily Inventory
 """
 
 from typing import List, Dict, Any, Optional
