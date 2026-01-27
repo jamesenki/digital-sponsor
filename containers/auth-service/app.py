@@ -10,6 +10,10 @@ import os
 import hashlib
 import time
 import uuid
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
@@ -27,6 +31,157 @@ logger = logging.getLogger(__name__)
 ADMIN_KEY = os.environ.get('ADMIN_KEY', 'DS-ADMIN-2026-BETA')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'temporary-secret-key')
 PORT = int(os.environ.get('PORT', 8080))
+
+# Email Configuration
+SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@commonsolution.org')
+APP_URL = os.environ.get('APP_URL', 'https://commonsolution.org')
+
+
+def send_beta_invitation_email(to_email: str, first_name: str, invite_code: str) -> bool:
+    """Send beta invitation email with code and instructions"""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        logger.warning("SMTP not configured - email not sent")
+        return False
+
+    subject = "Welcome to Digital Sponsor Beta - Your Invitation Code"
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }}
+        .code-box {{ background: #edf2f7; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #4a5568; text-align: center; margin: 20px 0; border: 2px dashed #667eea; }}
+        .warning {{ background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+        .cta-button {{ display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; }}
+        .section {{ background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border: 1px solid #e2e8f0; }}
+        .footer {{ text-align: center; padding: 20px; color: #718096; font-size: 0.85rem; }}
+        ul {{ padding-left: 20px; }}
+        li {{ margin: 8px 0; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to Digital Sponsor Beta</h1>
+        <p>Your AI-Powered Recovery Companion</p>
+    </div>
+    <div class="content">
+        <p>Dear {first_name or 'Friend'},</p>
+
+        <p>You've been invited to the <strong>Digital Sponsor Beta</strong> - an AI companion designed to support your recovery journey in Alcoholics Anonymous.</p>
+
+        <div class="code-box">
+            Your Invitation Code:<br>
+            <span style="font-size: 1.6rem; letter-spacing: 2px;">{invite_code}</span>
+        </div>
+
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="{APP_URL}" class="cta-button">Register Now</a>
+        </div>
+
+        <div class="warning">
+            <strong>Important:</strong> Digital Sponsor is a <em>supplement</em>, not a replacement for human sponsorship, AA meetings, or professional treatment. Nothing replaces the fellowship and wisdom of working with a human sponsor.
+        </div>
+
+        <div class="section">
+            <h3>What You Can Do:</h3>
+            <ul>
+                <li><strong>Ask Questions:</strong> "What does the Big Book say about resentments?"</li>
+                <li><strong>Work the Steps:</strong> Interactive worksheets for all 12 Steps</li>
+                <li><strong>Search Literature:</strong> Big Book, 12&12, Daily Reflections</li>
+                <li><strong>Track Progress:</strong> Sobriety counter, step work, daily inventory</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>Getting Started:</h3>
+            <ol>
+                <li>Go to <a href="{APP_URL}">{APP_URL}</a></li>
+                <li>Click "Register"</li>
+                <li>Enter your invitation code: <strong>{invite_code}</strong></li>
+                <li>Create your account</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h3>Your Code Expires In:</h3>
+            <p style="text-align: center; font-size: 1.2rem; color: #e53e3e;"><strong>72 Hours</strong></p>
+        </div>
+
+        <p>Questions? Reply to this email or reach out to us.</p>
+
+        <p>In fellowship,<br>
+        <strong>The Digital Sponsor Team</strong></p>
+    </div>
+    <div class="footer">
+        <p>Digital Sponsor is not affiliated with Alcoholics Anonymous World Services, Inc.</p>
+        <p>If you're in crisis, call the AA Hotline: 1-800-839-1686 or 911</p>
+    </div>
+</body>
+</html>
+"""
+
+    text_body = f"""
+Dear {first_name or 'Friend'},
+
+Welcome to Digital Sponsor Beta!
+
+Your Invitation Code: {invite_code}
+
+Register at: {APP_URL}
+
+IMPORTANT: Digital Sponsor is a supplement, not a replacement for human sponsorship, AA meetings, or professional treatment.
+
+What You Can Do:
+- Ask Questions: "What does the Big Book say about resentments?"
+- Work the Steps: Interactive worksheets for all 12 Steps
+- Search Literature: Big Book, 12&12, Daily Reflections
+- Track Progress: Sobriety counter, step work, daily inventory
+
+Getting Started:
+1. Go to {APP_URL}
+2. Click "Register"
+3. Enter code: {invite_code}
+4. Create your account
+
+Your code expires in 72 hours.
+
+In fellowship,
+The Digital Sponsor Team
+
+---
+Digital Sponsor is not affiliated with AA World Services.
+Crisis? Call AA Hotline: 1-800-839-1686 or 911
+"""
+
+    try:
+        message = MIMEMultipart("alternative")
+        message["Subject"] = subject
+        message["From"] = f"Digital Sponsor <{SENDER_EMAIL}>"
+        message["To"] = to_email
+
+        message.attach(MIMEText(text_body, "plain"))
+        message.attach(MIMEText(html_body, "html"))
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls(context=context)
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SENDER_EMAIL, to_email, message.as_string())
+
+        logger.info(f"Invitation email sent to {to_email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        return False
 
 
 class AuthService:
@@ -133,16 +288,19 @@ class AuthService:
         return self.user_repo.validate_invitation(code)
 
     def create_invitation(self, email: str, firstName: str, invitation_type: str = 'general') -> Dict[str, Any]:
-        """Create new invitation code"""
+        """Create new invitation code and send email"""
         invitation = self.user_repo.create_invitation(email, firstName, invitation_type)
         self.stats['total_invitations'] += 1
+
+        # Send invitation email
+        email_sent = send_beta_invitation_email(email, firstName, invitation['code'])
 
         return {
             'success': True,
             'invitation_code': invitation['code'],
-            'email_sent': True,
+            'email_sent': email_sent,
             'expires_at': invitation['expiresAt'],
-            'message': f'Beta invitation created for {email}'
+            'message': f'Beta invitation created for {email}' + (' - email sent!' if email_sent else ' - email not sent (SMTP not configured)')
         }
 
     def register_user(self, invitation_code: str, email: str, auth_provider: str = 'aad',

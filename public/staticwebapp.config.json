@@ -37,7 +37,7 @@
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com https://tpc.googlesyndication.com https://partner.googleadservices.com https://www.googleadservices.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://pagead2.googlesyndication.com; connect-src 'self' https://*.azurecontainerapps.io https://*.azurecontainer.io https://api.digitalsponsor.commonsolution.org https://digitalsponsor.commonsolution.org https://pagead2.googlesyndication.com https://*.google.com https://*.googlesyndication.com https://*.googleadservices.com;"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googlesyndication.com https://*.google.com https://*.googleadservices.com https://*.doubleclick.net https://adservice.google.com https://www.googletagservices.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; frame-src https://*.doubleclick.net https://*.googlesyndication.com https://*.google.com; connect-src 'self' https://*.azurecontainerapps.io https://*.azurecontainer.io https://api.digitalsponsor.commonsolution.org https://digitalsponsor.commonsolution.org https://*.googlesyndication.com https://*.google.com https://*.googleadservices.com https://*.doubleclick.net;"
   },
   "mimeTypes": {
     ".json": "application/json",

@@ -360,7 +360,7 @@ class UserRepository:
 
     def create_invitation(self, email: str, first_name: str,
                          invitation_type: str = 'general',
-                         expires_days: int = 7) -> Dict[str, Any]:
+                         expires_days: int = 3) -> Dict[str, Any]:
         """Create a beta invitation"""
         import time
 
