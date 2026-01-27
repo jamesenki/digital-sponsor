@@ -1986,19 +1986,18 @@
     <script>
         // Configuration - Central US deployment - PRODUCTION with HTTPS
         const config = {
-            // Auth still uses demo mode until we migrate it to Container Apps
-            authService: 'http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080',
-            apiGateway: 'http://digitalsponsor-auth-prod.centralus.azurecontainer.io:8080',
+            // Production auth service with Cosmos DB
+            authService: 'http://digitalsponsor-auth-cosmos.centralus.azurecontainer.io:8080',
+            apiGateway: 'http://digitalsponsor-auth-cosmos.centralus.azurecontainer.io:8080',
             // PRODUCTION HTTPS endpoints (Azure Container Apps)
             literatureService: 'https://ca-literature-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
             chatService: 'https://ca-chat-prod.nicesmoke-da12f415.centralus.azurecontainerapps.io',
             // Knowledge Graph Service (Neo4j)
             knowledgeGraphService: 'http://digitalsponsor-knowledge-graph.centralus.azurecontainer.io:3005',
             region: 'centralus',
-            customDomain: 'digitalsponsor.commonsolution.org',
-            // Demo mode only for auth - chat and literature are LIVE
-            demoMode: window.location.hostname.includes('commonsolution.org') ||
-                      window.location.hostname.includes('azurestaticapps.net'),
+            customDomain: 'commonsolution.org',
+            // Demo mode disabled - using live auth service
+            demoMode: false,
             // Feature flags
             useLiveChat: true,
             useLiveLiterature: true
