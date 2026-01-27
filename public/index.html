@@ -3170,10 +3170,21 @@
                         const showingCount = currentSearchState.results.length;
                         const totalCount = currentSearchState.totalCount;
 
+                        // Show search mode indicator
+                        const searchModeLabel = data.semanticEnabled
+                            ? '🧠 AI-Enhanced Search'
+                            : '🔤 Keyword Search';
+                        const searchModeStyle = data.semanticEnabled
+                            ? 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;'
+                            : 'background: #e2e8f0; color: #4a5568;';
+
                         let resultsHtml = `
                             <div class="literature-results-header">
                                 <h3>📚 AA Literature Results</h3>
-                                <p class="results-count">Showing ${showingCount} of ${totalCount} results</p>
+                                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <p class="results-count">Showing ${showingCount} of ${totalCount} results</p>
+                                    <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; ${searchModeStyle}">${searchModeLabel}</span>
+                                </div>
                             </div>
                         `;
 

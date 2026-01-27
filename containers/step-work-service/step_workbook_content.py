@@ -117,14 +117,14 @@ STEP_1_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s1_q1", "Describe the last time you tried to control your drinking. What happened?", "Think about times you made rules or limits for yourself.", True, 1),
-        StepQuestion("s1_q2", "List 5 examples of how your life has become unmanageable.", "Consider relationships, work, finances, health, and legal issues.", True, 2),
-        StepQuestion("s1_q3", "What does 'powerlessness' mean to you in your own words?", None, True, 3),
-        StepQuestion("s1_q4", "How has alcohol affected your relationships, work, health, and spirituality?", "Be specific with examples from your life.", False, 4),
-        StepQuestion("s1_q5", "What reservations do you still have about being an alcoholic?", "Be honest about any doubts or 'buts'.", False, 5),
-        StepQuestion("s1_q6", "Describe the progression of your drinking over time.", "From your first drink to your last.", False, 6),
-        StepQuestion("s1_q7", "What consequences have you faced due to your drinking?", "Include physical, emotional, legal, financial, and relational consequences.", False, 7),
-        StepQuestion("s1_q8", "Are you willing to accept that you cannot safely drink alcohol? Explain.", None, True, 8)
+        StepQuestion("s1_q1", "The Big Book says 'We learned that we had to fully concede to our innermost selves that we were alcoholics' (p.30). Have you fully conceded this? What reservations remain?", "Consider the difference between knowing intellectually and accepting emotionally.", True, 1),
+        StepQuestion("s1_q2", "The Doctor's Opinion describes 'the phenomenon of craving' that develops after the first drink (p.xxviii). Describe your experience with this craving - what happens once you start drinking?", "Think about the physical compulsion that follows the first drink.", True, 2),
+        StepQuestion("s1_q3", "The 12&12 asks 'Who cares to admit complete defeat?' (p.21). What makes admitting defeat so difficult for you? What keeps you from fully surrendering?", "Consider pride, ego, and self-image.", True, 3),
+        StepQuestion("s1_q4", "The Big Book states 'The delusion that we are like other people, or presently may be, has to be smashed' (p.30). What delusions about your drinking have you held onto?", "Times you convinced yourself you could drink normally.", False, 4),
+        StepQuestion("s1_q5", "The Big Book asks: 'If, when you honestly want to, you find you cannot quit entirely, or if when drinking, you have little control over the amount you take, you are probably alcoholic' (p.44). How does this apply to your experience?", "Be specific about your attempts to quit or control.", True, 5),
+        StepQuestion("s1_q6", "The 12&12 says the alcoholic's mind is 'warped into such an obsession for destructive drinking that only an act of Providence can remove it' (p.21). Describe the mental obsession - thoughts about drinking when not drinking.", "The obsession of the mind that precedes the first drink.", False, 6),
+        StepQuestion("s1_q7", "List 5 specific examples of how your life has become unmanageable - not just when drinking, but in all areas affected by alcoholism.", "Consider relationships, work, finances, health, emotions, and spiritual condition.", True, 7),
+        StepQuestion("s1_q8", "The Big Book describes alcoholism as a 'hopeless condition of mind and body' (p.20). Are you willing to accept this about yourself? What would accepting this mean for your future?", "This acceptance is the foundation of recovery.", True, 8)
     ]
 )
 
@@ -164,14 +164,14 @@ STEP_2_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s2_q1", "What is your current understanding of a 'Power greater than yourself'?", "It doesn't have to be a traditional God.", True, 1),
-        StepQuestion("s2_q2", "Describe times when you acted 'insanely' around alcohol.", "Insanity: doing the same thing expecting different results.", True, 2),
-        StepQuestion("s2_q3", "What barriers do you have to believing in a Higher Power?", "Past experiences, intellectual doubts, resentments against religion?", False, 3),
-        StepQuestion("s2_q4", "Can you accept that the AA group itself could be a power greater than yourself?", "The group has achieved what you could not alone.", False, 4),
-        StepQuestion("s2_q5", "What would 'restoration to sanity' look like in your life?", "Describe your life free from the insanity of alcoholism.", True, 5),
-        StepQuestion("s2_q6", "How has your concept of God or a Higher Power changed over time?", None, False, 6),
-        StepQuestion("s2_q7", "What evidence have you seen that this program works for others?", "Look at the people in the rooms.", False, 7),
-        StepQuestion("s2_q8", "Are you open-minded enough to try a spiritual solution? Explain.", None, True, 8)
+        StepQuestion("s2_q1", "The Big Book says 'As soon as we admitted the possible existence of a Creative Intelligence, a Spirit of the Universe underlying the totality of things, we began to be possessed of a new sense of power and direction' (p.46-47). Are you willing to admit this possibility? What holds you back?", "You don't have to believe fully - just be open to the possibility.", True, 1),
+        StepQuestion("s2_q2", "The 12&12 describes how alcoholics often say 'I won't believe in God' or 'I can't believe' (Step 2). Which describes you better, and why?", "There's a difference between unwillingness and inability.", True, 2),
+        StepQuestion("s2_q3", "The Big Book asks 'When we became alcoholics...we had to fearlessly face the proposition that either God is everything or else He is nothing. God either is, or He isn't. What was our choice to be?' (p.47). How do you answer this question?", "This doesn't require perfect faith, just a decision about direction.", True, 3),
+        StepQuestion("s2_q4", "The Big Book states 'We found that God does not make too hard terms with those who seek Him. To us, the Realm of Spirit is broad, roomy, all inclusive' (p.55). How does this affect your willingness to seek a Higher Power?", "The program doesn't require a specific religious belief.", False, 4),
+        StepQuestion("s2_q5", "Describe specific examples of 'insanity' in your drinking - times you expected different results from the same behavior, or made irrational choices around alcohol.", "The insanity isn't just drinking too much - it's the thinking.", True, 5),
+        StepQuestion("s2_q6", "The 12&12 mentions that many alcoholics 'had faith, but had no faith that it would perform this miracle' of removing the obsession (Step 2). Do you believe a Higher Power can restore you to sanity? Why or why not?", "Consider what 'restoration to sanity' would look like.", True, 6),
+        StepQuestion("s2_q7", "What evidence have you seen in AA meetings that this program can restore people to sanity? Describe specific examples of recovery you've witnessed.", "Look at the people in the rooms with long-term sobriety.", False, 7),
+        StepQuestion("s2_q8", "The Big Book says 'Lack of power, that was our dilemma. We had to find a power by which we could live, and it had to be a Power greater than ourselves' (p.45). Are you willing to seek this Power? What would that look like for you?", "This step is about willingness, not perfect belief.", True, 8)
     ]
 )
 
@@ -211,14 +211,14 @@ STEP_3_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s3_q1", "What does 'turning your will and life over to the care of God' mean to you?", None, True, 1),
-        StepQuestion("s3_q2", "In what areas of your life do you struggle with self-will?", "Where do you want to run the show?", True, 2),
-        StepQuestion("s3_q3", "Describe the 'actor' running the show in your life.", "See Big Book p. 60-61 for the actor analogy.", False, 3),
-        StepQuestion("s3_q4", "What fears do you have about letting go of control?", None, True, 4),
-        StepQuestion("s3_q5", "How has self-centeredness caused problems in your life?", "Give specific examples.", False, 5),
-        StepQuestion("s3_q6", "What specific things are you willing to turn over to God today?", None, True, 6),
-        StepQuestion("s3_q7", "Have you said the Third Step Prayer with your sponsor? What was that like?", "If not, plan when you will.", False, 7),
-        StepQuestion("s3_q8", "What does making this 'decision' require you to do differently?", "A decision without action is just a wish.", True, 8)
+        StepQuestion("s3_q1", "The Big Book describes how we are like 'an actor who wants to run the whole show' (p.60-61). How have you tried to arrange life to suit yourself - directing the actors, the lights, the scenery?", "Consider how you've tried to control people, places, and things.", True, 1),
+        StepQuestion("s3_q2", "The Big Book says 'Selfishness—self-centeredness! That, we think, is the root of our troubles' (p.62). How has self-centeredness been the root of YOUR troubles? Give specific examples.", "Think about times your selfishness hurt you or others.", True, 2),
+        StepQuestion("s3_q3", "The 12&12 says 'PRACTICING Step Three is like the opening of a door which to all appearances is still closed and locked. All we need is a key, and the decision to swing the door open. There is only one key, and it is called willingness' (Step 3). How willing are you to open this door?", "What hesitations do you have about surrendering?", True, 3),
+        StepQuestion("s3_q4", "The Big Book says 'Driven by a hundred forms of fear, self-delusion, self-seeking, and self-pity, we step on the toes of our fellows' (p.62). Which of these drive you most: fear, self-delusion, self-seeking, or self-pity? Give examples.", "Be honest about your primary character defects.", True, 4),
+        StepQuestion("s3_q5", "The Big Book declares 'Next we decided that hereafter in this drama of life, God was going to be our Director. He is the Principal; we are His agents' (p.63). What would your life look like if you let God be the Director instead of you?", "Describe specific changes in how you would approach daily life.", False, 5),
+        StepQuestion("s3_q6", "The Big Book states 'Neither could we reduce our self-centeredness much by wishing or trying on our own power. We had to have God's help' (p.62). Have you tried to change on your own power? What happened?", "Self-will alone is insufficient.", True, 6),
+        StepQuestion("s3_q7", "Read and reflect on the Third Step Prayer (p.63). What does 'Relieve me of the bondage of self, that I may better do Thy will' mean to you? Have you said this prayer with your sponsor?", "The bondage of self is the prison we've created.", False, 7),
+        StepQuestion("s3_q8", "The Big Book says this decision is 'the keystone of the new and triumphant arch through which we passed to freedom' (p.63). Step 3 is a decision - Steps 4-9 are the action. Are you ready to take this decision and follow through with action?", "A decision without action is just a wish.", True, 8)
     ]
 )
 
@@ -296,14 +296,14 @@ STEP_5_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s5_q1", "Who have you chosen to hear your Fifth Step? Why this person?", "Should be someone who understands alcoholism and won't be shocked.", True, 1),
-        StepQuestion("s5_q2", "What are you most afraid to reveal about yourself?", "These are often the things most important to share.", True, 2),
-        StepQuestion("s5_q3", "What secrets have you been keeping that feel like a burden?", None, False, 3),
-        StepQuestion("s5_q4", "How do you feel after completing your Fourth Step inventory?", None, False, 4),
-        StepQuestion("s5_q5", "What do you hope to gain from sharing your inventory honestly?", None, True, 5),
-        StepQuestion("s5_q6", "Are there any items in your inventory you're tempted to skip or minimize?", "These are probably the most important ones.", True, 6),
-        StepQuestion("s5_q7", "How has keeping secrets affected your sobriety and relationships?", None, False, 7),
-        StepQuestion("s5_q8", "After completing Step 5, what are you most grateful for?", "Answer after completing your Fifth Step.", False, 8)
+        StepQuestion("s5_q1", "The Big Book says 'We pocket our pride and go to it, illuminating every twist of character, every dark cranny of the past' (p.73). Who have you chosen to hear your Fifth Step, and are you willing to illuminate EVERY dark cranny?", "Choose someone who understands alcoholism and won't be shocked.", True, 1),
+        StepQuestion("s5_q2", "The 12&12 says 'When it comes to ego deflation, few Steps are harder to take than Five. But scarcely any Step is more necessary to longtime sobriety and peace of mind' (Step 5). What fears do you have about this ego deflation?", "These fears are normal but must be faced.", True, 2),
+        StepQuestion("s5_q3", "The Big Book warns 'If we skip this vital step, we may not overcome drinking' (p.72). What items in your inventory are you tempted to skip or minimize? Why are these the most important to share?", "We are only as sick as our secrets.", True, 3),
+        StepQuestion("s5_q4", "The 12&12 discusses how 'All of A.A.'s Twelve Steps ask us to go contrary to our natural desires' (Step 5). How is sharing your deepest secrets contrary to your natural instincts?", "Pride and fear resist confession.", False, 4),
+        StepQuestion("s5_q5", "The Big Book promises 'Once we have taken this step, withholding nothing, we are delighted. We can look the world in the eye...Our fears fall from us. We begin to feel the nearness of our Creator' (p.75). What do you hope to experience after Step 5?", "Focus on the promises, not the fears.", True, 5),
+        StepQuestion("s5_q6", "The Big Book emphasizes sharing 'the exact nature of our wrongs' (Step 5). What is the difference between listing WHAT you did versus revealing the EXACT NATURE of your wrongs - the underlying patterns and motivations?", "The exact nature is about character defects, not just actions.", True, 6),
+        StepQuestion("s5_q7", "The 12&12 says 'More than most people, the alcoholic leads a double life. He is very much the actor' (Step 5). How has keeping secrets and living a double life affected your sobriety and relationships?", "Secrets keep us sick.", False, 7),
+        StepQuestion("s5_q8", "After completing Step 5: The Big Book says 'We begin to have a spiritual experience' (p.75). Describe your experience after sharing your Fifth Step. What shifted?", "Answer this question after completing your Fifth Step.", False, 8)
     ]
 )
 
@@ -343,14 +343,14 @@ STEP_6_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s6_q1", "List the character defects you identified in your Fourth Step.", "Group them by type: selfishness, fear, dishonesty, resentment, etc.", True, 1),
-        StepQuestion("s6_q2", "Which defects are you most willing to have removed? Why?", None, True, 2),
-        StepQuestion("s6_q3", "Which defects are you clinging to? What do they give you?", "Be honest about the 'benefits' you perceive.", True, 3),
-        StepQuestion("s6_q4", "What does 'entirely ready' mean to you?", None, False, 4),
-        StepQuestion("s6_q5", "How have your character defects 'worked' for you in the past?", "They served a purpose, even if unhealthy.", False, 5),
-        StepQuestion("s6_q6", "What would your life look like without these defects?", None, False, 6),
-        StepQuestion("s6_q7", "Are there defects you're afraid to give up? Why?", None, True, 7),
-        StepQuestion("s6_q8", "What is the difference between 'wanting' to change and being 'ready' to change?", None, False, 8)
+        StepQuestion("s6_q1", "The Big Book asks 'Are we now ready to let God remove from us all the things which we have admitted are objectionable? Can He now take them all—every one?' (p.76). List the character defects revealed in Steps 4 and 5. Which are you NOT ready to give up?", "Be honest about defects you're attached to.", True, 1),
+        StepQuestion("s6_q2", "The 12&12 says 'This is the Step that separates the men from the boys' (Step 6). A clergyman friend of AA said 'Any person capable of enough willingness and honesty to try repeatedly Step Six on all his faults—without any reservations whatever—has indeed come a long way spiritually.' What reservations do you still have?", "Complete willingness is the goal.", True, 2),
+        StepQuestion("s6_q3", "The Big Book says 'If we still cling to something we will not let go, we ask God to help us be willing' (p.76). What are you clinging to? What does each defect 'give' you that makes it hard to release?", "Every defect serves a perceived purpose.", True, 3),
+        StepQuestion("s6_q4", "The 12&12 discusses how our instincts - for security, sex, companionship, prestige - become defects when 'exceeded their proper function' (Step 4). Which of your instincts have exceeded their proper bounds? Are you ready to have them right-sized?", "Instincts aren't bad - just out of proportion.", False, 4),
+        StepQuestion("s6_q5", "The 12&12 asks about a specific defect: 'Suppose we were afflicted by...just lust. Suppose we asked for its removal and nothing seemed to happen' then asks 'But was I entirely ready to have it removed? I rather doubt it' (Step 6). For each major defect, honestly assess: Am I ENTIRELY ready?", "Partial willingness is not enough.", True, 5),
+        StepQuestion("s6_q6", "The 12&12 says perfectionism in Step 6 is a 'stumbling block' - 'This being so, the question each of us must ask is: How many of us have had a really thorough desire to become perfect? Is there any one who has completely practiced humility?' What progress, not perfection, can you make?", "Aim for progress, not perfection.", False, 6),
+        StepQuestion("s6_q7", "The Big Book implies that removing defects makes us useful to God and others. How have your defects interfered with your usefulness to others? What could you contribute if they were removed?", "Defects block us from being of service.", True, 7),
+        StepQuestion("s6_q8", "The 12&12 says 'The chief activator of our defects has been self-centered fear' (Step 6). What fears underlie your character defects? Fear of losing what you have or not getting what you want?", "Fear drives most defects.", True, 8)
     ]
 )
 
@@ -390,14 +390,14 @@ STEP_7_CONTENT = StepWorkbookContent(
         )
     ],
     questions=[
-        StepQuestion("s7_q1", "What is your understanding of humility?", "Not thinking less of yourself, but thinking of yourself less.", True, 1),
-        StepQuestion("s7_q2", "How is humility different from humiliation?", None, False, 2),
-        StepQuestion("s7_q3", "Which shortcomings do you most want God to remove?", None, True, 3),
-        StepQuestion("s7_q4", "Have you said the Seventh Step Prayer with your sponsor? What was that like?", "If not, plan when you will.", False, 4),
-        StepQuestion("s7_q5", "How do you 'ask' God to remove your shortcomings on a daily basis?", None, True, 5),
-        StepQuestion("s7_q6", "What evidence have you seen that God removes character defects?", "In your life or others' lives.", False, 6),
-        StepQuestion("s7_q7", "Are you willing to take action to change, or just waiting for God to do it?", "God helps those who help themselves.", True, 7),
-        StepQuestion("s7_q8", "How will you know when a shortcoming has been removed or reduced?", None, False, 8)
+        StepQuestion("s7_q1", "The 12&12 says 'Since this Step so specifically concerns itself with humility, we should pause here to consider what humility is...Indeed, the attainment of greater humility is the foundation principle of each of A.A.'s Twelve Steps' (Step 7). What is YOUR understanding of humility? How is it different from humiliation?", "Humility is not thinking less of yourself, but thinking of yourself less.", True, 1),
+        StepQuestion("s7_q2", "The 12&12 says 'A great turning point in our lives came when we sought for humility itself as something we really wanted, rather than as something we must have' (Step 7). Do you WANT humility, or just feel you MUST have it? What's the difference?", "Wanting versus needing creates different motivations.", True, 2),
+        StepQuestion("s7_q3", "The 12&12 describes how 'Humility, as a word and as an ideal, has a very bad time of it in our world...Many people haven't even a nodding acquaintance with humility as a way of life' (Step 7). What negative associations have you had with humility? How is the AA understanding different?", "Our culture often confuses humility with weakness.", False, 3),
+        StepQuestion("s7_q4", "Read the Seventh Step Prayer (p.76): 'My Creator, I am now willing that you should have all of me, good and bad...' What does 'all of me, good and bad' mean? Are there parts you're holding back?", "God wants all of us, not just the parts we're ashamed of.", True, 4),
+        StepQuestion("s7_q5", "The prayer asks God to 'remove from me every single defect of character which stands in the way of my usefulness to you and my fellows.' How do your defects block your usefulness to God and others? Be specific.", "Service is a key part of recovery.", True, 5),
+        StepQuestion("s7_q6", "The 12&12 says 'For without some degree of humility, no alcoholic can stay sober at all' (Step 7). How has pride and lack of humility contributed to your drinking or relapses? How could humility protect your sobriety?", "Pride is the opposite of humility and blocks recovery.", True, 6),
+        StepQuestion("s7_q7", "The prayer ends 'Grant me strength, as I go out from here, to do your bidding.' Step 7 asks for removal of defects AND strength to take action. What actions are you willing to take to cooperate with God in changing your character?", "God removes defects but we must take action.", True, 7),
+        StepQuestion("s7_q8", "Have you said the Seventh Step Prayer on your knees with your sponsor? Describe that experience, or plan when you will do it. The Big Book says 'When ready, we say something like this...' - are you ready?", "This is typically done formally with your sponsor.", False, 8)
     ]
 )
 

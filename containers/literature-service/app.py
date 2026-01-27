@@ -4,6 +4,7 @@ import json
 import os
 import urllib.request
 import urllib.parse
+import threading
 from datetime import datetime
 
 # Azure OpenAI Configuration
@@ -15,23 +16,23 @@ def call_azure_openai_embedding(text):
     """Call Azure OpenAI text-embedding-ada-002 for embeddings"""
     try:
         url = f"{AZURE_OPENAI_ENDPOINT.rstrip('/')}/openai/deployments/{AZURE_OPENAI_EMBEDDING_DEPLOYMENT}/embeddings?api-version=2024-08-01-preview"
-        
+
         headers = {
             'api-key': AZURE_OPENAI_API_KEY,
             'Content-Type': 'application/json'
         }
-        
+
         data = {
             "input": text
         }
-        
-        req = urllib.request.Request(url, 
+
+        req = urllib.request.Request(url,
                                    data=json.dumps(data).encode('utf-8'),
                                    headers=headers)
-        
+
         with urllib.request.urlopen(req) as response:
             result = json.loads(response.read().decode('utf-8'))
-            
+
         if 'data' in result and len(result['data']) > 0:
             return {
                 'success': True,
@@ -44,7 +45,7 @@ def call_azure_openai_embedding(text):
                 'success': False,
                 'error': 'No embedding response from Azure OpenAI'
             }
-            
+
     except Exception as e:
         print(f"Azure OpenAI Embedding Error: {str(e)}")
         return {
@@ -55,8 +56,27 @@ def call_azure_openai_embedding(text):
 # Import comprehensive literature database
 from literature_database import get_all_literature_items
 
+# Import vector search engine
+from vector_search import (
+    VECTOR_SEARCH_ENGINE,
+    initialize_search_engine,
+    search as vector_search,
+    get_search_status
+)
+
 # Get all literature items from the comprehensive database
 LITERATURE_DATABASE = get_all_literature_items()
+
+# Initialize vector search engine in background
+def init_search_engine_background():
+    """Initialize search engine with embeddings in background"""
+    print("🔄 Initializing vector search engine in background...")
+    stats = initialize_search_engine(LITERATURE_DATABASE)
+    print(f"✅ Vector search engine initialized: {stats}")
+
+# Start background initialization
+init_thread = threading.Thread(target=init_search_engine_background, daemon=True)
+init_thread.start()
 
 class LiteratureHandler(http.server.BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -72,6 +92,10 @@ class LiteratureHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
+
+            # Get search engine status
+            search_status = get_search_status()
+
             response = {
                 'status': 'healthy',
                 'service': 'Digital Sponsor Literature Service',
@@ -83,90 +107,137 @@ class LiteratureHandler(http.server.BaseHTTPRequestHandler):
                     'recovery_concepts': len([item for item in LITERATURE_DATABASE if item['type'] == 'recovery_concepts']),
                     'crisis_support': len([item for item in LITERATURE_DATABASE if item['type'] == 'crisis_support'])
                 },
+                'search_engine': {
+                    'semantic_enabled': search_status['is_initialized'],
+                    'embeddings_computed': search_status['embeddings_computed'],
+                    'last_precompute': search_status['last_precompute_time']
+                },
                 'timestamp': datetime.now().isoformat(),
-                'version': '2.0.0'
+                'version': '3.0.0'
             }
             self.wfile.write(json.dumps(response).encode())
+
+        elif self.path == '/api/search/status':
+            # Search engine status endpoint
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            response = get_search_status()
+            self.wfile.write(json.dumps(response).encode())
+
         else:
             self.send_error(404)
     
     def do_POST(self):
         if self.path == '/api/search':
+            # Default search - uses hybrid (keyword + semantic) when available
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             try:
                 data = json.loads(post_data.decode('utf-8'))
                 query = data.get('query', '')
-                max_results = data.get('maxResults', 5)
-                
+                max_results = data.get('maxResults', 10)
+                search_mode = data.get('mode', 'hybrid')  # 'keyword', 'semantic', or 'hybrid'
+
                 if not query:
                     self.send_error(400, 'Query required')
                     return
-                
-                # Enhanced keyword search with themes and keywords
-                results = []
-                query_terms = [term.lower().strip() for term in query.split()]
-                
-                for item in LITERATURE_DATABASE:
-                    score = 0
-                    search_text = (item['title'] + ' ' + item['content']).lower()
-                    
-                    # Check title matches (higher weight)
-                    for term in query_terms:
-                        if term in item['title'].lower():
-                            score += 3
-                    
-                    # Check content matches
-                    for term in query_terms:
-                        if term in item['content'].lower():
-                            score += 2
-                    
-                    # Check keyword matches (if available)
-                    if 'keywords' in item:
-                        for keyword in item['keywords']:
-                            for term in query_terms:
-                                if term in keyword.lower():
-                                    score += 2
-                    
-                    # Check theme matches (if available)
-                    if 'themes' in item:
-                        for theme in item['themes']:
-                            for term in query_terms:
-                                if term in theme.lower():
-                                    score += 1
-                    
-                    if score > 0:
-                        # Add dynamic relevance score based on search match
-                        item_copy = item.copy()
-                        item_copy['searchScore'] = score
-                        results.append(item_copy)
-                
-                # Sort by search score (descending)
-                results.sort(key=lambda x: x.get('searchScore', 0), reverse=True)
-                
-                # Return top results or fallback to general recovery content
+
+                # Use vector search engine
+                results = vector_search(query, mode=search_mode, top_k=max_results)
+
+                # Fallback if no results
                 if not results:
-                    # Return crisis resources and steps if no match
-                    results = [item for item in LITERATURE_DATABASE if 
+                    results = [item for item in LITERATURE_DATABASE if
                               item['type'] in ['crisis_support', 'twelve_steps']][:max_results]
-                else:
-                    results = results[:max_results]
-                
+
+                search_status = get_search_status()
+
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                
+
                 response = {
                     'success': True,
                     'results': results,
                     'totalCount': len(results),
                     'query': query,
-                    'searchMode': 'enhanced_keyword_search',
+                    'searchMode': search_mode,
+                    'semanticEnabled': search_status['is_initialized'],
                     'databaseSize': len(LITERATURE_DATABASE)
                 }
                 self.wfile.write(json.dumps(response).encode())
-                
+
+            except json.JSONDecodeError:
+                self.send_error(400, 'Invalid JSON')
+
+        elif self.path == '/api/search/keyword':
+            # Keyword-only search (legacy compatibility)
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                data = json.loads(post_data.decode('utf-8'))
+                query = data.get('query', '')
+                max_results = data.get('maxResults', 10)
+
+                if not query:
+                    self.send_error(400, 'Query required')
+                    return
+
+                results = vector_search(query, mode='keyword', top_k=max_results)
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+
+                response = {
+                    'success': True,
+                    'results': results,
+                    'totalCount': len(results),
+                    'query': query,
+                    'searchMode': 'keyword',
+                    'databaseSize': len(LITERATURE_DATABASE)
+                }
+                self.wfile.write(json.dumps(response).encode())
+
+            except json.JSONDecodeError:
+                self.send_error(400, 'Invalid JSON')
+
+        elif self.path == '/api/search/semantic':
+            # Semantic-only search
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                data = json.loads(post_data.decode('utf-8'))
+                query = data.get('query', '')
+                max_results = data.get('maxResults', 10)
+
+                if not query:
+                    self.send_error(400, 'Query required')
+                    return
+
+                results = vector_search(query, mode='semantic', top_k=max_results)
+                search_status = get_search_status()
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+
+                response = {
+                    'success': True,
+                    'results': results,
+                    'totalCount': len(results),
+                    'query': query,
+                    'searchMode': 'semantic',
+                    'semanticEnabled': search_status['is_initialized'],
+                    'databaseSize': len(LITERATURE_DATABASE)
+                }
+                self.wfile.write(json.dumps(response).encode())
+
             except json.JSONDecodeError:
                 self.send_error(400, 'Invalid JSON')
                 
@@ -213,6 +284,7 @@ class LiteratureHandler(http.server.BaseHTTPRequestHandler):
 PORT = int(os.environ.get('PORT', 3002))
 with socketserver.TCPServer(('', PORT), LiteratureHandler) as httpd:
     print(f'📚 Digital Sponsor Literature Service running on port {PORT}')
-    print(f'📖 Mock literature records: {len(MOCK_LITERATURE)}')
+    print(f'📖 Literature records: {len(LITERATURE_DATABASE)}')
+    print('🔍 Search modes: keyword, semantic, hybrid (default)')
     print('🌍 Region: Central US (co-located with function apps)')
     httpd.serve_forever()
