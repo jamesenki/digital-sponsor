@@ -16,6 +16,7 @@ COPY reflection_questions.py .
 COPY step_workbook_content.py .
 COPY step11_meditation.py .
 COPY step12_service_tracker.py .
+COPY step8_list_builder.py .
 COPY app.py .
 
 # Expose port

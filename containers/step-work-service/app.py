@@ -29,12 +29,14 @@ from step_workbook_content import (
 )
 from step11_meditation import Step11MeditationGuide
 from step12_service_tracker import Step12ServiceTracker, ServiceCategory
+from step8_list_builder import Step8ListBuilder, get_step8_builder
 
 
 class StepWorkHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.data_manager = StepWorkDataManager()
         self.step4_guide = Step4WorkbookGuide()
+        self.step8_builder = get_step8_builder()
         super().__init__(*args, **kwargs)
 
     def do_OPTIONS(self):
@@ -144,6 +146,25 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
             user_id = path.split('/')[-1]
             self.handle_step12_experiences(user_id, query_params)
 
+        # ========================================
+        # Step 8 List Builder endpoints
+        # ========================================
+        elif path.startswith('/api/step8/suggestions/'):
+            user_id = path.split('/')[-1]
+            self.handle_step8_suggestions(user_id)
+
+        elif path.startswith('/api/step8/list/'):
+            parts = path.split('/')
+            if len(parts) >= 4:
+                user_id = parts[3]
+                session_id = parts[4] if len(parts) > 4 else None
+                self.handle_step8_get_list(user_id, session_id)
+            else:
+                self.send_error(400)
+
+        elif path == '/api/step8/reflection-questions':
+            self.handle_step8_reflection_questions()
+
         else:
             self.send_error(404)
 
@@ -224,6 +245,21 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path == '/api/step12/commitment':
             self.handle_step12_add_commitment(data)
 
+        # ========================================
+        # Step 8 List Builder POST endpoints
+        # ========================================
+        elif path == '/api/step8/list/create':
+            self.handle_step8_create_list(data)
+
+        elif path == '/api/step8/entry':
+            self.handle_step8_add_entry(data)
+
+        elif path == '/api/step8/entry/update':
+            self.handle_step8_update_entry(data)
+
+        elif path == '/api/step8/list/complete':
+            self.handle_step8_complete_list(data)
+
         else:
             self.send_error(404)
 
@@ -238,6 +274,10 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path.startswith('/api/stepwork/user/'):
             user_id = path.split('/')[-1]
             self.handle_delete_user_step_work(user_id)
+
+        elif path.startswith('/api/step8/entry/'):
+            entry_id = path.split('/')[-1]
+            self.handle_step8_delete_entry(entry_id)
 
         else:
             self.send_error(404)
@@ -1174,6 +1214,164 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         }
         self.send_json_response(response, status=201)
 
+    # ========================================
+    # Step 8 List Builder handlers
+    # ========================================
+
+    def handle_step8_suggestions(self, user_id):
+        """Get suggestions for Step 8 list from Step 4 data"""
+        # In production, this would fetch from Cosmos DB
+        # For now, return demo suggestions
+        demo_step4_data = {
+            'resentments': [
+                {'id': 'r1', 'who': 'Boss at work', 'cause': 'Passed me over for promotion'},
+                {'id': 'r2', 'who': 'Ex-spouse', 'cause': 'Took the kids'},
+                {'id': 'r3', 'who': 'Father', 'cause': 'Never showed approval'},
+            ],
+            'harms_done': [
+                {'id': 'h1', 'who': 'Mother', 'what_i_did': 'Lied about drinking'},
+                {'id': 'h2', 'who': 'Former employer', 'what_i_did': 'Called in sick when drinking'},
+                {'id': 'h3', 'who': 'Children', 'what_i_did': 'Missed important events'},
+            ]
+        }
+
+        suggestions = self.step8_builder.get_step4_suggestions(user_id, demo_step4_data)
+
+        response = {
+            'success': True,
+            'suggestions': suggestions,
+            'message': 'Pull suggestions from your Step 4 inventory'
+        }
+        self.send_json_response(response)
+
+    def handle_step8_get_list(self, user_id, session_id=None):
+        """Get Step 8 list for a user"""
+        if session_id:
+            step8_list = self.step8_builder.get_list(session_id)
+        else:
+            step8_list = self.step8_builder.get_latest_list(user_id)
+
+        if step8_list:
+            response = {
+                'success': True,
+                'list': step8_list.to_dict()
+            }
+        else:
+            response = {
+                'success': True,
+                'list': None,
+                'message': 'No Step 8 list found. Create one to get started.'
+            }
+        self.send_json_response(response)
+
+    def handle_step8_reflection_questions(self):
+        """Get Step 8 reflection questions"""
+        questions = self.step8_builder.get_reflection_questions()
+        response = {
+            'success': True,
+            'questions': questions
+        }
+        self.send_json_response(response)
+
+    def handle_step8_create_list(self, data):
+        """Create a new Step 8 list"""
+        user_id = data.get('user_id')
+        step4_session_id = data.get('step4_session_id')
+
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        # Check for existing lists to determine version number
+        existing_lists = self.step8_builder.get_user_lists(user_id)
+        version_number = len(existing_lists) + 1
+
+        new_list = self.step8_builder.create_list(
+            user_id=user_id,
+            step4_session_id=step4_session_id,
+            version_number=version_number
+        )
+
+        response = {
+            'success': True,
+            'list': new_list.to_dict(),
+            'message': f'Step 8 list created (Version {version_number})'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step8_add_entry(self, data):
+        """Add an entry to a Step 8 list"""
+        session_id = data.get('session_id')
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        entry = self.step8_builder.add_entry(session_id, data)
+
+        if entry:
+            response = {
+                'success': True,
+                'entry': entry.to_dict(),
+                'message': 'Entry added to your Step 8 list'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(404, 'Step 8 list not found')
+
+    def handle_step8_update_entry(self, data):
+        """Update an existing Step 8 entry"""
+        entry_id = data.get('entry_id')
+
+        if not entry_id:
+            self.send_error(400, 'entry_id required')
+            return
+
+        entry = self.step8_builder.update_entry(entry_id, data)
+
+        if entry:
+            response = {
+                'success': True,
+                'entry': entry.to_dict(),
+                'message': 'Entry updated successfully'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Entry not found')
+
+    def handle_step8_delete_entry(self, entry_id):
+        """Delete a Step 8 entry"""
+        success = self.step8_builder.delete_entry(entry_id)
+
+        if success:
+            response = {
+                'success': True,
+                'message': 'Entry deleted successfully'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Entry not found')
+
+    def handle_step8_complete_list(self, data):
+        """Mark a Step 8 list as completed"""
+        session_id = data.get('session_id')
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        completed_list = self.step8_builder.complete_list(session_id)
+
+        if completed_list:
+            response = {
+                'success': True,
+                'list': completed_list.to_dict(),
+                'message': 'Step 8 list completed! You can now proceed to Step 9.'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Step 8 list not found')
+
 
 # ========================================
 # Global services to persist across requests
@@ -1286,6 +1484,17 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   POST /api/step12/experience - Log 12th step experience')
     print(f'   GET  /api/step12/experiences/{{user_id}} - Get 12th step experiences')
     print(f'   POST /api/step12/commitment - Add service commitment')
+    print()
+    print(f'Step 8 List Builder Endpoints:')
+    print(f'   GET  /api/step8/suggestions/{{user_id}} - Get suggestions from Step 4')
+    print(f'   GET  /api/step8/list/{{user_id}} - Get user\'s latest Step 8 list')
+    print(f'   GET  /api/step8/list/{{user_id}}/{{session_id}} - Get specific Step 8 list')
+    print(f'   GET  /api/step8/reflection-questions - Get reflection questions')
+    print(f'   POST /api/step8/list/create - Create new Step 8 list')
+    print(f'   POST /api/step8/entry - Add entry to list')
+    print(f'   POST /api/step8/entry/update - Update entry')
+    print(f'   POST /api/step8/list/complete - Complete Step 8 list')
+    print(f'   DELETE /api/step8/entry/{{entry_id}} - Delete entry')
     print()
 
     httpd.serve_forever()
