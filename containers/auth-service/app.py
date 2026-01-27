@@ -397,10 +397,19 @@ class AuthService:
 
     def check_admin_permission(self, admin_key: str = None, user_email: str = None) -> bool:
         """Check if request has admin/invite permissions"""
+        # Hardcoded admin emails (synced with frontend ADMIN_EMAILS)
+        ADMIN_EMAILS = ['jamessimonster@icloud.com', 'jamesenki@digitalsponsor.ai']
+
         if admin_key and admin_key == ADMIN_KEY:
             return True
 
         if user_email:
+            # Check hardcoded admin list first
+            if user_email.lower() in [e.lower() for e in ADMIN_EMAILS]:
+                logger.info(f"Admin access granted to hardcoded admin: {user_email}")
+                return True
+
+            # Check database roles
             user = self.user_repo.get_user_by_email(user_email)
             if user and ('admin' in user.get('roles', []) or 'invite_manager' in user.get('roles', [])):
                 return True
@@ -413,12 +422,25 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         self.auth_service = auth_service
         super().__init__(*args, **kwargs)
 
-    def do_OPTIONS(self):
-        """Handle CORS preflight"""
-        self.send_response(200)
+    def send_cors_headers(self):
+        """Send CORS headers for all responses"""
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+    def send_error_response(self, status_code: int, message: str):
+        """Send error response with CORS headers"""
+        self.send_response(status_code)
+        self.send_header("Content-type", "application/json")
+        self.send_cors_headers()
+        self.end_headers()
+        response = {'success': False, 'error': message}
+        self.wfile.write(json.dumps(response).encode())
+
+    def do_OPTIONS(self):
+        """Handle CORS preflight"""
+        self.send_response(200)
+        self.send_cors_headers()
         self.end_headers()
 
     def do_GET(self):
@@ -432,7 +454,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith('/api/user/') and '/history' in self.path:
             self.handle_get_user_history()
         else:
-            self.send_error(404, "Endpoint not found")
+            self.send_error_response(404, "Endpoint not found")
 
     def do_POST(self):
         """Handle POST requests"""
@@ -445,7 +467,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith('/api/user/') and '/data/' in self.path:
             self.handle_save_encrypted_data()
         else:
-            self.send_error(404, "Endpoint not found")
+            self.send_error_response(404, "Endpoint not found")
 
     def do_DELETE(self):
         """Handle DELETE requests"""
@@ -456,13 +478,13 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith('/api/user/') and '/history' in self.path:
             self.handle_delete_user_history()
         else:
-            self.send_error(404, "Endpoint not found")
+            self.send_error_response(404, "Endpoint not found")
 
     def handle_health(self):
         """Health check endpoint"""
         self.send_response(200)
         self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_cors_headers()
         self.end_headers()
 
         db_health = self.auth_service.cosmos_client.health_check()
@@ -499,7 +521,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         self.send_response(200)
         self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_cors_headers()
         self.end_headers()
         self.wfile.write(json.dumps(result).encode())
 
@@ -517,7 +539,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             password = post_data.get('password', '')
 
             if not invitation_code or not email:
-                self.send_error(400, "Missing invitationCode or email")
+                self.send_error_response(400, "Missing invitationCode or email")
                 return
 
             result = self.auth_service.register_user(
@@ -528,13 +550,13 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             status_code = 201 if result['success'] else 400
             self.send_response(status_code)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
 
         except Exception as e:
             logger.error(f"Registration error: {str(e)}")
-            self.send_error(500, f"Registration failed: {str(e)}")
+            self.send_error_response(500, f"Registration failed: {str(e)}")
 
     def handle_login(self):
         """Handle user login"""
@@ -546,7 +568,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             password = post_data.get('password')
 
             if not email or not password:
-                self.send_error(400, "Missing email or password")
+                self.send_error_response(400, "Missing email or password")
                 return
 
             result = self.auth_service.authenticate_user(email, password)
@@ -554,13 +576,13 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             status_code = 200 if result['success'] else 401
             self.send_response(status_code)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
 
         except Exception as e:
             logger.error(f"Login error: {str(e)}")
-            self.send_error(500, f"Login failed: {str(e)}")
+            self.send_error_response(500, f"Login failed: {str(e)}")
 
     def handle_create_invitation(self):
         """Handle invitation creation"""
@@ -569,31 +591,35 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
             admin_key = post_data.get('adminKey')
-            user_email = post_data.get('userEmail')
+            # Accept both 'userEmail' and 'adminEmail' for compatibility
+            user_email = post_data.get('userEmail') or post_data.get('adminEmail')
             email = post_data.get('email')
             first_name = post_data.get('firstName')
             invitation_type = post_data.get('type', 'general')
 
+            logger.info(f"Invitation request: adminKey={bool(admin_key)}, userEmail={user_email}, targetEmail={email}")
+
             # Check permissions
             if not self.auth_service.check_admin_permission(admin_key, user_email):
-                self.send_error(403, "Insufficient permissions")
+                logger.warning(f"Permission denied for invitation by: {user_email}")
+                self.send_error_response(403, f"Insufficient permissions. User '{user_email}' is not an admin.")
                 return
 
             if not email or not first_name:
-                self.send_error(400, "Missing email or firstName")
+                self.send_error_response(400, "Missing email or firstName")
                 return
 
             result = self.auth_service.create_invitation(email, first_name, invitation_type)
 
             self.send_response(201)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
 
         except Exception as e:
             logger.error(f"Invitation creation error: {str(e)}")
-            self.send_error(500, f"Invitation creation failed: {str(e)}")
+            self.send_error_response(500, f"Invitation creation failed: {str(e)}")
 
     def handle_get_user_history(self):
         """Get user search and chat history"""
@@ -605,14 +631,14 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id = parts[3] if len(parts) > 3 else None
 
             if not user_id:
-                self.send_error(400, "Missing user ID")
+                self.send_error_response(400, "Missing user ID")
                 return
 
             history = self.auth_service.user_repo.get_user_history(user_id)
 
             self.send_response(200)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -624,7 +650,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Get history error: {str(e)}")
-            self.send_error(500, f"Failed to get history: {str(e)}")
+            self.send_error_response(500, f"Failed to get history: {str(e)}")
 
     def handle_delete_user_history(self):
         """Delete user search and chat history (GDPR)"""
@@ -635,14 +661,14 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id = parts[3] if len(parts) > 3 else None
 
             if not user_id:
-                self.send_error(400, "Missing user ID")
+                self.send_error_response(400, "Missing user ID")
                 return
 
             success = self.auth_service.user_repo.clear_user_history(user_id)
 
             self.send_response(200 if success else 500)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -653,7 +679,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Delete history error: {str(e)}")
-            self.send_error(500, f"Failed to delete history: {str(e)}")
+            self.send_error_response(500, f"Failed to delete history: {str(e)}")
 
     def _parse_user_data_path(self):
         """Parse /api/user/{userId}/data/{dataType} path"""
@@ -672,18 +698,18 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id, data_type = self._parse_user_data_path()
 
             if not user_id or not data_type:
-                self.send_error(400, "Missing user ID or data type")
+                self.send_error_response(400, "Missing user ID or data type")
                 return
 
             if data_type not in ['stepwork', 'chat']:
-                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                self.send_error_response(400, "Invalid data type. Use 'stepwork' or 'chat'")
                 return
 
             items = self.auth_service.encrypted_data_repo.get_encrypted_data(user_id, data_type)
 
             self.send_response(200)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -697,7 +723,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Get encrypted data error: {str(e)}")
-            self.send_error(500, f"Failed to get encrypted data: {str(e)}")
+            self.send_error_response(500, f"Failed to get encrypted data: {str(e)}")
 
     def handle_save_encrypted_data(self):
         """Save encrypted user data"""
@@ -705,11 +731,11 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id, data_type = self._parse_user_data_path()
 
             if not user_id or not data_type:
-                self.send_error(400, "Missing user ID or data type")
+                self.send_error_response(400, "Missing user ID or data type")
                 return
 
             if data_type not in ['stepwork', 'chat']:
-                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                self.send_error_response(400, "Invalid data type. Use 'stepwork' or 'chat'")
                 return
 
             content_length = int(self.headers.get('Content-Length', 0))
@@ -720,7 +746,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             metadata = post_data.get('metadata', {})
 
             if not item_id or not encrypted_payload:
-                self.send_error(400, "Missing itemId or encryptedPayload")
+                self.send_error_response(400, "Missing itemId or encryptedPayload")
                 return
 
             result = self.auth_service.encrypted_data_repo.save_encrypted_data(
@@ -729,7 +755,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
             self.send_response(201)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -741,7 +767,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Save encrypted data error: {str(e)}")
-            self.send_error(500, f"Failed to save encrypted data: {str(e)}")
+            self.send_error_response(500, f"Failed to save encrypted data: {str(e)}")
 
     def handle_delete_encrypted_data(self):
         """Delete encrypted user data of a specific type"""
@@ -749,18 +775,18 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id, data_type = self._parse_user_data_path()
 
             if not user_id or not data_type:
-                self.send_error(400, "Missing user ID or data type")
+                self.send_error_response(400, "Missing user ID or data type")
                 return
 
             if data_type not in ['stepwork', 'chat']:
-                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                self.send_error_response(400, "Invalid data type. Use 'stepwork' or 'chat'")
                 return
 
             success = self.auth_service.encrypted_data_repo.delete_encrypted_data(user_id, data_type)
 
             self.send_response(200 if success else 500)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -771,7 +797,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Delete encrypted data error: {str(e)}")
-            self.send_error(500, f"Failed to delete encrypted data: {str(e)}")
+            self.send_error_response(500, f"Failed to delete encrypted data: {str(e)}")
 
     def handle_delete_all_user_data(self):
         """Delete ALL encrypted user data (GDPR compliance)"""
@@ -782,14 +808,14 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             user_id = parts[3] if len(parts) > 3 else None
 
             if not user_id:
-                self.send_error(400, "Missing user ID")
+                self.send_error_response(400, "Missing user ID")
                 return
 
             success = self.auth_service.encrypted_data_repo.delete_all_user_data(user_id)
 
             self.send_response(200 if success else 500)
             self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_cors_headers()
             self.end_headers()
 
             response = {
@@ -800,7 +826,7 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Delete all user data error: {str(e)}")
-            self.send_error(500, f"Failed to delete all user data: {str(e)}")
+            self.send_error_response(500, f"Failed to delete all user data: {str(e)}")
 
 
 def create_handler(auth_service: AuthService):

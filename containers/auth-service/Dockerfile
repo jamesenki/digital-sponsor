@@ -4,7 +4,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy requirements and install dependencies
-COPY requirements.txt .
+COPY auth-service/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY shared/ ./shared/
 
 # Copy application code
-COPY app.py .
+COPY auth-service/app.py .
 
 # Expose port
 EXPOSE 8080
