@@ -2886,7 +2886,7 @@
             alert('Data exported successfully!');
         }
 
-        function deleteAllData() {
+        async function deleteAllData() {
             if (!confirm('⚠️ WARNING: This will delete ALL your data including step work, profile, sobriety date, and settings. This cannot be undone.')) return;
             if (!confirm('Are you absolutely sure? Type "DELETE" in the next prompt to confirm.')) return;
 
@@ -2896,11 +2896,7 @@
                 return;
             }
 
-            localStorage.clear();
-            alert('All data has been deleted. The page will now reload.');
-            window.location.reload();
-
-            // Also delete from cloud if sync is available
+            // Delete from cloud first if sync is available
             if (syncManager && currentUser) {
                 try {
                     await fetch(`${config.authService}/api/user/${currentUser.id}/data`, {
@@ -2910,6 +2906,10 @@
                     console.error('Failed to delete cloud data:', e);
                 }
             }
+
+            localStorage.clear();
+            alert('All data has been deleted. The page will now reload.');
+            window.location.reload();
         }
 
         // Manual sync trigger
