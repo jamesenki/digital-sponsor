@@ -8,14 +8,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy shared module
-COPY shared/ ./shared/
-
 # Copy step work service files
 COPY step_work_data_model.py .
 COPY step4_workbook.py .
 COPY rag_integration.py .
 COPY reflection_questions.py .
+COPY step_workbook_content.py .
+COPY step11_meditation.py .
+COPY step12_service_tracker.py .
 COPY app.py .
 
 # Expose port

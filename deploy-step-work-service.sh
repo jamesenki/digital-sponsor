@@ -10,7 +10,7 @@ RESOURCE_GROUP="rg-digitalsponsor"
 LOCATION="centralus"
 REGISTRY_NAME="crdigitalsponsornew"
 IMAGE_NAME="step-work-service"
-TAG="v2.0.0-rag"
+TAG="v3.0.0-workbooks"
 CONTAINER_NAME="digitalsponsor-stepwork-v2"
 
 # Check if resource group exists
@@ -59,6 +59,7 @@ az container create \
     --ports 3003 \
     --memory 1 \
     --cpu 0.5 \
+    --os-type Linux \
     --environment-variables \
         PORT=3003 \
         LITERATURE_SERVICE_URL=http://digitalsponsor-literature-massive.centralus.azurecontainer.io:3002 \

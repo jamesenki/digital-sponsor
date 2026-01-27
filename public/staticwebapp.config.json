@@ -6,33 +6,27 @@
     },
     {
       "route": "/admin",
-      "serve": "/admin.html",
-      "statusCode": 200
+      "rewrite": "/admin.html"
     },
     {
       "route": "/auth-proxy",
-      "serve": "/auth-proxy.html",
-      "statusCode": 200
+      "rewrite": "/auth-proxy.html"
     },
     {
       "route": "/privacy",
-      "serve": "/privacy.html",
-      "statusCode": 200
+      "rewrite": "/privacy.html"
     },
     {
       "route": "/terms",
-      "serve": "/terms.html",
-      "statusCode": 200
+      "rewrite": "/terms.html"
     },
     {
       "route": "/contact",
-      "serve": "/contact.html",
-      "statusCode": 200
+      "rewrite": "/contact.html"
     },
     {
       "route": "/*",
-      "serve": "/index.html",
-      "statusCode": 200
+      "rewrite": "/index.html"
     }
   ],
   "responseOverrides": {
@@ -45,9 +39,12 @@
       "statusCode": 302
     },
     "404": {
-      "redirect": "/404",
-      "statusCode": 404
+      "rewrite": "/index.html"
     }
+  },
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["*.{css,js,png,jpg,gif,ico,svg,json,txt,woff,woff2}"]
   },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",

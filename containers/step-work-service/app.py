@@ -796,11 +796,10 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
 
     def handle_step11_prayers(self):
         """Get Step 11 morning and evening prayers"""
-        prayers = self.step11_meditation.get_prayers()
         response = {
             'success': True,
-            'morning_prayer': prayers['morning'].to_dict(),
-            'evening_prayer': prayers['evening'].to_dict()
+            'morning_prayer': self.step11_meditation.get_morning_prayer(),
+            'evening_prayer': self.step11_meditation.get_evening_prayer()
         }
         self.send_json_response(response)
 
