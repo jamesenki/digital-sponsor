@@ -232,7 +232,8 @@ class UserRepository:
     def create_user(self, email: str, first_name: str, last_name: str = '',
                     password_hash: str = '', roles: List[str] = None,
                     invitation_type: str = 'general', auth_provider: str = 'local',
-                    display_name: str = '', phone: str = '', encryption_salt: str = '') -> Dict[str, Any]:
+                    display_name: str = '', last_initial: str = '', phone: str = '',
+                    zip_code: str = '', encryption_salt: str = '') -> Dict[str, Any]:
         """Create a new user"""
         user_id = f"user_{uuid.uuid4()}"
 
@@ -248,7 +249,9 @@ class UserRepository:
             'displayName': display_name or first_name,
             'firstName': first_name,
             'lastName': last_name,
+            'lastInitial': last_initial.upper() if last_initial else '',
             'phone': phone,
+            'zipCode': zip_code,
             'passwordHash': password_hash,
             'encryptionSalt': encryption_salt,
             'roles': roles or ['user'],
@@ -260,6 +263,7 @@ class UserRepository:
                 'sobrietyDate': None,
                 'homeGroup': None,
                 'sponsorName': None,
+                'willingToSponsor': False,
                 'preferences': {}
             },
             'searchHistory': [],

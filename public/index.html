@@ -1662,6 +1662,11 @@
                     <small>This is how you'll appear in the app</small>
                 </div>
                 <div class="form-group">
+                    <label for="lastInitial">Last Initial</label>
+                    <input type="text" id="lastInitial" maxlength="1" placeholder="S" style="width: 60px; text-transform: uppercase;">
+                    <small>For anonymity (e.g., "John S.")</small>
+                </div>
+                <div class="form-group">
                     <label for="registerEmail">Email Address</label>
                     <input type="email" id="registerEmail" required>
                 </div>
@@ -1669,6 +1674,11 @@
                     <label for="registerPhone">Phone (optional)</label>
                     <input type="tel" id="registerPhone" placeholder="(555) 123-4567">
                     <small>For sponsor contact - completely optional</small>
+                </div>
+                <div class="form-group">
+                    <label for="registerZipCode">Zip Code</label>
+                    <input type="text" id="registerZipCode" maxlength="10" placeholder="12345">
+                    <small>Helps us connect you with local resources</small>
                 </div>
                 <div class="form-group">
                     <label for="registerPassword">Password</label>
@@ -1746,6 +1756,10 @@
                                 <input type="text" id="profileDisplayName" placeholder="How you want to be called" onchange="saveProfile()">
                             </div>
                             <div>
+                                <label>Last Initial</label>
+                                <input type="text" id="profileLastInitial" maxlength="1" placeholder="S" style="width: 60px; text-transform: uppercase;" onchange="saveProfile()">
+                            </div>
+                            <div>
                                 <label>Email</label>
                                 <input type="email" id="profileEmail" readonly style="background: #f0f0f0; cursor: not-allowed;">
                             </div>
@@ -1754,12 +1768,23 @@
                                 <input type="tel" id="profilePhone" placeholder="For sponsor contact" onchange="saveProfile()">
                             </div>
                             <div>
+                                <label>Zip Code</label>
+                                <input type="text" id="profileZipCode" maxlength="10" placeholder="12345" onchange="saveProfile()">
+                            </div>
+                            <div>
                                 <label>Home Group</label>
                                 <input type="text" id="profileHomeGroup" placeholder="Enter your home group" onchange="saveProfile()">
                             </div>
                             <div>
                                 <label>Sponsor Name (Optional)</label>
                                 <input type="text" id="profileSponsor" placeholder="Your sponsor's name" onchange="saveProfile()">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" id="profileWillingToSponsor" onchange="saveProfile()" style="width: 18px; height: 18px;">
+                                    <span>Willing to Sponsor Others</span>
+                                </label>
+                                <small style="margin-left: 28px; display: block; color: #718096;">Check this if you'd like to be matched with someone seeking a sponsor</small>
                             </div>
                         </div>
                     </div>
@@ -2215,37 +2240,52 @@
         function loadProfile() {
             // Load from currentUser first, then localStorage as fallback
             const displayName = currentUser?.displayName || localStorage.getItem('profile_display_name') || '';
+            const lastInitial = currentUser?.lastInitial || localStorage.getItem('profile_last_initial') || '';
             const email = currentUser?.email || localStorage.getItem('profile_email') || '';
             const phone = currentUser?.phone || localStorage.getItem('profile_phone') || '';
+            const zipCode = currentUser?.zipCode || localStorage.getItem('profile_zip_code') || '';
             const homeGroup = currentUser?.profile?.homeGroup || localStorage.getItem('profile_home_group') || '';
             const sponsor = currentUser?.profile?.sponsorName || localStorage.getItem('profile_sponsor') || '';
+            const willingToSponsor = currentUser?.profile?.willingToSponsor || localStorage.getItem('profile_willing_to_sponsor') === 'true';
 
             document.getElementById('profileDisplayName').value = displayName;
+            document.getElementById('profileLastInitial').value = lastInitial;
             document.getElementById('profileEmail').value = email;
             document.getElementById('profilePhone').value = phone;
+            document.getElementById('profileZipCode').value = zipCode;
             document.getElementById('profileHomeGroup').value = homeGroup;
             document.getElementById('profileSponsor').value = sponsor;
+            document.getElementById('profileWillingToSponsor').checked = willingToSponsor;
         }
 
         function saveProfile() {
             const displayName = document.getElementById('profileDisplayName').value;
+            const lastInitial = document.getElementById('profileLastInitial').value.toUpperCase();
             const phone = document.getElementById('profilePhone').value;
+            const zipCode = document.getElementById('profileZipCode').value;
             const homeGroup = document.getElementById('profileHomeGroup').value;
             const sponsor = document.getElementById('profileSponsor').value;
+            const willingToSponsor = document.getElementById('profileWillingToSponsor').checked;
 
             // Save to localStorage
             localStorage.setItem('profile_display_name', displayName);
+            localStorage.setItem('profile_last_initial', lastInitial);
             localStorage.setItem('profile_phone', phone);
+            localStorage.setItem('profile_zip_code', zipCode);
             localStorage.setItem('profile_home_group', homeGroup);
             localStorage.setItem('profile_sponsor', sponsor);
+            localStorage.setItem('profile_willing_to_sponsor', willingToSponsor.toString());
 
             // Update currentUser if exists
             if (currentUser) {
                 currentUser.displayName = displayName;
+                currentUser.lastInitial = lastInitial;
                 currentUser.phone = phone;
+                currentUser.zipCode = zipCode;
                 if (!currentUser.profile) currentUser.profile = {};
                 currentUser.profile.homeGroup = homeGroup;
                 currentUser.profile.sponsorName = sponsor;
+                currentUser.profile.willingToSponsor = willingToSponsor;
             }
 
             // TODO: Sync to cloud when cloud storage is implemented
@@ -3658,7 +3698,9 @@
 
             const email = document.getElementById('registerEmail').value;
             const displayName = document.getElementById('displayName').value;
+            const lastInitial = document.getElementById('lastInitial').value.toUpperCase();
             const phone = document.getElementById('registerPhone').value;
+            const zipCode = document.getElementById('registerZipCode').value;
             const password = document.getElementById('registerPassword').value;
 
             // Check if using demo invitation code - bypass auth service
@@ -3674,7 +3716,9 @@
                         email: email,
                         displayName: displayName || demoUser.firstName,
                         firstName: demoUser.firstName,
+                        lastInitial: lastInitial,
                         phone: phone,
+                        zipCode: zipCode,
                         type: demoUser.type
                     };
                     sessionToken = 'demo-token-' + Date.now();
@@ -3692,7 +3736,9 @@
                 invitationCode: invitationCode,
                 email: email,
                 displayName: displayName,
+                lastInitial: lastInitial,
                 phone: phone,
+                zipCode: zipCode,
                 password: password,
                 authProvider: 'local'
             };

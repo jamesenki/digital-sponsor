@@ -304,7 +304,8 @@ class AuthService:
         }
 
     def register_user(self, invitation_code: str, email: str, auth_provider: str = 'aad',
-                      display_name: str = '', phone: str = '', password: str = '') -> Dict[str, Any]:
+                      display_name: str = '', last_initial: str = '', phone: str = '',
+                      zip_code: str = '', password: str = '') -> Dict[str, Any]:
         """Register new user with invitation code"""
         # Validate invitation
         validation = self.validate_invitation(invitation_code)
@@ -333,7 +334,9 @@ class AuthService:
             invitation_type=invitation['type'],
             auth_provider=auth_provider,
             display_name=final_display_name,
+            last_initial=last_initial,
             phone=phone,
+            zip_code=zip_code,
             password_hash=password_hash
         )
 
@@ -353,7 +356,9 @@ class AuthService:
                 'email': email,
                 'displayName': final_display_name,
                 'firstName': invitation.get('firstName', final_display_name),
+                'lastInitial': last_initial,
                 'phone': phone,
+                'zipCode': zip_code,
                 'encryptionSalt': user.get('encryptionSalt', ''),
                 'invitationType': invitation['type']
             },
@@ -386,7 +391,9 @@ class AuthService:
                 'email': user['email'],
                 'displayName': user.get('displayName', user.get('firstName', '')),
                 'firstName': user.get('firstName', ''),
+                'lastInitial': user.get('lastInitial', ''),
                 'phone': user.get('phone', ''),
+                'zipCode': user.get('zipCode', ''),
                 'encryptionSalt': user.get('encryptionSalt', ''),
                 'roles': user.get('roles', ['user']),
                 'profile': user.get('profile', {})
@@ -535,7 +542,9 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             email = post_data.get('email')
             auth_provider = post_data.get('authProvider', 'local')
             display_name = post_data.get('displayName', '')
+            last_initial = post_data.get('lastInitial', '')
             phone = post_data.get('phone', '')
+            zip_code = post_data.get('zipCode', '')
             password = post_data.get('password', '')
 
             if not invitation_code or not email:
@@ -544,7 +553,8 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
             result = self.auth_service.register_user(
                 invitation_code, email, auth_provider,
-                display_name=display_name, phone=phone, password=password
+                display_name=display_name, last_initial=last_initial,
+                phone=phone, zip_code=zip_code, password=password
             )
 
             status_code = 201 if result['success'] else 400
