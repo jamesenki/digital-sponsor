@@ -736,6 +736,111 @@ class StepWorkRepository:
             return False
 
 
+class EncryptedDataRepository:
+    """
+    Repository for encrypted user data (step work, chat history).
+    Data is encrypted client-side - server only stores opaque blobs.
+    """
+
+    CONTAINER_NAME = 'EncryptedUserData'
+
+    def __init__(self, cosmos_client: Optional[CosmosDBClient] = None):
+        self.db = cosmos_client or CosmosDBClient()
+
+    def save_encrypted_data(self, user_id: str, data_type: str, item_id: str,
+                            encrypted_payload: Dict[str, Any],
+                            metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Save encrypted data for a user.
+
+        Args:
+            user_id: The user's ID (partition key)
+            data_type: Type of data ('stepwork' or 'chat')
+            item_id: Unique identifier for this item
+            encrypted_payload: The encrypted data blob (includes 'data' and 'iv')
+            metadata: Unencrypted metadata for queries (key, timestamp, etc.)
+        """
+        doc_id = f"{data_type}_{user_id}_{item_id}"
+
+        document = {
+            'id': doc_id,
+            'docType': 'encrypted_data',
+            'userId': user_id,
+            'dataType': data_type,
+            'itemId': item_id,
+            'encryptedPayload': encrypted_payload,
+            'metadata': metadata or {},
+            'updatedAt': datetime.utcnow().isoformat() + 'Z'
+        }
+
+        # Check if document exists - upsert
+        existing = self.db.get_by_id(self.CONTAINER_NAME, doc_id, user_id)
+        if existing:
+            return self.db.update(self.CONTAINER_NAME, doc_id, user_id, {
+                'encryptedPayload': encrypted_payload,
+                'metadata': metadata or {},
+                'updatedAt': datetime.utcnow().isoformat() + 'Z'
+            })
+        else:
+            return self.db.create(self.CONTAINER_NAME, document)
+
+    def get_encrypted_data(self, user_id: str, data_type: str) -> List[Dict[str, Any]]:
+        """Get all encrypted data of a specific type for a user."""
+        if self.db._in_memory_mode:
+            store = self.db._in_memory_store.get(self.CONTAINER_NAME, {})
+            results = []
+            for doc in store.values():
+                if (doc.get('docType') == 'encrypted_data' and
+                    doc.get('userId') == user_id and
+                    doc.get('dataType') == data_type):
+                    results.append(doc)
+            return results
+
+        results = self.db.query(
+            self.CONTAINER_NAME,
+            "SELECT * FROM c WHERE c.docType = 'encrypted_data' AND c.userId = @userId AND c.dataType = @dataType",
+            [
+                {'name': '@userId', 'value': user_id},
+                {'name': '@dataType', 'value': data_type}
+            ],
+            partition_key=user_id
+        )
+        return results
+
+    def get_encrypted_item(self, user_id: str, data_type: str, item_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific encrypted item."""
+        doc_id = f"{data_type}_{user_id}_{item_id}"
+        return self.db.get_by_id(self.CONTAINER_NAME, doc_id, user_id)
+
+    def delete_encrypted_data(self, user_id: str, data_type: str) -> bool:
+        """Delete all encrypted data of a specific type for a user."""
+        try:
+            items = self.get_encrypted_data(user_id, data_type)
+            for item in items:
+                self.db.delete(self.CONTAINER_NAME, item['id'], user_id)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete encrypted data: {e}")
+            return False
+
+    def delete_encrypted_item(self, user_id: str, data_type: str, item_id: str) -> bool:
+        """Delete a specific encrypted item."""
+        doc_id = f"{data_type}_{user_id}_{item_id}"
+        return self.db.delete(self.CONTAINER_NAME, doc_id, user_id)
+
+    def delete_all_user_data(self, user_id: str) -> bool:
+        """Delete ALL encrypted data for a user (GDPR compliance)."""
+        try:
+            # Delete stepwork
+            self.delete_encrypted_data(user_id, 'stepwork')
+            # Delete chat
+            self.delete_encrypted_data(user_id, 'chat')
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete all user data: {e}")
+            return False
+
+
 # Convenience functions for creating repositories
 def create_user_repository() -> UserRepository:
     """Create a UserRepository with default client"""
@@ -745,3 +850,8 @@ def create_user_repository() -> UserRepository:
 def create_step_work_repository() -> StepWorkRepository:
     """Create a StepWorkRepository with default client"""
     return StepWorkRepository(CosmosDBClient())
+
+
+def create_encrypted_data_repository() -> EncryptedDataRepository:
+    """Create an EncryptedDataRepository with default client"""
+    return EncryptedDataRepository(CosmosDBClient())

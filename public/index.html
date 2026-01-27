@@ -1764,6 +1764,10 @@
                     <!-- Data Management Card -->
                     <div class="dashboard-card">
                         <h3>💾 My Data</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #f7fafc; border-radius: 8px;">
+                            <span id="syncStatus" style="font-size: 0.9rem;">☁️ Ready</span>
+                            <button class="data-btn data-btn-view" onclick="manualSync()" style="font-size: 0.85rem;">Sync Now</button>
+                        </div>
                         <ul class="data-management-list">
                             <li>
                                 <span>Step Workbooks</span>
@@ -2068,6 +2072,7 @@
             loadStepProgress();
             loadProfile();
             updateWelcomeMessage();
+            restoreChatHistory();
         }
 
         // Sobriety Timer Functions
@@ -2329,6 +2334,446 @@
             }
         }
 
+        // =====================================================================
+        // CLIENT-SIDE ENCRYPTION (using Web Crypto API)
+        // =====================================================================
+
+        class ClientEncryption {
+            constructor() {
+                this.key = null;
+                this.isReady = false;
+            }
+
+            async deriveKey(password, salt) {
+                try {
+                    const encoder = new TextEncoder();
+                    const keyMaterial = await crypto.subtle.importKey(
+                        'raw',
+                        encoder.encode(password),
+                        'PBKDF2',
+                        false,
+                        ['deriveKey']
+                    );
+
+                    this.key = await crypto.subtle.deriveKey(
+                        {
+                            name: 'PBKDF2',
+                            salt: encoder.encode(salt),
+                            iterations: 100000,
+                            hash: 'SHA-256'
+                        },
+                        keyMaterial,
+                        { name: 'AES-GCM', length: 256 },
+                        false,
+                        ['encrypt', 'decrypt']
+                    );
+
+                    this.isReady = true;
+                    console.log('Encryption key derived successfully');
+                    return this.key;
+                } catch (error) {
+                    console.error('Failed to derive encryption key:', error);
+                    this.isReady = false;
+                    return null;
+                }
+            }
+
+            async encrypt(plaintext) {
+                if (!this.isReady) {
+                    console.warn('Encryption not ready');
+                    return null;
+                }
+
+                try {
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const encoded = new TextEncoder().encode(JSON.stringify(plaintext));
+
+                    const ciphertext = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv },
+                        this.key,
+                        encoded
+                    );
+
+                    return {
+                        data: btoa(String.fromCharCode(...new Uint8Array(ciphertext))),
+                        iv: btoa(String.fromCharCode(...iv))
+                    };
+                } catch (error) {
+                    console.error('Encryption failed:', error);
+                    return null;
+                }
+            }
+
+            async decrypt(encryptedData) {
+                if (!this.isReady || !encryptedData) {
+                    return null;
+                }
+
+                try {
+                    const iv = Uint8Array.from(atob(encryptedData.iv), c => c.charCodeAt(0));
+                    const ciphertext = Uint8Array.from(atob(encryptedData.data), c => c.charCodeAt(0));
+
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: 'AES-GCM', iv },
+                        this.key,
+                        ciphertext
+                    );
+
+                    return JSON.parse(new TextDecoder().decode(decrypted));
+                } catch (error) {
+                    console.error('Decryption failed:', error);
+                    return null;
+                }
+            }
+        }
+
+        // =====================================================================
+        // SYNC MANAGER - Handles cloud storage synchronization
+        // =====================================================================
+
+        class SyncManager {
+            constructor(userId, encryption, authService) {
+                this.userId = userId;
+                this.encryption = encryption;
+                this.authService = authService;
+                this.isSyncing = false;
+                this.lastSyncTime = null;
+                this.syncDebounceTimer = null;
+            }
+
+            // Step work keys to sync
+            get stepWorkKeys() {
+                return [
+                    'step4_inventory',
+                    'step8_list',
+                    'step9_amends',
+                    'step11_meditation_stats',
+                    'step12_service_log',
+                    'sobriety_date',
+                    'profile_home_group',
+                    'profile_sponsor',
+                    'profile_display_name',
+                    'profile_phone'
+                ];
+            }
+
+            // Get all step work data from localStorage
+            getLocalStepWork() {
+                const data = {};
+
+                // Named keys
+                this.stepWorkKeys.forEach(key => {
+                    const val = localStorage.getItem(key);
+                    if (val) {
+                        try {
+                            data[key] = key.includes('date') ? val : JSON.parse(val);
+                        } catch {
+                            data[key] = val;
+                        }
+                    }
+                });
+
+                // Step 10 daily inventories (dated)
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('step10_')) {
+                        try {
+                            data[key] = JSON.parse(localStorage.getItem(key));
+                        } catch {
+                            data[key] = localStorage.getItem(key);
+                        }
+                    }
+                }
+
+                // Step completion status
+                for (let i = 1; i <= 12; i++) {
+                    const completedKey = `step${i}_completed`;
+                    const progressKey = `step${i}_in_progress`;
+                    if (localStorage.getItem(completedKey)) {
+                        data[completedKey] = localStorage.getItem(completedKey);
+                    }
+                    if (localStorage.getItem(progressKey)) {
+                        data[progressKey] = localStorage.getItem(progressKey);
+                    }
+                }
+
+                return data;
+            }
+
+            // Sync step work to cloud
+            async syncStepWorkToCloud() {
+                if (this.isSyncing || !this.encryption?.isReady) {
+                    console.log('Sync skipped - already syncing or encryption not ready');
+                    return;
+                }
+
+                this.isSyncing = true;
+                updateSyncStatus('syncing');
+
+                try {
+                    const localData = this.getLocalStepWork();
+                    const encrypted = await this.encryption.encrypt(localData);
+
+                    if (!encrypted) {
+                        throw new Error('Encryption failed');
+                    }
+
+                    const response = await fetch(`${this.authService}/api/user/${this.userId}/data/stepwork`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            itemId: 'stepwork_all',
+                            encryptedPayload: encrypted,
+                            metadata: {
+                                itemCount: Object.keys(localData).length,
+                                syncedAt: new Date().toISOString()
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        this.lastSyncTime = new Date();
+                        updateSyncStatus('synced');
+                        console.log('Step work synced to cloud:', Object.keys(localData).length, 'items');
+                    } else {
+                        throw new Error(`Sync failed: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Sync to cloud failed:', error);
+                    updateSyncStatus('error');
+                } finally {
+                    this.isSyncing = false;
+                }
+            }
+
+            // Load step work from cloud
+            async loadFromCloud() {
+                if (!this.encryption?.isReady) {
+                    console.log('Cannot load from cloud - encryption not ready');
+                    return false;
+                }
+
+                try {
+                    const response = await fetch(`${this.authService}/api/user/${this.userId}/data/stepwork`);
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            console.log('No cloud data found - first time user');
+                            return true;
+                        }
+                        throw new Error(`Load failed: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (!result.success || !result.items || result.items.length === 0) {
+                        console.log('No encrypted data in response');
+                        return true;
+                    }
+
+                    // Get the most recent stepwork item
+                    const stepworkItem = result.items[0];
+                    if (!stepworkItem?.encryptedPayload) {
+                        console.log('No encrypted payload in item');
+                        return true;
+                    }
+
+                    const decrypted = await this.encryption.decrypt(stepworkItem.encryptedPayload);
+                    if (!decrypted) {
+                        throw new Error('Decryption failed');
+                    }
+
+                    // Merge with localStorage (cloud data takes precedence for newer data)
+                    for (const [key, value] of Object.entries(decrypted)) {
+                        const strValue = typeof value === 'string' ? value : JSON.stringify(value);
+                        localStorage.setItem(key, strValue);
+                    }
+
+                    console.log('Loaded', Object.keys(decrypted).length, 'items from cloud');
+                    return true;
+                } catch (error) {
+                    console.error('Load from cloud failed:', error);
+                    return false;
+                }
+            }
+
+            // Sync chat history to cloud
+            async syncChatToCloud() {
+                if (this.isSyncing || !this.encryption?.isReady) {
+                    return;
+                }
+
+                try {
+                    const chatHistory = localStorage.getItem('chat_history');
+                    if (!chatHistory) return;
+
+                    const messages = JSON.parse(chatHistory);
+                    if (messages.length === 0) return;
+
+                    const encrypted = await this.encryption.encrypt(messages);
+                    if (!encrypted) return;
+
+                    const response = await fetch(`${this.authService}/api/user/${this.userId}/data/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            itemId: 'chat_history',
+                            encryptedPayload: encrypted,
+                            metadata: {
+                                messageCount: messages.length,
+                                syncedAt: new Date().toISOString()
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        console.log('Chat history synced:', messages.length, 'messages');
+                    }
+                } catch (error) {
+                    console.error('Chat sync failed:', error);
+                }
+            }
+
+            // Load chat history from cloud
+            async loadChatFromCloud() {
+                if (!this.encryption?.isReady) {
+                    return false;
+                }
+
+                try {
+                    const response = await fetch(`${this.authService}/api/user/${this.userId}/data/chat`);
+                    if (!response.ok) return false;
+
+                    const result = await response.json();
+                    if (!result.success || !result.items || result.items.length === 0) {
+                        return false;
+                    }
+
+                    // Find the chat_history item
+                    const chatItem = result.items.find(item => item.itemId === 'chat_history');
+                    if (!chatItem?.encryptedPayload) {
+                        return false;
+                    }
+
+                    const decrypted = await this.encryption.decrypt(chatItem.encryptedPayload);
+                    if (!decrypted || !Array.isArray(decrypted)) {
+                        return false;
+                    }
+
+                    // Merge with local chat history
+                    const localHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
+                    const merged = this.mergeChatHistories(localHistory, decrypted);
+                    localStorage.setItem('chat_history', JSON.stringify(merged));
+
+                    console.log('Loaded chat history from cloud:', merged.length, 'messages');
+                    return true;
+                } catch (error) {
+                    console.error('Load chat from cloud failed:', error);
+                    return false;
+                }
+            }
+
+            // Merge local and cloud chat histories (dedupe by id)
+            mergeChatHistories(local, cloud) {
+                const seen = new Map();
+
+                // Add cloud messages first
+                cloud.forEach(msg => {
+                    seen.set(msg.id, msg);
+                });
+
+                // Add local messages (overwrite if same id exists)
+                local.forEach(msg => {
+                    if (!seen.has(msg.id)) {
+                        seen.set(msg.id, msg);
+                    }
+                });
+
+                // Sort by timestamp and limit to 500
+                const merged = Array.from(seen.values())
+                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                    .slice(-500);
+
+                return merged;
+            }
+
+            // Debounced sync trigger
+            triggerSync() {
+                if (this.syncDebounceTimer) {
+                    clearTimeout(this.syncDebounceTimer);
+                }
+                this.syncDebounceTimer = setTimeout(() => {
+                    this.syncStepWorkToCloud();
+                    this.syncChatToCloud();
+                }, 3000); // 3 second debounce
+            }
+        }
+
+        // Global instances
+        let clientEncryption = null;
+        let syncManager = null;
+
+        // Update sync status indicator
+        function updateSyncStatus(status) {
+            const indicator = document.getElementById('syncStatus');
+            if (!indicator) return;
+
+            const statusMap = {
+                'synced': { text: '☁️ Synced', color: '#48bb78' },
+                'syncing': { text: '🔄 Syncing...', color: '#ecc94b' },
+                'error': { text: '⚠️ Sync Error', color: '#e53e3e' },
+                'offline': { text: '📴 Offline', color: '#718096' }
+            };
+
+            const config = statusMap[status] || statusMap['offline'];
+            indicator.textContent = config.text;
+            indicator.style.color = config.color;
+        }
+
+        // Initialize encryption and sync after login
+        async function initializeCloudSync(user, password) {
+            try {
+                // Initialize encryption
+                clientEncryption = new ClientEncryption();
+
+                // Use encryption salt from user profile, or generate one
+                const salt = user.encryptionSalt || user.id;
+                await clientEncryption.deriveKey(password, salt);
+
+                // Initialize sync manager
+                syncManager = new SyncManager(user.id, clientEncryption, config.authService);
+
+                // Load data from cloud (step work and chat)
+                await syncManager.loadFromCloud();
+                await syncManager.loadChatFromCloud();
+
+                // Start periodic sync
+                setInterval(() => {
+                    if (syncManager && !document.hidden) {
+                        syncManager.triggerSync();
+                    }
+                }, 5 * 60 * 1000); // Sync every 5 minutes if tab is visible
+
+                updateSyncStatus('synced');
+                console.log('Cloud sync initialized');
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize cloud sync:', error);
+                updateSyncStatus('error');
+                return false;
+            }
+        }
+
+        // Hook into localStorage changes to trigger sync
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function(key, value) {
+            originalSetItem.apply(this, arguments);
+
+            // Trigger sync for step-related data and chat
+            if (syncManager && (key.startsWith('step') || key.startsWith('profile_') || key === 'sobriety_date' || key === 'chat_history')) {
+                syncManager.triggerSync();
+            }
+        };
+
         // Welcome Message
         function updateWelcomeMessage() {
             const welcomeEl = document.getElementById('welcomeMessage');
@@ -2455,6 +2900,43 @@
             localStorage.clear();
             alert('All data has been deleted. The page will now reload.');
             window.location.reload();
+
+            // Also delete from cloud if sync is available
+            if (syncManager && currentUser) {
+                try {
+                    await fetch(`${config.authService}/api/user/${currentUser.id}/data`, {
+                        method: 'DELETE'
+                    });
+                } catch (e) {
+                    console.error('Failed to delete cloud data:', e);
+                }
+            }
+        }
+
+        // Manual sync trigger
+        async function manualSync() {
+            if (!syncManager) {
+                alert('Sync not available. Please log in first.');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+            try {
+                // Sync both step work and chat
+                await syncManager.syncStepWorkToCloud();
+                await syncManager.syncChatToCloud();
+
+                // Load from cloud to merge any changes
+                await syncManager.loadFromCloud();
+                await syncManager.loadChatFromCloud();
+
+                updateSyncStatus('synced');
+                alert('Sync complete!');
+            } catch (error) {
+                console.error('Manual sync failed:', error);
+                updateSyncStatus('error');
+                alert('Sync failed. Please try again.');
+            }
         }
 
         // =====================================================================
@@ -2872,9 +3354,11 @@
                 if (data.success) {
                     showMessage(`🎉 ${data.message}`, 'success');
 
-                    // For demo purposes, simulate login since Azure AD isn't fully configured
                     currentUser = data.user;
                     sessionToken = data.session_token || 'demo-token';
+
+                    // Initialize cloud sync with user's password for encryption
+                    await initializeCloudSync(data.user, password);
 
                     setTimeout(() => {
                         showMainApp();
@@ -2942,9 +3426,13 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showMessage('Login successful! Welcome back!', 'success');
+                    showMessage('Login successful! Syncing data...', 'success');
                     currentUser = data.user;
                     sessionToken = data.session_token;
+
+                    // Initialize cloud sync with user's password for encryption
+                    await initializeCloudSync(data.user, password);
+
                     showMainApp();
                 } else {
                     showMessage(data.error, 'error');
@@ -3456,6 +3944,68 @@
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Persist to localStorage (skip typing indicators and restored messages)
+            if (!className.includes('typing') && !className.includes('restored')) {
+                saveChatMessage(message, sender);
+            }
+        }
+
+        // Save chat message to localStorage and trigger sync
+        function saveChatMessage(message, sender) {
+            try {
+                const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+                history.push({
+                    id: Date.now().toString(),
+                    role: sender,
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Keep last 500 messages
+                if (history.length > 500) {
+                    history.splice(0, history.length - 500);
+                }
+
+                localStorage.setItem('chat_history', JSON.stringify(history));
+
+                // Trigger cloud sync (debounced through localStorage hook)
+            } catch (error) {
+                console.error('Failed to save chat message:', error);
+            }
+        }
+
+        // Restore chat history from localStorage
+        function restoreChatHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+                if (history.length === 0) return;
+
+                const messagesContainer = document.getElementById('chatMessages');
+                if (!messagesContainer) return;
+
+                // Clear default welcome message
+                messagesContainer.innerHTML = '';
+
+                // Restore last 50 messages
+                const recentHistory = history.slice(-50);
+                recentHistory.forEach(msg => {
+                    addMessageToChat(msg.content, msg.role, 'restored');
+                });
+
+                // Add a separator to show where history ends
+                if (recentHistory.length > 0) {
+                    const separator = document.createElement('div');
+                    separator.className = 'chat-history-separator';
+                    separator.innerHTML = '<span>— Previous conversation —</span>';
+                    separator.style.cssText = 'text-align: center; color: #a0aec0; font-size: 0.85rem; margin: 10px 0; padding: 5px;';
+                    messagesContainer.appendChild(separator);
+                }
+
+                console.log(`Restored ${recentHistory.length} chat messages from history`);
+            } catch (error) {
+                console.error('Failed to restore chat history:', error);
+            }
         }
 
         // Clean up literature content from PDF artifacts

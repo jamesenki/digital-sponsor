@@ -17,7 +17,7 @@ import logging
 # Import shared Cosmos DB client
 import sys
 sys.path.insert(0, '/app')
-from shared.cosmos_client import UserRepository, CosmosDBClient
+from shared.cosmos_client import UserRepository, CosmosDBClient, EncryptedDataRepository
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +34,7 @@ class AuthService:
         # Initialize Cosmos DB repositories
         self.cosmos_client = CosmosDBClient()
         self.user_repo = UserRepository(self.cosmos_client)
+        self.encrypted_data_repo = EncryptedDataRepository(self.cosmos_client)
 
         # Track stats
         self.stats = {
@@ -268,6 +269,8 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             self.handle_health()
         elif self.path.startswith('/api/validate-invitation'):
             self.handle_validate_invitation()
+        elif self.path.startswith('/api/user/') and '/data/' in self.path:
+            self.handle_get_encrypted_data()
         elif self.path.startswith('/api/user/') and '/history' in self.path:
             self.handle_get_user_history()
         else:
@@ -281,12 +284,18 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
             self.handle_login()
         elif self.path == '/api/admin/send-invitation':
             self.handle_create_invitation()
+        elif self.path.startswith('/api/user/') and '/data/' in self.path:
+            self.handle_save_encrypted_data()
         else:
             self.send_error(404, "Endpoint not found")
 
     def do_DELETE(self):
         """Handle DELETE requests"""
-        if self.path.startswith('/api/user/') and '/history' in self.path:
+        if self.path.startswith('/api/user/') and '/data/' in self.path:
+            self.handle_delete_encrypted_data()
+        elif self.path.startswith('/api/user/') and '/data' == self.path.split('/')[-1]:
+            self.handle_delete_all_user_data()
+        elif self.path.startswith('/api/user/') and '/history' in self.path:
             self.handle_delete_user_history()
         else:
             self.send_error(404, "Endpoint not found")
@@ -487,6 +496,153 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
         except Exception as e:
             logger.error(f"Delete history error: {str(e)}")
             self.send_error(500, f"Failed to delete history: {str(e)}")
+
+    def _parse_user_data_path(self):
+        """Parse /api/user/{userId}/data/{dataType} path"""
+        from urllib.parse import urlparse
+        parsed_url = urlparse(self.path)
+        parts = parsed_url.path.split('/')
+        # /api/user/{userId}/data/{dataType}
+        # 0  /  1   /  2   /  3  /    4
+        user_id = parts[3] if len(parts) > 3 else None
+        data_type = parts[5] if len(parts) > 5 else None
+        return user_id, data_type
+
+    def handle_get_encrypted_data(self):
+        """Get encrypted user data (step work or chat)"""
+        try:
+            user_id, data_type = self._parse_user_data_path()
+
+            if not user_id or not data_type:
+                self.send_error(400, "Missing user ID or data type")
+                return
+
+            if data_type not in ['stepwork', 'chat']:
+                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                return
+
+            items = self.auth_service.encrypted_data_repo.get_encrypted_data(user_id, data_type)
+
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': True,
+                'userId': user_id,
+                'dataType': data_type,
+                'items': items,
+                'count': len(items)
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Get encrypted data error: {str(e)}")
+            self.send_error(500, f"Failed to get encrypted data: {str(e)}")
+
+    def handle_save_encrypted_data(self):
+        """Save encrypted user data"""
+        try:
+            user_id, data_type = self._parse_user_data_path()
+
+            if not user_id or not data_type:
+                self.send_error(400, "Missing user ID or data type")
+                return
+
+            if data_type not in ['stepwork', 'chat']:
+                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                return
+
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
+
+            item_id = post_data.get('itemId')
+            encrypted_payload = post_data.get('encryptedPayload')
+            metadata = post_data.get('metadata', {})
+
+            if not item_id or not encrypted_payload:
+                self.send_error(400, "Missing itemId or encryptedPayload")
+                return
+
+            result = self.auth_service.encrypted_data_repo.save_encrypted_data(
+                user_id, data_type, item_id, encrypted_payload, metadata
+            )
+
+            self.send_response(201)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': True,
+                'message': f'{data_type} data saved successfully',
+                'itemId': item_id
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Save encrypted data error: {str(e)}")
+            self.send_error(500, f"Failed to save encrypted data: {str(e)}")
+
+    def handle_delete_encrypted_data(self):
+        """Delete encrypted user data of a specific type"""
+        try:
+            user_id, data_type = self._parse_user_data_path()
+
+            if not user_id or not data_type:
+                self.send_error(400, "Missing user ID or data type")
+                return
+
+            if data_type not in ['stepwork', 'chat']:
+                self.send_error(400, "Invalid data type. Use 'stepwork' or 'chat'")
+                return
+
+            success = self.auth_service.encrypted_data_repo.delete_encrypted_data(user_id, data_type)
+
+            self.send_response(200 if success else 500)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': success,
+                'message': f'{data_type} data deleted' if success else f'Failed to delete {data_type} data'
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Delete encrypted data error: {str(e)}")
+            self.send_error(500, f"Failed to delete encrypted data: {str(e)}")
+
+    def handle_delete_all_user_data(self):
+        """Delete ALL encrypted user data (GDPR compliance)"""
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(self.path)
+            parts = parsed_url.path.split('/')
+            user_id = parts[3] if len(parts) > 3 else None
+
+            if not user_id:
+                self.send_error(400, "Missing user ID")
+                return
+
+            success = self.auth_service.encrypted_data_repo.delete_all_user_data(user_id)
+
+            self.send_response(200 if success else 500)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            response = {
+                'success': success,
+                'message': 'All user data deleted' if success else 'Failed to delete user data'
+            }
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            logger.error(f"Delete all user data error: {str(e)}")
+            self.send_error(500, f"Failed to delete all user data: {str(e)}")
 
 
 def create_handler(auth_service: AuthService):
