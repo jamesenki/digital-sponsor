@@ -2804,6 +2804,8 @@
                 await loadStep4Workbook();
             } else if (stepNumber === 8) {
                 await loadStep8ListBuilder();
+            } else if (stepNumber === 9) {
+                await loadStep9AmendsTracker();
             } else if (stepNumber === 11) {
                 await loadStep11Meditation();
             } else if (stepNumber === 12) {
@@ -3752,6 +3754,425 @@
             const reflections = JSON.parse(localStorage.getItem('step8_reflections') || '{}');
             reflections[`q${num}`] = value;
             localStorage.setItem('step8_reflections', JSON.stringify(reflections));
+        }
+
+        // =====================================================================
+        // STEP 9: AMENDS TRACKER
+        // =====================================================================
+
+        let step9Data = {
+            sessionId: null,
+            userId: 'demo-user',
+            versionNumber: 1,
+            entries: []
+        };
+
+        async function loadStep9AmendsTracker() {
+            // Load existing data from localStorage
+            const savedData = localStorage.getItem('step9_amends');
+            if (savedData) {
+                step9Data = JSON.parse(savedData);
+            }
+
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStep9Section('tracker')">Amends Tracker</button>
+                <button class="step-modal-tab" onclick="showStep9Section('add')">Add Amend</button>
+                <button class="step-modal-tab" onclick="showStep9Section('guidance')">Guidance</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            const contentHtml = `
+                <div class="step-section active" id="section-tracker">
+                    ${buildStep9TrackerSection()}
+                </div>
+                <div class="step-section" id="section-add">
+                    ${buildStep9AddSection()}
+                </div>
+                <div class="step-section" id="section-guidance">
+                    ${buildStep9GuidanceSection()}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStep9Section(section) {
+            document.querySelectorAll('#stepModalTabs button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.step-section').forEach(sec => sec.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('section-' + section).classList.add('active');
+        }
+
+        function buildStep9TrackerSection() {
+            const summary = getStep9Summary();
+
+            let rowsHtml = '';
+            step9Data.entries.forEach((entry, idx) => {
+                const statusInfo = getStatusInfo(entry.status);
+
+                rowsHtml += `
+                    <tr>
+                        <td style="font-weight: 600;">${entry.person_name}</td>
+                        <td style="font-size: 0.9em; color: #4a5568;">${entry.nature_of_harm || '-'}</td>
+                        <td>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: ${statusInfo.bgColor}; color: ${statusInfo.color}; border-radius: 20px; font-size: 0.85em;">
+                                ${statusInfo.icon} ${statusInfo.label}
+                            </span>
+                        </td>
+                        <td style="color: #718096; font-size: 0.9em;">${entry.date_completed ? new Date(entry.date_completed).toLocaleDateString() : entry.date_attempted ? 'In progress' : '-'}</td>
+                        <td>
+                            <button onclick="openStep9Entry(${idx})" style="padding: 4px 8px; font-size: 0.8em; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                ${entry.status === 'not_started' ? 'Start' : entry.status === 'completed' ? 'View' : 'Update'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (rowsHtml === '') {
+                rowsHtml = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #718096; padding: 30px;">
+                            No amends to track yet. Import from Step 8 or add entries manually.
+                        </td>
+                    </tr>
+                `;
+            }
+
+            return `
+                <div style="margin-bottom: 20px;">
+                    <div class="prayer-box" style="background: linear-gradient(135deg, #48bb7820 0%, #38a16920 100%); border-left-color: #48bb78; margin-bottom: 20px;">
+                        <p style="font-style: italic; margin: 0; line-height: 1.7;">
+                            "Made direct amends to such people wherever possible, except when to do so would injure them or others."
+                        </p>
+                        <small style="color: #718096;">— Step 9</small>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #2d3748;">${summary.total}</div>
+                            <div style="color: #718096; font-size: 0.9em;">Total Amends</div>
+                        </div>
+                        <div style="background: #c6f6d520; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #48bb78;">${summary.completed + summary.living_amends}</div>
+                            <div style="color: #718096; font-size: 0.9em;">Completed</div>
+                        </div>
+                        <div style="background: #bee3f820; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #4299e1;">${summary.completion_percentage}%</div>
+                            <div style="color: #718096; font-size: 0.9em;">Progress</div>
+                        </div>
+                    </div>
+
+                    <div style="background: #edf2f7; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(90deg, #48bb78 0%, #38a169 100%); height: 100%; width: ${summary.completion_percentage}%; transition: width 0.3s;"></div>
+                    </div>
+
+                    <button onclick="importFromStep8()" style="margin-bottom: 15px; padding: 10px 20px; background: #805ad5; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                        Import from Step 8 List
+                    </button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Person</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Harm</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Status</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Date</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function buildStep9AddSection() {
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #4299e120 0%, #3182ce20 100%); border-left-color: #4299e1; margin-bottom: 20px;">
+                    <p style="margin: 0; font-weight: 600;">Add an Amend Manually</p>
+                    <small style="color: #718096;">For amends not imported from Step 8, you can add them here.</small>
+                </div>
+
+                <div style="display: grid; gap: 20px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Person's Name *</label>
+                        <input type="text" id="step9_person" placeholder="Who do you need to make amends to?"
+                               style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">What Harm Did You Cause?</label>
+                        <textarea id="step9_harm" rows="3" placeholder="Describe the harm that requires amends..."
+                                  style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">How Do You Plan to Make Amends?</label>
+                        <textarea id="step9_approach" rows="2" placeholder="What's your approach? Have you discussed with your sponsor?"
+                                  style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <button onclick="addStep9Entry()" style="padding: 15px 30px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem;">
+                        Add to Amends List
+                    </button>
+                </div>
+            `;
+        }
+
+        function buildStep9GuidanceSection() {
+            return `
+                <div class="prayer-box" style="background: linear-gradient(135deg, #ed893620 0%, #dd6b2020 100%); border-left-color: #ed8936; margin-bottom: 20px;">
+                    <p style="font-style: italic; margin: 0; line-height: 1.7;">
+                        "God, please show me how to make my amends to ____. Help me to be honest, sincere, and willing to accept whatever outcome You have in store. Give me the courage to right my wrongs and the humility to ask for forgiveness."
+                    </p>
+                    <small style="color: #718096;">— Step 9 Prayer</small>
+                </div>
+
+                <div style="display: grid; gap: 20px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <h4 style="margin: 0 0 10px 0; color: #2d3748;">The Approach</h4>
+                        <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                            "We go to him in a helpful and forgiving spirit, confessing our former ill feeling and expressing our regret." (Big Book, p.77)
+                        </p>
+                    </div>
+
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #48bb78;">
+                        <h4 style="margin: 0 0 10px 0; color: #2d3748;">No Expectations</h4>
+                        <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                            We make amends "wherever possible" but we don't expect forgiveness. Our job is to clean up our side of the street.
+                        </p>
+                    </div>
+
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #ed8936;">
+                        <h4 style="margin: 0 0 10px 0; color: #2d3748;">When Not to Make Amends</h4>
+                        <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                            "...except when to do so would injure them or others." Sometimes direct amends would cause more harm. Discuss with your sponsor.
+                        </p>
+                    </div>
+
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #9f7aea;">
+                        <h4 style="margin: 0 0 10px 0; color: #2d3748;">The Promises</h4>
+                        <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                            "If we are painstaking about this phase of our development, we will be amazed before we are half way through. We are going to know a new freedom and a new happiness." (Big Book, p.83)
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusInfo(status) {
+            const statusMap = {
+                'not_started': { icon: '⏳', label: 'Not Started', color: '#718096', bgColor: '#edf2f7' },
+                'in_progress': { icon: '🔄', label: 'In Progress', color: '#d69e2e', bgColor: '#fefcbf' },
+                'completed': { icon: '✅', label: 'Completed', color: '#38a169', bgColor: '#c6f6d5' },
+                'living_amends': { icon: '📝', label: 'Living Amends', color: '#3182ce', bgColor: '#bee3f8' },
+                'not_appropriate': { icon: '⚠️', label: 'Not Appropriate', color: '#e53e3e', bgColor: '#fed7d7' }
+            };
+            return statusMap[status] || statusMap['not_started'];
+        }
+
+        function getStep9Summary() {
+            const entries = step9Data.entries;
+            const total = entries.length;
+            if (total === 0) {
+                return { total: 0, not_started: 0, in_progress: 0, completed: 0, living_amends: 0, not_appropriate: 0, completion_percentage: 0 };
+            }
+
+            const not_started = entries.filter(e => e.status === 'not_started').length;
+            const in_progress = entries.filter(e => e.status === 'in_progress').length;
+            const completed = entries.filter(e => e.status === 'completed').length;
+            const living_amends = entries.filter(e => e.status === 'living_amends').length;
+            const not_appropriate = entries.filter(e => e.status === 'not_appropriate').length;
+
+            const resolved = completed + living_amends + not_appropriate;
+            const completion_percentage = Math.round((resolved / total) * 100);
+
+            return { total, not_started, in_progress, completed, living_amends, not_appropriate, completion_percentage };
+        }
+
+        function addStep9Entry() {
+            const person = document.getElementById('step9_person').value.trim();
+            const harm = document.getElementById('step9_harm').value.trim();
+            const approach = document.getElementById('step9_approach').value.trim();
+
+            if (!person) {
+                alert('Please enter the person\'s name.');
+                return;
+            }
+
+            const entry = {
+                id: Date.now().toString(),
+                person_name: person,
+                nature_of_harm: harm,
+                approach_plan: approach,
+                status: 'not_started',
+                date_attempted: null,
+                date_completed: null,
+                how_it_went: '',
+                their_response: '',
+                what_i_learned: '',
+                created_at: new Date().toISOString()
+            };
+
+            step9Data.entries.push(entry);
+            saveStep9Data();
+
+            // Clear form
+            document.getElementById('step9_person').value = '';
+            document.getElementById('step9_harm').value = '';
+            document.getElementById('step9_approach').value = '';
+
+            // Refresh tracker view
+            document.getElementById('section-tracker').innerHTML = buildStep9TrackerSection();
+
+            // Switch to tracker tab
+            showStep9Section('tracker');
+            document.querySelectorAll('#stepModalTabs button')[0].classList.add('active');
+            document.querySelectorAll('#stepModalTabs button')[1].classList.remove('active');
+        }
+
+        function importFromStep8() {
+            const step8Saved = localStorage.getItem('step8_list');
+            if (!step8Saved) {
+                alert('No Step 8 list found. Complete Step 8 first to import your list.');
+                return;
+            }
+
+            const step8 = JSON.parse(step8Saved);
+            let imported = 0;
+
+            (step8.entries || []).forEach(s8Entry => {
+                // Check if already in Step 9
+                if (!step9Data.entries.some(e => e.step8_entry_id === s8Entry.id || e.person_name.toLowerCase() === s8Entry.person_or_institution.toLowerCase())) {
+                    step9Data.entries.push({
+                        id: Date.now().toString() + Math.random(),
+                        step8_entry_id: s8Entry.id,
+                        person_name: s8Entry.person_or_institution,
+                        nature_of_harm: s8Entry.nature_of_harm,
+                        status: 'not_started',
+                        date_attempted: null,
+                        date_completed: null,
+                        how_it_went: '',
+                        their_response: '',
+                        what_i_learned: '',
+                        created_at: new Date().toISOString()
+                    });
+                    imported++;
+                }
+            });
+
+            saveStep9Data();
+            document.getElementById('section-tracker').innerHTML = buildStep9TrackerSection();
+
+            if (imported > 0) {
+                alert(`Imported ${imported} entries from Step 8. Begin making your amends!`);
+            } else {
+                alert('No new entries to import. All Step 8 entries are already in your tracker.');
+            }
+        }
+
+        function openStep9Entry(idx) {
+            const entry = step9Data.entries[idx];
+
+            const modalHtml = `
+                <div id="step9EntryModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1001;">
+                    <div style="background: white; border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px;">
+                        <h3 style="margin: 0 0 20px 0; color: #2d3748;">Amend: ${entry.person_name}</h3>
+
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                            <strong>Harm:</strong> ${entry.nature_of_harm || 'Not specified'}
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">Status</label>
+                            <select id="entry_status" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                                <option value="not_started" ${entry.status === 'not_started' ? 'selected' : ''}>⏳ Not Started</option>
+                                <option value="in_progress" ${entry.status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+                                <option value="completed" ${entry.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+                                <option value="living_amends" ${entry.status === 'living_amends' ? 'selected' : ''}>📝 Living Amends</option>
+                                <option value="not_appropriate" ${entry.status === 'not_appropriate' ? 'selected' : ''}>⚠️ Not Appropriate</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">How Did It Go?</label>
+                            <textarea id="entry_how" rows="3" placeholder="Describe the amends attempt..."
+                                      style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;">${entry.how_it_went || ''}</textarea>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">Their Response</label>
+                            <textarea id="entry_response" rows="2" placeholder="How did they respond?"
+                                      style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;">${entry.their_response || ''}</textarea>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">What Did You Learn?</label>
+                            <textarea id="entry_learned" rows="2" placeholder="Reflect on this experience..."
+                                      style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;">${entry.what_i_learned || ''}</textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="deleteStep9Entry(${idx})" style="padding: 12px 24px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                Delete
+                            </button>
+                            <button onclick="closeStep9EntryModal()" style="padding: 12px 24px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                Cancel
+                            </button>
+                            <button onclick="saveStep9Entry(${idx})" style="padding: 12px 24px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeStep9EntryModal() {
+            const modal = document.getElementById('step9EntryModal');
+            if (modal) modal.remove();
+        }
+
+        function saveStep9Entry(idx) {
+            const entry = step9Data.entries[idx];
+            const newStatus = document.getElementById('entry_status').value;
+
+            entry.status = newStatus;
+            entry.how_it_went = document.getElementById('entry_how').value;
+            entry.their_response = document.getElementById('entry_response').value;
+            entry.what_i_learned = document.getElementById('entry_learned').value;
+
+            // Set dates based on status
+            if (newStatus === 'in_progress' && !entry.date_attempted) {
+                entry.date_attempted = new Date().toISOString();
+            }
+            if (newStatus === 'completed' && !entry.date_completed) {
+                entry.date_completed = new Date().toISOString();
+            }
+
+            saveStep9Data();
+            closeStep9EntryModal();
+            document.getElementById('section-tracker').innerHTML = buildStep9TrackerSection();
+        }
+
+        function deleteStep9Entry(idx) {
+            if (confirm('Remove this amend from your tracker?')) {
+                step9Data.entries.splice(idx, 1);
+                saveStep9Data();
+                closeStep9EntryModal();
+                document.getElementById('section-tracker').innerHTML = buildStep9TrackerSection();
+            }
+        }
+
+        function saveStep9Data() {
+            localStorage.setItem('step9_amends', JSON.stringify(step9Data));
         }
 
         // =====================================================================

@@ -30,6 +30,7 @@ from step_workbook_content import (
 from step11_meditation import Step11MeditationGuide
 from step12_service_tracker import Step12ServiceTracker, ServiceCategory
 from step8_list_builder import Step8ListBuilder, get_step8_builder
+from step9_amends_tracker import Step9AmendsTracker, get_step9_tracker
 
 
 class StepWorkHandler(http.server.BaseHTTPRequestHandler):
@@ -165,6 +166,28 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path == '/api/step8/reflection-questions':
             self.handle_step8_reflection_questions()
 
+        # ========================================
+        # Step 9 Amends Tracker endpoints
+        # ========================================
+        elif path.startswith('/api/step9/list/'):
+            user_id = path.split('/')[-1]
+            self.handle_step9_get_list(user_id)
+
+        elif path.startswith('/api/step9/session/'):
+            session_id = path.split('/')[-1]
+            self.handle_step9_get_session(session_id)
+
+        elif path.startswith('/api/step9/summary/'):
+            user_id = path.split('/')[-1]
+            self.handle_step9_get_summary(user_id)
+
+        elif path == '/api/step9/guidance':
+            self.handle_step9_guidance()
+
+        elif path.startswith('/api/step9/prompts/'):
+            status = path.split('/')[-1]
+            self.handle_step9_reflection_prompts(status)
+
         else:
             self.send_error(404)
 
@@ -260,6 +283,24 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path == '/api/step8/list/complete':
             self.handle_step8_complete_list(data)
 
+        # ========================================
+        # Step 9 Amends Tracker POST endpoints
+        # ========================================
+        elif path == '/api/step9/session/create':
+            self.handle_step9_create_session(data)
+
+        elif path == '/api/step9/import-from-step8':
+            self.handle_step9_import_from_step8(data)
+
+        elif path == '/api/step9/entry':
+            self.handle_step9_add_entry(data)
+
+        elif path == '/api/step9/entry/update':
+            self.handle_step9_update_entry(data)
+
+        elif path == '/api/step9/session/complete':
+            self.handle_step9_complete_session(data)
+
         else:
             self.send_error(404)
 
@@ -278,6 +319,10 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path.startswith('/api/step8/entry/'):
             entry_id = path.split('/')[-1]
             self.handle_step8_delete_entry(entry_id)
+
+        elif path.startswith('/api/step9/entry/'):
+            entry_id = path.split('/')[-1]
+            self.handle_step9_delete_entry(entry_id)
 
         else:
             self.send_error(404)
@@ -1372,6 +1417,213 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404, 'Step 8 list not found')
 
+    # ========================================
+    # Step 9 Amends Tracker handlers
+    # ========================================
+
+    def handle_step9_get_list(self, user_id):
+        """Get latest Step 9 session for a user"""
+        session = self.step9_tracker.get_latest_session(user_id)
+
+        if session:
+            response = {
+                'success': True,
+                'session': session.to_dict()
+            }
+        else:
+            response = {
+                'success': True,
+                'session': None,
+                'message': 'No Step 9 session found. Import from Step 8 to get started.'
+            }
+        self.send_json_response(response)
+
+    def handle_step9_get_session(self, session_id):
+        """Get a specific Step 9 session"""
+        session = self.step9_tracker.get_session(session_id)
+
+        if session:
+            response = {
+                'success': True,
+                'session': session.to_dict()
+            }
+        else:
+            response = {
+                'success': False,
+                'message': 'Session not found'
+            }
+        self.send_json_response(response)
+
+    def handle_step9_get_summary(self, user_id):
+        """Get amends progress summary for a user"""
+        session = self.step9_tracker.get_latest_session(user_id)
+
+        if session:
+            response = {
+                'success': True,
+                'user_id': user_id,
+                'summary': session.get_summary()
+            }
+        else:
+            response = {
+                'success': True,
+                'user_id': user_id,
+                'summary': {
+                    'total': 0,
+                    'not_started': 0,
+                    'in_progress': 0,
+                    'completed': 0,
+                    'living_amends': 0,
+                    'not_appropriate': 0,
+                    'completion_percentage': 0
+                }
+            }
+        self.send_json_response(response)
+
+    def handle_step9_guidance(self):
+        """Get Step 9 general guidance"""
+        guidance = self.step9_tracker.get_step9_guidance()
+        response = {
+            'success': True,
+            'guidance': guidance
+        }
+        self.send_json_response(response)
+
+    def handle_step9_reflection_prompts(self, status):
+        """Get reflection prompts for a specific amend status"""
+        prompts = self.step9_tracker.get_reflection_prompts(status)
+        response = {
+            'success': True,
+            'status': status,
+            'prompts': prompts
+        }
+        self.send_json_response(response)
+
+    def handle_step9_create_session(self, data):
+        """Create a new Step 9 session"""
+        user_id = data.get('user_id')
+        step8_session_id = data.get('step8_session_id')
+
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        # Determine version number
+        existing_sessions = self.step9_tracker.get_user_sessions(user_id)
+        version_number = len(existing_sessions) + 1
+
+        session = self.step9_tracker.create_session(
+            user_id=user_id,
+            step8_session_id=step8_session_id,
+            version_number=version_number
+        )
+
+        response = {
+            'success': True,
+            'session': session.to_dict(),
+            'message': f'Step 9 session created (Version {version_number})'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step9_import_from_step8(self, data):
+        """Import entries from Step 8 list into Step 9"""
+        session_id = data.get('session_id')
+        step8_entries = data.get('step8_entries', [])
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        if not step8_entries:
+            self.send_error(400, 'step8_entries required')
+            return
+
+        imported = self.step9_tracker.import_from_step8(session_id, step8_entries)
+
+        response = {
+            'success': True,
+            'imported_count': len(imported),
+            'entries': [e.to_dict() for e in imported],
+            'message': f'Imported {len(imported)} entries from Step 8'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step9_add_entry(self, data):
+        """Add a new amend entry manually"""
+        session_id = data.get('session_id')
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        entry = self.step9_tracker.add_entry(session_id, data)
+
+        if entry:
+            response = {
+                'success': True,
+                'entry': entry.to_dict(),
+                'message': 'Amend entry added'
+            }
+            self.send_json_response(response, status=201)
+        else:
+            self.send_error(404, 'Step 9 session not found')
+
+    def handle_step9_update_entry(self, data):
+        """Update an amend entry (status, reflections, etc.)"""
+        entry_id = data.get('entry_id')
+
+        if not entry_id:
+            self.send_error(400, 'entry_id required')
+            return
+
+        entry = self.step9_tracker.update_entry(entry_id, data)
+
+        if entry:
+            # Get reflection prompts for the new status
+            prompts = self.step9_tracker.get_reflection_prompts(entry.status)
+            response = {
+                'success': True,
+                'entry': entry.to_dict(),
+                'reflection_prompts': prompts,
+                'message': 'Entry updated successfully'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Entry not found')
+
+    def handle_step9_delete_entry(self, entry_id):
+        """Delete an amend entry"""
+        success = self.step9_tracker.delete_entry(entry_id)
+
+        if success:
+            response = {
+                'success': True,
+                'message': 'Entry deleted successfully'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Entry not found')
+
+    def handle_step9_complete_session(self, data):
+        """Mark Step 9 session as completed"""
+        session_id = data.get('session_id')
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        session = self.step9_tracker.complete_session(session_id)
+
+        if session:
+            response = {
+                'success': True,
+                'session': session.to_dict(),
+                'message': 'Step 9 complete! The promises are coming true.'
+            }
+            self.send_json_response(response)
+        else:
+            self.send_error(404, 'Session not found')
+
 
 # ========================================
 # Global services to persist across requests
@@ -1390,6 +1642,10 @@ GLOBAL_RAG_INTEGRATION = StepWorkRAGIntegration(LITERATURE_SERVICE_URL, CHAT_SER
 GLOBAL_STEP11_MEDITATION = Step11MeditationGuide()
 GLOBAL_STEP12_SERVICE_TRACKER = Step12ServiceTracker()
 
+# Step 8 List Builder and Step 9 Amends Tracker
+GLOBAL_STEP8_BUILDER = get_step8_builder()
+GLOBAL_STEP9_TRACKER = get_step9_tracker()
+
 
 class PersistentStepWorkHandler(StepWorkHandler):
     """Handler that uses global data managers for persistence"""
@@ -1402,6 +1658,8 @@ class PersistentStepWorkHandler(StepWorkHandler):
         self.rag_integration = GLOBAL_RAG_INTEGRATION
         self.step11_meditation = GLOBAL_STEP11_MEDITATION
         self.step12_service_tracker = GLOBAL_STEP12_SERVICE_TRACKER
+        self.step8_builder = GLOBAL_STEP8_BUILDER
+        self.step9_tracker = GLOBAL_STEP9_TRACKER
         # Don't call StepWorkHandler.__init__ to avoid creating new instances
         http.server.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
@@ -1495,6 +1753,19 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   POST /api/step8/entry/update - Update entry')
     print(f'   POST /api/step8/list/complete - Complete Step 8 list')
     print(f'   DELETE /api/step8/entry/{{entry_id}} - Delete entry')
+    print()
+    print(f'Step 9 Amends Tracker Endpoints:')
+    print(f'   GET  /api/step9/list/{{user_id}} - Get user\'s latest Step 9 session')
+    print(f'   GET  /api/step9/session/{{session_id}} - Get specific session')
+    print(f'   GET  /api/step9/summary/{{user_id}} - Get amends progress summary')
+    print(f'   GET  /api/step9/guidance - Get Step 9 guidance')
+    print(f'   GET  /api/step9/prompts/{{status}} - Get reflection prompts for status')
+    print(f'   POST /api/step9/session/create - Create new Step 9 session')
+    print(f'   POST /api/step9/import-from-step8 - Import entries from Step 8')
+    print(f'   POST /api/step9/entry - Add amend entry manually')
+    print(f'   POST /api/step9/entry/update - Update amend entry')
+    print(f'   POST /api/step9/session/complete - Complete Step 9')
+    print(f'   DELETE /api/step9/entry/{{entry_id}} - Delete entry')
     print()
 
     httpd.serve_forever()
