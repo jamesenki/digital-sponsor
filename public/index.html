@@ -453,17 +453,42 @@
 
         .literature-content-box {
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            padding: 16px 20px;
+            padding: 20px 24px;
             border-radius: 12px;
             margin: 14px 0;
             border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         .literature-content-box p {
             color: #2d3748;
-            margin: 0;
-            line-height: 1.8;
-            font-size: 1rem;
+            margin: 0 0 12px 0;
+            line-height: 1.85;
+            font-size: 0.95rem;
+            text-align: justify;
+        }
+
+        .literature-content-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .literature-content-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .literature-content-box::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 3px;
+        }
+
+        .literature-content-box::-webkit-scrollbar-thumb {
+            background: #a0aec0;
+            border-radius: 3px;
+        }
+
+        .literature-content-box::-webkit-scrollbar-thumb:hover {
+            background: #718096;
         }
 
         .literature-tags {
@@ -2257,6 +2282,65 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        // Clean up literature content from PDF artifacts
+        function cleanLiteratureContent(content) {
+            if (!content) return '';
+
+            let cleaned = content
+                // Remove PDF file references like "Alco_1893007162_6p_01_r5.qxd 4/4/03 11:17 AM Page 517"
+                .replace(/Alco_[\d_]+[a-z]*\.qxd\s+\d+\/\d+\/\d+\s+\d+:\d+\s+[AP]M\s+Page\s+\d+/gi, '')
+                // Remove standalone page numbers with headers like "EMPTY ON THE INSIDE 517"
+                .replace(/^[A-Z][A-Z\s]+\d{1,3}\s*$/gm, '')
+                // Remove page numbers at end of lines
+                .replace(/\s+\d{3}\s*$/gm, '')
+                // Remove multiple consecutive spaces
+                .replace(/\s{3,}/g, '  ')
+                // Fix common OCR issues
+                .replace(/ﬁ/g, 'fi')
+                .replace(/ﬂ/g, 'fl')
+                .replace(/'/g, "'")
+                .replace(/"/g, '"')
+                .replace(/"/g, '"')
+                .replace(/—/g, '—')
+                // Clean up excessive line breaks
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            return cleaned;
+        }
+
+        // Format literature content for display with truncation
+        function formatLiteratureContent(content, maxLength = 800) {
+            const cleaned = cleanLiteratureContent(content);
+
+            if (cleaned.length <= maxLength) {
+                // Format paragraphs
+                return cleaned
+                    .split(/\n\n+/)
+                    .map(p => p.trim())
+                    .filter(p => p.length > 0)
+                    .map(p => `<p style="margin: 0 0 12px 0; text-indent: 1.5em;">${p.replace(/\n/g, ' ')}</p>`)
+                    .join('');
+            }
+
+            // Truncate at sentence boundary
+            let truncated = cleaned.substring(0, maxLength);
+            const lastSentence = truncated.lastIndexOf('. ');
+            if (lastSentence > maxLength * 0.6) {
+                truncated = truncated.substring(0, lastSentence + 1);
+            }
+
+            // Format paragraphs for truncated content
+            const formatted = truncated
+                .split(/\n\n+/)
+                .map(p => p.trim())
+                .filter(p => p.length > 0)
+                .map(p => `<p style="margin: 0 0 12px 0; text-indent: 1.5em;">${p.replace(/\n/g, ' ')}</p>`)
+                .join('');
+
+            return `${formatted}<p style="color: #667eea; font-style: italic; margin-top: 8px;">... (content continues)</p>`;
+        }
+
         // Literature search
         async function searchLiterature() {
             const query = document.getElementById('literatureSearch').value.trim();
@@ -2308,7 +2392,7 @@
 
                             // Check if we have actual content text
                             const hasContent = result.content && result.content.length > 50;
-                            const contentPreview = hasContent ? result.content : null;
+                            const formattedContent = hasContent ? formatLiteratureContent(result.content) : null;
 
                             resultsHtml += `
                                 <div class="literature-result-card">
@@ -2316,9 +2400,9 @@
                                         <h4 class="literature-result-title">${index + 1}. ${result.title}</h4>
                                         <span class="relevance-badge" style="background: ${relevanceColor};">${relevance}% match</span>
                                     </div>
-                                    ${contentPreview ? `
+                                    ${formattedContent ? `
                                         <div class="literature-content-box">
-                                            <p>${contentPreview}</p>
+                                            ${formattedContent}
                                         </div>
                                     ` : `
                                         <p style="color: #4a5568; margin: 12px 0; line-height: 1.7;">${result.description || 'AA literature content related to your search.'}</p>
