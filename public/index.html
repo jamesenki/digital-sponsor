@@ -3419,17 +3419,53 @@
 
             currentStepData = workbookData;
 
-            // Build tabs
+            // Get version info
+            const versionInfo = getStepVersionInfo(stepNumber);
+            const currentVersion = versionInfo.currentVersion;
+            const totalVersions = versionInfo.versions.length;
+            const showReflections = currentVersion > 1;
+
+            // Build version dropdown HTML
+            let versionDropdownHtml = '';
+            if (totalVersions > 0) {
+                versionDropdownHtml = `
+                    <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <label style="font-weight: 500; color: #4a5568;">Version:</label>
+                        <select id="versionSelect" onchange="switchStepVersion(${stepNumber}, this.value)"
+                                style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; font-size: 0.9rem;">
+                            ${versionInfo.versions.map(v => `
+                                <option value="${v.version}" ${v.version === currentVersion ? 'selected' : ''}>
+                                    Version ${v.version}${v.status === 'completed' ? ' (Completed ' + formatDate(v.completedAt) + ')' : ' (Current)'}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <button onclick="startNewStepVersion(${stepNumber})"
+                                style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                            + New Version
+                        </button>
+                    </div>
+                `;
+            } else {
+                // First time - no version dropdown, just show "Version 1"
+                versionDropdownHtml = `
+                    <div style="margin-bottom: 15px; color: #718096; font-size: 0.9rem;">
+                        Version 1 (First time working this step)
+                    </div>
+                `;
+            }
+
+            // Build tabs - only show Reflections if version > 1
             const tabsHtml = `
                 <button class="step-modal-tab active" onclick="showStepSection('prayer')">Prayer</button>
                 <button class="step-modal-tab" onclick="showStepSection('meditate')">Meditate</button>
                 <button class="step-modal-tab" onclick="showStepSection('questions')">Questions</button>
-                <button class="step-modal-tab" onclick="showStepSection('reflections')">Reflections</button>
+                ${showReflections ? `<button class="step-modal-tab" onclick="showStepSection('reflections')">Reflections</button>` : ''}
             `;
             document.getElementById('stepModalTabs').innerHTML = tabsHtml;
 
             // Build content
             const contentHtml = `
+                ${versionDropdownHtml}
                 <div class="step-section active" id="section-prayer">
                     ${buildPrayerSection(workbookData)}
                 </div>
@@ -3439,11 +3475,112 @@
                 <div class="step-section" id="section-questions">
                     ${buildQuestionsSection(workbookData)}
                 </div>
+                ${showReflections ? `
                 <div class="step-section" id="section-reflections">
                     ${buildReflectionsSection(stepNumber)}
                 </div>
+                ` : ''}
             `;
             document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        // Version management functions
+        function getStepVersionInfo(stepNumber) {
+            const versionsKey = `step${stepNumber}_versions`;
+            const savedVersions = localStorage.getItem(versionsKey);
+
+            if (!savedVersions) {
+                // Check if there's any data for this step (indicating at least started once)
+                const hasData = localStorage.getItem(`step${stepNumber}_q0`) ||
+                               localStorage.getItem(`step${stepNumber}_completed`);
+
+                if (hasData) {
+                    // Create version 1 entry
+                    const versions = [{
+                        version: 1,
+                        startedAt: new Date().toISOString(),
+                        status: localStorage.getItem(`step${stepNumber}_completed`) ? 'completed' : 'in_progress',
+                        completedAt: localStorage.getItem(`step${stepNumber}_completed_date`) || null
+                    }];
+                    localStorage.setItem(versionsKey, JSON.stringify(versions));
+                    return { versions, currentVersion: 1 };
+                }
+
+                return { versions: [], currentVersion: 1 };
+            }
+
+            const versions = JSON.parse(savedVersions);
+            // Current version is the latest one (highest number)
+            const currentVersion = Math.max(...versions.map(v => v.version));
+            return { versions, currentVersion };
+        }
+
+        function startNewStepVersion(stepNumber) {
+            if (!confirm('Start a new version of this step work? Your previous answers will be saved and you can view them in Reflections.')) {
+                return;
+            }
+
+            const versionInfo = getStepVersionInfo(stepNumber);
+            const newVersionNumber = versionInfo.currentVersion + 1;
+
+            // Mark current version as completed if not already
+            const versions = versionInfo.versions;
+            const currentVersionIdx = versions.findIndex(v => v.version === versionInfo.currentVersion);
+            if (currentVersionIdx >= 0 && versions[currentVersionIdx].status !== 'completed') {
+                versions[currentVersionIdx].status = 'completed';
+                versions[currentVersionIdx].completedAt = new Date().toISOString();
+            }
+
+            // Add new version
+            versions.push({
+                version: newVersionNumber,
+                startedAt: new Date().toISOString(),
+                status: 'in_progress',
+                completedAt: null
+            });
+
+            localStorage.setItem(`step${stepNumber}_versions`, JSON.stringify(versions));
+
+            // Archive current answers before starting fresh
+            archiveStepAnswers(stepNumber, versionInfo.currentVersion);
+
+            // Reload the workbook
+            loadStandardStepWorkbook(stepNumber);
+        }
+
+        function archiveStepAnswers(stepNumber, versionNumber) {
+            // Copy current answers to versioned storage
+            const archiveKey = `step${stepNumber}_v${versionNumber}_answers`;
+            const answers = {};
+
+            // Collect all answers for this step
+            for (let i = 0; i < 20; i++) { // Assume max 20 questions
+                const answer = localStorage.getItem(`step${stepNumber}_q${i}`);
+                if (answer) {
+                    answers[`q${i}`] = answer;
+                }
+            }
+
+            localStorage.setItem(archiveKey, JSON.stringify(answers));
+        }
+
+        function switchStepVersion(stepNumber, version) {
+            // For now, switching versions just reloads with that version's data
+            // In a full implementation, this would load the archived answers
+            const versionNum = parseInt(version);
+            const versionInfo = getStepVersionInfo(stepNumber);
+
+            // Store which version we're viewing
+            localStorage.setItem(`step${stepNumber}_viewing_version`, versionNum);
+
+            // Reload the workbook
+            loadStandardStepWorkbook(stepNumber);
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
         function showStepSection(sectionName) {
@@ -3515,33 +3652,79 @@
         }
 
         function buildReflectionsSection(stepNumber) {
+            // Get previous version answers to show for comparison
+            const versionInfo = getStepVersionInfo(stepNumber);
+            let previousAnswersHtml = '';
+
+            if (versionInfo.currentVersion > 1) {
+                const prevVersion = versionInfo.currentVersion - 1;
+                const prevAnswers = localStorage.getItem(`step${stepNumber}_v${prevVersion}_answers`);
+
+                if (prevAnswers) {
+                    const answers = JSON.parse(prevAnswers);
+                    if (Object.keys(answers).length > 0) {
+                        previousAnswersHtml = `
+                            <div style="background: #f7fafc; border-radius: 8px; padding: 15px; margin-bottom: 25px; border-left: 4px solid #667eea;">
+                                <h5 style="margin: 0 0 10px 0; color: #4a5568;">Your Previous Answers (Version ${prevVersion})</h5>
+                                <p style="color: #718096; font-size: 0.85rem; margin-bottom: 10px;">
+                                    Review how you answered last time to see your growth.
+                                </p>
+                                <details style="cursor: pointer;">
+                                    <summary style="font-weight: 500; color: #667eea;">Click to view previous answers</summary>
+                                    <div style="margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.9rem; color: #4a5568;">
+                                        ${Object.entries(answers).map(([key, value]) =>
+                                            `<div style="margin-bottom: 10px; padding: 8px; background: white; border-radius: 4px;"><strong>${key}:</strong> ${value.substring(0, 200)}${value.length > 200 ? '...' : ''}</div>`
+                                        ).join('')}
+                                    </div>
+                                </details>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            const savedRef1 = localStorage.getItem(`step${stepNumber}_reflection_1`) || '';
+            const savedRef2 = localStorage.getItem(`step${stepNumber}_reflection_2`) || '';
+            const savedRef3 = localStorage.getItem(`step${stepNumber}_reflection_3`) || '';
+
             return `
                 <h4 style="margin-bottom: 20px;">Reflection Questions (For Repeat Work)</h4>
                 <p style="color: #718096; margin-bottom: 20px;">
                     These questions help you reflect on your growth since you last worked this step.
                 </p>
+
+                ${previousAnswersHtml}
+
                 <div class="question-item">
                     <p class="question-text">
                         <span class="question-number">1</span>
                         How has your understanding of this step changed since you first worked it?
                     </p>
-                    <textarea class="question-answer" id="reflection_1" placeholder="Reflect on your growth..."></textarea>
+                    <textarea class="question-answer" id="reflection_1" placeholder="Reflect on your growth..."
+                              onchange="saveReflection(${stepNumber}, 1, this.value)">${savedRef1}</textarea>
                 </div>
                 <div class="question-item">
                     <p class="question-text">
                         <span class="question-number">2</span>
                         What new insights have you gained about this step through your experience?
                     </p>
-                    <textarea class="question-answer" id="reflection_2" placeholder="Share your insights..."></textarea>
+                    <textarea class="question-answer" id="reflection_2" placeholder="Share your insights..."
+                              onchange="saveReflection(${stepNumber}, 2, this.value)">${savedRef2}</textarea>
                 </div>
                 <div class="question-item">
                     <p class="question-text">
                         <span class="question-number">3</span>
                         How has practicing this step affected your daily life and relationships?
                     </p>
-                    <textarea class="question-answer" id="reflection_3" placeholder="Describe the impact..."></textarea>
+                    <textarea class="question-answer" id="reflection_3" placeholder="Describe the impact..."
+                              onchange="saveReflection(${stepNumber}, 3, this.value)">${savedRef3}</textarea>
                 </div>
             `;
+        }
+
+        function saveReflection(stepNumber, questionNum, value) {
+            localStorage.setItem(`step${stepNumber}_reflection_${questionNum}`, value);
+            showSaveIndicator();
         }
 
         function autoSaveAnswer(stepNumber, questionIndex, answer) {
