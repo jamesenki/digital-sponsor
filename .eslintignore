@@ -10,4 +10,5 @@ dist/
 
 # Exclude generated files
 public/
-frontend/frontend/
+frontend/frontend/playwright.config.ts
+tests/

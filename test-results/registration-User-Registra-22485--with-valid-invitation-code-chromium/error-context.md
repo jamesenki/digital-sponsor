@@ -1,0 +1,51 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "🔥 Digital Sponsor" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Beta Platform - AI-Powered Recovery Companion
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - strong [ref=e8]: 🎫 Invite-Only Beta Access
+        - text: Enter your personal invitation code received via email. Need access? Contact us for an invitation.
+      - generic [ref=e9]:
+        - button "Login" [ref=e10] [cursor=pointer]
+        - button "Register" [ref=e11] [cursor=pointer]
+      - generic [ref=e12]: 🎉 Welcome to Digital Sponsor Beta, Test User!
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Personal Invitation Code
+          - textbox "Personal Invitation Code" [ref=e16]:
+            - /placeholder: DS-GENERAL-ABC12345
+            - text: DS-GENERAL-320F83E8
+          - text: Check your email for your unique invitation code (DS-TYPE-XXXXXXXX format)
+        - generic [ref=e17]:
+          - generic [ref=e18]: What should we call you?
+          - textbox "What should we call you?" [ref=e19]:
+            - /placeholder: First name or nickname
+            - text: Test User
+          - text: This is how you'll appear in the app
+        - generic [ref=e20]:
+          - generic [ref=e21]: Email Address
+          - textbox "Email Address" [ref=e22]: test-1769544318453@example.com
+        - generic [ref=e23]:
+          - generic [ref=e24]: Phone (optional)
+          - textbox "Phone (optional)" [ref=e25]:
+            - /placeholder: (555) 123-4567
+          - text: For sponsor contact - completely optional
+        - generic [ref=e26]:
+          - generic [ref=e27]: Password
+          - textbox "Password" [ref=e28]: SecurePass123!
+        - button "Create Account" [active] [ref=e29] [cursor=pointer]
+  - contentinfo [ref=e30]:
+    - generic [ref=e31]:
+      - link "Privacy Policy" [ref=e32] [cursor=pointer]:
+        - /url: /privacy
+      - link "Terms of Service" [ref=e33] [cursor=pointer]:
+        - /url: /terms
+      - link "Contact Us" [ref=e34] [cursor=pointer]:
+        - /url: /contact
+    - paragraph [ref=e35]: © 2026 Digital Sponsor. Not affiliated with Alcoholics Anonymous World Services.
+```
