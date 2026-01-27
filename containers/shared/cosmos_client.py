@@ -167,20 +167,24 @@ class CosmosDBClient:
         try:
             container = self._get_container(container_name)
 
-            query_options = {
+            # Build query kwargs
+            query_kwargs = {
+                'query': query,
+                'parameters': parameters or [],
                 'max_item_count': max_items,
-                'enable_cross_partition_query': partition_key is None
             }
-            if partition_key:
-                query_options['partition_key'] = partition_key
 
-            items = list(container.query_items(
-                query=query,
-                parameters=parameters or [],
-                **query_options
-            ))
+            if partition_key:
+                query_kwargs['partition_key'] = partition_key
+            else:
+                query_kwargs['enable_cross_partition_query'] = True
+
+            logger.debug(f"Querying {container_name} with partition_key={partition_key}")
+            items = list(container.query_items(**query_kwargs))
+            logger.debug(f"Query returned {len(items)} items")
             return items
         except Exception as e:
+            logger.error(f"Query error in {container_name}: {type(e).__name__}: {str(e)}")
             raise CosmosDBError(f"Failed to query {container_name}", e)
 
     def health_check(self) -> Dict[str, Any]:
