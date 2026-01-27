@@ -731,6 +731,197 @@
             display: none !important;
         }
 
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .dashboard-card h3 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sobriety-timer {
+            text-align: center;
+            background: linear-gradient(135deg, #48bb7820 0%, #38a16920 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .sobriety-timer .timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 15px 0;
+        }
+
+        .sobriety-timer .timer-detail {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .sobriety-timer .timer-quote {
+            font-style: italic;
+            color: #4a5568;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #c6f6d5;
+        }
+
+        .step-progress-visual {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .step-circle:hover {
+            transform: scale(1.1);
+        }
+
+        .step-circle.completed {
+            background: #48bb78;
+            color: white;
+        }
+
+        .step-circle.in-progress {
+            background: #ecc94b;
+            color: #744210;
+        }
+
+        .step-circle.not-started {
+            background: #e2e8f0;
+            color: #718096;
+        }
+
+        .progress-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .progress-legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .data-management-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .data-management-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-management-list li:last-child {
+            border-bottom: none;
+        }
+
+        .data-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .data-btn-view {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .data-btn-delete {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .data-btn-export {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+
+        .profile-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .profile-form label {
+            font-weight: 500;
+            color: #4a5568;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .profile-form input, .profile-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+
+        .welcome-message .greeting {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .welcome-message .quote {
+            font-style: italic;
+            color: #4a5568;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -1364,32 +1555,101 @@
 
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="dashboardTab">
-                <h2>Welcome to Digital Sponsor Beta! 🎉</h2>
-                <p>Your AI-powered recovery companion with access to 2,382+ pieces of AA literature.</p>
-                
-                <div class="service-status" id="serviceStatus">
-                    <div class="service-card">
-                        <strong>System Status</strong><br>
-                        <small>Checking services...</small>
-                    </div>
+                <!-- Welcome Message -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="greeting">Welcome back!</div>
+                    <div class="quote">"Progress, not perfection."</div>
                 </div>
 
-                <div class="step-grid">
-                    <div class="step-card" onclick="showTab('chat')">
-                        <h3>💬 Ask Questions</h3>
-                        <p>Get AI-powered spiritual guidance</p>
+                <div class="dashboard-grid">
+                    <!-- Sobriety Timer Card -->
+                    <div class="dashboard-card sobriety-timer">
+                        <h3>🎉 Sobriety</h3>
+                        <div class="timer-display" id="sobrietyDisplay">Set Your Date</div>
+                        <div class="timer-detail" id="sobrietyDetail">Click to set your sobriety date</div>
+                        <div class="timer-quote">"One day at a time"</div>
+                        <button onclick="openSobrietySettings()" style="margin-top: 15px; padding: 8px 16px; background: #48bb78; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Set/Update Date
+                        </button>
                     </div>
-                    <div class="step-card" onclick="showTab('stepwork')">
-                        <h3>📝 Work the Steps</h3>
-                        <p>Interactive step work with prayers</p>
+
+                    <!-- Step Progress Card -->
+                    <div class="dashboard-card">
+                        <h3>📊 Step Progress</h3>
+                        <div class="step-progress-visual" id="stepProgressVisual">
+                            <!-- Generated by JS -->
+                        </div>
+                        <div class="progress-legend">
+                            <span><span class="legend-dot" style="background: #48bb78;"></span> Completed</span>
+                            <span><span class="legend-dot" style="background: #ecc94b;"></span> In Progress</span>
+                            <span><span class="legend-dot" style="background: #e2e8f0;"></span> Not Started</span>
+                        </div>
                     </div>
-                    <div class="step-card" onclick="showTab('resources')">
-                        <h3>📚 AA Literature</h3>
-                        <p>Search 2,382+ pieces of literature</p>
+
+                    <!-- Quick Actions Card -->
+                    <div class="dashboard-card">
+                        <h3>⚡ Quick Actions</h3>
+                        <div style="display: grid; gap: 10px;">
+                            <button onclick="showTab('chat')" style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                💬 Ask a Question
+                            </button>
+                            <button onclick="showTab('stepwork')" style="padding: 12px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                📝 Continue Step Work
+                            </button>
+                            <button onclick="openStep(10)" style="padding: 12px; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                📋 Daily Inventory
+                            </button>
+                        </div>
                     </div>
-                    <div class="step-card" onclick="showTab('emergency')">
-                        <h3>🚨 Crisis Support</h3>
-                        <p>Immediate help when you need it</p>
+
+                    <!-- Profile Card -->
+                    <div class="dashboard-card">
+                        <h3>👤 My Profile</h3>
+                        <div class="profile-form">
+                            <div>
+                                <label>Home Group</label>
+                                <input type="text" id="profileHomeGroup" placeholder="Enter your home group" onchange="saveProfile()">
+                            </div>
+                            <div>
+                                <label>Sponsor Name (Optional)</label>
+                                <input type="text" id="profileSponsor" placeholder="Your sponsor's name" onchange="saveProfile()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Management Card -->
+                    <div class="dashboard-card">
+                        <h3>💾 My Data</h3>
+                        <ul class="data-management-list">
+                            <li>
+                                <span>Step Workbooks</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="data-btn data-btn-view" onclick="viewStepData()">View</button>
+                                    <button class="data-btn data-btn-delete" onclick="deleteStepData()">Delete</button>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Chat History</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="data-btn data-btn-delete" onclick="deleteChatHistory()">Clear</button>
+                                </div>
+                            </li>
+                            <li>
+                                <span>All My Data</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="data-btn data-btn-export" onclick="exportAllData()">Export</button>
+                                    <button class="data-btn data-btn-delete" onclick="deleteAllData()">Delete All</button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Service Status Card -->
+                    <div class="dashboard-card">
+                        <h3>🔧 System Status</h3>
+                        <div id="serviceStatus" style="font-size: 0.9rem;">
+                            <small>Checking services...</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1623,13 +1883,317 @@
             // Update tab buttons
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-            
+
             // Show/hide content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(tabName + 'Tab').classList.add('active');
         }
+
+        // =====================================================================
+        // DASHBOARD FUNCTIONS
+        // =====================================================================
+
+        // Initialize dashboard on page load
+        function initDashboard() {
+            loadSobrietyTimer();
+            loadStepProgress();
+            loadProfile();
+            updateWelcomeMessage();
+        }
+
+        // Sobriety Timer Functions
+        function loadSobrietyTimer() {
+            const sobrietyDate = localStorage.getItem('sobriety_date');
+            if (sobrietyDate) {
+                updateSobrietyDisplay(new Date(sobrietyDate));
+            }
+        }
+
+        function updateSobrietyDisplay(sobrietyDate) {
+            const now = new Date();
+            const diff = now - sobrietyDate;
+
+            // Calculate days, months, years
+            const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const years = Math.floor(totalDays / 365);
+            const months = Math.floor((totalDays % 365) / 30);
+            const days = totalDays % 30;
+
+            // Format display
+            let displayText = '';
+            let detailText = '';
+
+            if (years > 0) {
+                displayText = `${years} Year${years > 1 ? 's' : ''}`;
+                if (months > 0) displayText += `, ${months} Month${months > 1 ? 's' : ''}`;
+                detailText = `${totalDays.toLocaleString()} days total`;
+            } else if (months > 0) {
+                displayText = `${months} Month${months > 1 ? 's' : ''}, ${days} Day${days !== 1 ? 's' : ''}`;
+                detailText = `${totalDays} days total`;
+            } else {
+                displayText = `${totalDays} Day${totalDays !== 1 ? 's' : ''}`;
+                detailText = totalDays === 1 ? 'One day at a time!' : 'Keep coming back!';
+            }
+
+            document.getElementById('sobrietyDisplay').textContent = displayText;
+            document.getElementById('sobrietyDetail').textContent = detailText;
+
+            // Check for milestones and update quote
+            const quotes = [
+                '"One day at a time"',
+                '"Progress, not perfection"',
+                '"Keep coming back"',
+                '"It works if you work it"',
+                '"Easy does it"'
+            ];
+
+            // Milestone messages
+            if (totalDays === 1) {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = '"The journey of a thousand miles begins with a single step"';
+            } else if (totalDays === 30) {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = '"30 days! You are a miracle!"';
+            } else if (totalDays === 60) {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = '"60 days of freedom!"';
+            } else if (totalDays === 90) {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = '"90 days - the promises are coming true!"';
+            } else if (totalDays === 365) {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = '"Happy Birthday! One year of happy destiny!"';
+            } else {
+                document.querySelector('.sobriety-timer .timer-quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+            }
+        }
+
+        function openSobrietySettings() {
+            const currentDate = localStorage.getItem('sobriety_date') || '';
+            const formattedDate = currentDate ? new Date(currentDate).toISOString().split('T')[0] : '';
+
+            const modalHtml = `
+                <div id="sobrietyModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1001;">
+                    <div style="background: white; border-radius: 16px; max-width: 400px; width: 90%; padding: 30px;">
+                        <h3 style="margin: 0 0 20px 0; color: #2d3748;">Set Sobriety Date</h3>
+                        <p style="color: #718096; margin-bottom: 20px;">Enter the date you began your journey in recovery.</p>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px;">Sobriety Date</label>
+                            <input type="date" id="sobrietyDateInput" value="${formattedDate}"
+                                   style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                                   max="${new Date().toISOString().split('T')[0]}">
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="closeSobrietyModal()" style="padding: 12px 24px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer;">
+                                Cancel
+                            </button>
+                            <button onclick="saveSobrietyDate()" style="padding: 12px 24px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeSobrietyModal() {
+            const modal = document.getElementById('sobrietyModal');
+            if (modal) modal.remove();
+        }
+
+        function saveSobrietyDate() {
+            const dateInput = document.getElementById('sobrietyDateInput').value;
+            if (dateInput) {
+                localStorage.setItem('sobriety_date', dateInput);
+                updateSobrietyDisplay(new Date(dateInput));
+                updateWelcomeMessage();
+            }
+            closeSobrietyModal();
+        }
+
+        // Step Progress Functions
+        function loadStepProgress() {
+            const progressContainer = document.getElementById('stepProgressVisual');
+            if (!progressContainer) return;
+
+            let html = '';
+            for (let i = 1; i <= 12; i++) {
+                const stepData = localStorage.getItem(`step${i}_completed`);
+                const inProgress = localStorage.getItem(`step${i}_in_progress`);
+
+                let statusClass = 'not-started';
+                if (stepData === 'true') {
+                    statusClass = 'completed';
+                } else if (inProgress === 'true' || localStorage.getItem(`step${i}_list`) || localStorage.getItem(`step${i}_amends`)) {
+                    statusClass = 'in-progress';
+                }
+
+                // Check special cases
+                if (i === 8 && localStorage.getItem('step8_list')) statusClass = 'in-progress';
+                if (i === 9 && localStorage.getItem('step9_amends')) statusClass = 'in-progress';
+                if (i === 10 && localStorage.getItem(`step10_${new Date().toISOString().split('T')[0]}`)) statusClass = 'in-progress';
+
+                html += `<div class="step-circle ${statusClass}" onclick="openStep(${i})" title="Step ${i}">${i}</div>`;
+            }
+
+            progressContainer.innerHTML = html;
+        }
+
+        function markStepComplete(stepNumber) {
+            localStorage.setItem(`step${stepNumber}_completed`, 'true');
+            loadStepProgress();
+        }
+
+        // Profile Functions
+        function loadProfile() {
+            const homeGroup = localStorage.getItem('profile_home_group');
+            const sponsor = localStorage.getItem('profile_sponsor');
+
+            if (homeGroup) document.getElementById('profileHomeGroup').value = homeGroup;
+            if (sponsor) document.getElementById('profileSponsor').value = sponsor;
+        }
+
+        function saveProfile() {
+            const homeGroup = document.getElementById('profileHomeGroup').value;
+            const sponsor = document.getElementById('profileSponsor').value;
+
+            localStorage.setItem('profile_home_group', homeGroup);
+            localStorage.setItem('profile_sponsor', sponsor);
+        }
+
+        // Welcome Message
+        function updateWelcomeMessage() {
+            const welcomeEl = document.getElementById('welcomeMessage');
+            if (!welcomeEl) return;
+
+            const firstName = localStorage.getItem('user_firstName') || '';
+            const sobrietyDate = localStorage.getItem('sobriety_date');
+
+            let greeting = firstName ? `Welcome back, ${firstName}!` : 'Welcome back!';
+            let quote = '"Progress, not perfection."';
+
+            // Check for anniversaries
+            if (sobrietyDate) {
+                const sobriety = new Date(sobrietyDate);
+                const now = new Date();
+                const totalDays = Math.floor((now - sobriety) / (1000 * 60 * 60 * 24));
+
+                // Check if today is an anniversary
+                if (sobriety.getMonth() === now.getMonth() && sobriety.getDate() === now.getDate() && totalDays >= 365) {
+                    const years = Math.floor(totalDays / 365);
+                    greeting = `🎉 Happy ${years} Year${years > 1 ? 's' : ''} Anniversary, ${firstName || 'Friend'}!`;
+                    quote = '"We are going to know a new freedom and a new happiness." - The Promises';
+                } else if (totalDays === 30) {
+                    greeting = `🎉 Congratulations on 30 days, ${firstName || 'Friend'}!`;
+                } else if (totalDays === 60) {
+                    greeting = `🎉 60 days! Keep it up, ${firstName || 'Friend'}!`;
+                } else if (totalDays === 90) {
+                    greeting = `🎉 90 days - You're doing amazing, ${firstName || 'Friend'}!`;
+                }
+            }
+
+            welcomeEl.querySelector('.greeting').textContent = greeting;
+            welcomeEl.querySelector('.quote').textContent = quote;
+        }
+
+        // Data Management Functions
+        function viewStepData() {
+            let dataHtml = '<h3>Step Work Data</h3><div style="max-height: 400px; overflow-y: auto;">';
+
+            for (let i = 1; i <= 12; i++) {
+                const stepData = localStorage.getItem(`step${i}_list`) || localStorage.getItem(`step${i}_amends`) || localStorage.getItem(`step${i}_responses`);
+                if (stepData) {
+                    dataHtml += `<div style="margin-bottom: 10px; padding: 10px; background: #f7fafc; border-radius: 6px;"><strong>Step ${i}:</strong> Data saved</div>`;
+                }
+            }
+
+            // Check special step data
+            if (localStorage.getItem('step4_inventory')) {
+                dataHtml += '<div style="margin-bottom: 10px; padding: 10px; background: #f7fafc; border-radius: 6px;"><strong>Step 4 Inventory:</strong> Data saved</div>';
+            }
+
+            dataHtml += '</div>';
+
+            alert('Step data saved locally. Use Export to download a copy.');
+        }
+
+        function deleteStepData() {
+            if (!confirm('Are you sure you want to delete all your step work data? This cannot be undone.')) return;
+            if (!confirm('This will permanently delete all step workbooks, inventories, and progress. Are you absolutely sure?')) return;
+
+            // Delete all step-related localStorage items
+            const keysToDelete = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('step') || key.includes('_inventory') || key.includes('_responses') || key.includes('_reflections')) {
+                    keysToDelete.push(key);
+                }
+            }
+            keysToDelete.forEach(key => localStorage.removeItem(key));
+
+            loadStepProgress();
+            alert('All step work data has been deleted.');
+        }
+
+        function deleteChatHistory() {
+            if (!confirm('Delete all chat history?')) return;
+
+            // Clear chat messages from DOM
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.innerHTML = `
+                    <div class="message-bubble message-assistant">
+                        <strong>Digital Sponsor AI:</strong> Welcome! I'm here to help with your recovery journey. Ask me anything about the steps, sponsorship, meetings, or any AA topic. How can I support you today? 🙏
+                    </div>
+                `;
+            }
+            localStorage.removeItem('chat_history');
+            alert('Chat history cleared.');
+        }
+
+        function exportAllData() {
+            const exportData = {};
+
+            // Collect all localStorage data
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                exportData[key] = localStorage.getItem(key);
+            }
+
+            // Create download
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `digital-sponsor-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('Data exported successfully!');
+        }
+
+        function deleteAllData() {
+            if (!confirm('⚠️ WARNING: This will delete ALL your data including step work, profile, sobriety date, and settings. This cannot be undone.')) return;
+            if (!confirm('Are you absolutely sure? Type "DELETE" in the next prompt to confirm.')) return;
+
+            const confirmation = prompt('Type DELETE to confirm:');
+            if (confirmation !== 'DELETE') {
+                alert('Deletion cancelled.');
+                return;
+            }
+
+            localStorage.clear();
+            alert('All data has been deleted. The page will now reload.');
+            window.location.reload();
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initDashboard();
+        });
 
         // Invitation validation
         async function validateInvitationCode(code) {
