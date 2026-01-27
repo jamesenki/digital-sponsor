@@ -144,7 +144,8 @@ class AuthService:
             'message': f'Beta invitation created for {email}'
         }
 
-    def register_user(self, invitation_code: str, email: str, auth_provider: str = 'aad') -> Dict[str, Any]:
+    def register_user(self, invitation_code: str, email: str, auth_provider: str = 'aad',
+                      display_name: str = '', phone: str = '', password: str = '') -> Dict[str, Any]:
         """Register new user with invitation code"""
         # Validate invitation
         validation = self.validate_invitation(invitation_code)
@@ -159,13 +160,22 @@ class AuthService:
         # Get invitation details
         invitation = self.user_repo.get_invitation_by_code(invitation_code)
 
-        # Create user
+        # Use display_name from form, fallback to invitation firstName
+        final_display_name = display_name or invitation.get('firstName', '')
+
+        # Hash password if provided
+        password_hash = self.hash_password(password) if password else ''
+
+        # Create user with new fields
         user = self.user_repo.create_user(
             email=email,
-            first_name=invitation['firstName'],
+            first_name=invitation.get('firstName', final_display_name),
             roles=['user'],
             invitation_type=invitation['type'],
-            auth_provider=auth_provider
+            auth_provider=auth_provider,
+            display_name=final_display_name,
+            phone=phone,
+            password_hash=password_hash
         )
 
         # Mark invitation as used
@@ -182,11 +192,14 @@ class AuthService:
             'user': {
                 'id': user['id'],
                 'email': email,
-                'firstName': invitation['firstName'],
+                'displayName': final_display_name,
+                'firstName': invitation.get('firstName', final_display_name),
+                'phone': phone,
+                'encryptionSalt': user.get('encryptionSalt', ''),
                 'invitationType': invitation['type']
             },
             'session_token': session['id'],
-            'message': f"Welcome to Digital Sponsor Beta, {invitation['firstName']}!"
+            'message': f"Welcome to Digital Sponsor Beta, {final_display_name}!"
         }
 
     def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
@@ -212,11 +225,15 @@ class AuthService:
             'user': {
                 'id': user['id'],
                 'email': user['email'],
-                'firstName': user['firstName'],
-                'roles': user['roles']
+                'displayName': user.get('displayName', user.get('firstName', '')),
+                'firstName': user.get('firstName', ''),
+                'phone': user.get('phone', ''),
+                'encryptionSalt': user.get('encryptionSalt', ''),
+                'roles': user.get('roles', ['user']),
+                'profile': user.get('profile', {})
             },
             'session_token': session['id'],
-            'message': 'Login successful - welcome back!'
+            'message': f"Login successful - welcome back, {user.get('displayName', user.get('firstName', 'friend'))}!"
         }
 
     def check_admin_permission(self, admin_key: str = None, user_email: str = None) -> bool:
@@ -327,13 +344,19 @@ class AuthHandler(http.server.BaseHTTPRequestHandler):
 
             invitation_code = post_data.get('invitationCode')
             email = post_data.get('email')
-            auth_provider = post_data.get('authProvider', 'aad')
+            auth_provider = post_data.get('authProvider', 'local')
+            display_name = post_data.get('displayName', '')
+            phone = post_data.get('phone', '')
+            password = post_data.get('password', '')
 
             if not invitation_code or not email:
                 self.send_error(400, "Missing invitationCode or email")
                 return
 
-            result = self.auth_service.register_user(invitation_code, email, auth_provider)
+            result = self.auth_service.register_user(
+                invitation_code, email, auth_provider,
+                display_name=display_name, phone=phone, password=password
+            )
 
             status_code = 201 if result['success'] else 400
             self.send_response(status_code)

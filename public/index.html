@@ -179,32 +179,6 @@
             display: block;
         }
 
-        .service-status {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .service-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .service-healthy {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .service-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
         .chat-container {
             border: 1px solid #e2e8f0;
             border-radius: 12px;
@@ -1680,12 +1654,18 @@
                     <small>Check your email for your unique invitation code (DS-TYPE-XXXXXXXX format)</small>
                 </div>
                 <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" required>
+                    <label for="displayName">What should we call you?</label>
+                    <input type="text" id="displayName" placeholder="First name or nickname" required>
+                    <small>This is how you'll appear in the app</small>
                 </div>
                 <div class="form-group">
                     <label for="registerEmail">Email Address</label>
                     <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">Phone (optional)</label>
+                    <input type="tel" id="registerPhone" placeholder="(555) 123-4567">
+                    <small>For sponsor contact - completely optional</small>
                 </div>
                 <div class="form-group">
                     <label for="registerPassword">Password</label>
@@ -1759,6 +1739,18 @@
                         <h3>👤 My Profile</h3>
                         <div class="profile-form">
                             <div>
+                                <label>Display Name</label>
+                                <input type="text" id="profileDisplayName" placeholder="How you want to be called" onchange="saveProfile()">
+                            </div>
+                            <div>
+                                <label>Email</label>
+                                <input type="email" id="profileEmail" readonly style="background: #f0f0f0; cursor: not-allowed;">
+                            </div>
+                            <div>
+                                <label>Phone (Optional)</label>
+                                <input type="tel" id="profilePhone" placeholder="For sponsor contact" onchange="saveProfile()">
+                            </div>
+                            <div>
                                 <label>Home Group</label>
                                 <input type="text" id="profileHomeGroup" placeholder="Enter your home group" onchange="saveProfile()">
                             </div>
@@ -1796,12 +1788,33 @@
                         </ul>
                     </div>
 
-                    <!-- Service Status Card -->
-                    <div class="dashboard-card">
-                        <h3>🔧 System Status</h3>
-                        <div id="serviceStatus" style="font-size: 0.9rem;">
-                            <small>Checking services...</small>
-                        </div>
+                    <!-- Admin Section (hidden by default) -->
+                    <div class="dashboard-card" id="adminSection" style="display: none; background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); border: 2px solid #667eea;">
+                        <h3>🔐 Admin: Invite Users</h3>
+                        <form id="inviteUserForm" onsubmit="sendInvitation(event)">
+                            <div class="profile-form">
+                                <div>
+                                    <label>Email Address</label>
+                                    <input type="email" id="inviteEmail" placeholder="newuser@example.com" required>
+                                </div>
+                                <div>
+                                    <label>First Name</label>
+                                    <input type="text" id="inviteFirstName" placeholder="John" required>
+                                </div>
+                                <div>
+                                    <label>Invitation Type</label>
+                                    <select id="inviteType">
+                                        <option value="general">General User</option>
+                                        <option value="sponsor">Sponsor</option>
+                                        <option value="investor">Investor</option>
+                                        <option value="clinical">Clinical</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn" style="margin-top: 15px; background: #667eea;">Send Invitation</button>
+                        </form>
+                        <div id="inviteResult" style="margin-top: 15px;"></div>
+                        <div id="recentInvites" style="margin-top: 15px;"></div>
                     </div>
                 </div>
             </div>
@@ -2201,19 +2214,119 @@
 
         // Profile Functions
         function loadProfile() {
-            const homeGroup = localStorage.getItem('profile_home_group');
-            const sponsor = localStorage.getItem('profile_sponsor');
+            // Load from currentUser first, then localStorage as fallback
+            const displayName = currentUser?.displayName || localStorage.getItem('profile_display_name') || '';
+            const email = currentUser?.email || localStorage.getItem('profile_email') || '';
+            const phone = currentUser?.phone || localStorage.getItem('profile_phone') || '';
+            const homeGroup = currentUser?.profile?.homeGroup || localStorage.getItem('profile_home_group') || '';
+            const sponsor = currentUser?.profile?.sponsorName || localStorage.getItem('profile_sponsor') || '';
 
-            if (homeGroup) document.getElementById('profileHomeGroup').value = homeGroup;
-            if (sponsor) document.getElementById('profileSponsor').value = sponsor;
+            document.getElementById('profileDisplayName').value = displayName;
+            document.getElementById('profileEmail').value = email;
+            document.getElementById('profilePhone').value = phone;
+            document.getElementById('profileHomeGroup').value = homeGroup;
+            document.getElementById('profileSponsor').value = sponsor;
         }
 
         function saveProfile() {
+            const displayName = document.getElementById('profileDisplayName').value;
+            const phone = document.getElementById('profilePhone').value;
             const homeGroup = document.getElementById('profileHomeGroup').value;
             const sponsor = document.getElementById('profileSponsor').value;
 
+            // Save to localStorage
+            localStorage.setItem('profile_display_name', displayName);
+            localStorage.setItem('profile_phone', phone);
             localStorage.setItem('profile_home_group', homeGroup);
             localStorage.setItem('profile_sponsor', sponsor);
+
+            // Update currentUser if exists
+            if (currentUser) {
+                currentUser.displayName = displayName;
+                currentUser.phone = phone;
+                if (!currentUser.profile) currentUser.profile = {};
+                currentUser.profile.homeGroup = homeGroup;
+                currentUser.profile.sponsorName = sponsor;
+            }
+
+            // TODO: Sync to cloud when cloud storage is implemented
+            showMessage('Profile saved!', 'success');
+        }
+
+        // =====================================================================
+        // ADMIN FUNCTIONS
+        // =====================================================================
+
+        const ADMIN_EMAILS = ['jamessimonster@icloud.com', 'jamesenki@digitalsponsor.ai'];
+
+        function checkAdminAccess() {
+            const adminSection = document.getElementById('adminSection');
+            if (!adminSection) return;
+
+            const userEmail = currentUser?.email?.toLowerCase() || '';
+            const isAdmin = ADMIN_EMAILS.includes(userEmail) ||
+                           currentUser?.roles?.includes('admin') ||
+                           currentUser?.roles?.includes('invite_manager');
+
+            adminSection.style.display = isAdmin ? 'block' : 'none';
+
+            if (isAdmin) {
+                console.log('Admin access granted for:', userEmail);
+            }
+        }
+
+        async function sendInvitation(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('inviteEmail').value;
+            const firstName = document.getElementById('inviteFirstName').value;
+            const inviteType = document.getElementById('inviteType').value;
+            const resultDiv = document.getElementById('inviteResult');
+
+            resultDiv.innerHTML = '<small>Sending invitation...</small>';
+
+            try {
+                const response = await fetch(`${config.authService}/api/admin/send-invitation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        firstName: firstName,
+                        type: inviteType,
+                        userEmail: currentUser?.email  // For authorization
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div style="background: #d4edda; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                            <strong>✅ Invitation Created!</strong><br>
+                            <small>Code: <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">${data.invitation?.code || 'Generated'}</code></small><br>
+                            <small>Sent to: ${email}</small>
+                        </div>
+                    `;
+                    // Clear form
+                    document.getElementById('inviteEmail').value = '';
+                    document.getElementById('inviteFirstName').value = '';
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="background: #f8d7da; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                            <strong>❌ Failed</strong><br>
+                            <small>${data.error || 'Could not create invitation'}</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Invitation error:', error);
+                resultDiv.innerHTML = `
+                    <div style="background: #f8d7da; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                        <strong>❌ Error</strong><br>
+                        <small>Could not connect to auth service. Try again later.</small>
+                    </div>
+                `;
+            }
         }
 
         // Welcome Message
@@ -2681,7 +2794,7 @@
                     const result = await validateInvitationCode(code);
                     if (result.valid) {
                         e.target.style.borderColor = '#38a169';
-                        document.getElementById('firstName').value = result.firstName || '';
+                        document.getElementById('displayName').value = result.firstName || '';
                         showMessage(`✅ Valid ${result.type} invitation for ${result.firstName}`, 'success');
                     } else {
                         e.target.style.borderColor = '#e53e3e';
@@ -2705,6 +2818,9 @@
             }
 
             const email = document.getElementById('registerEmail').value;
+            const displayName = document.getElementById('displayName').value;
+            const phone = document.getElementById('registerPhone').value;
+            const password = document.getElementById('registerPassword').value;
 
             // Check if using demo invitation code - bypass auth service
             if (demoInvitations[invitationCode]) {
@@ -2713,11 +2829,13 @@
 
                 // Simulate successful registration for demo
                 setTimeout(() => {
-                    showMessage(`🎉 Welcome to Digital Sponsor Beta, ${demoUser.firstName}!`, 'success');
+                    showMessage(`🎉 Welcome to Digital Sponsor Beta, ${displayName || demoUser.firstName}!`, 'success');
                     currentUser = {
                         id: 'demo-' + Date.now(),
                         email: email,
+                        displayName: displayName || demoUser.firstName,
                         firstName: demoUser.firstName,
+                        phone: phone,
                         type: demoUser.type
                     };
                     sessionToken = 'demo-token-' + Date.now();
@@ -2734,7 +2852,10 @@
             const formData = {
                 invitationCode: invitationCode,
                 email: email,
-                authProvider: 'aad'
+                displayName: displayName,
+                phone: phone,
+                password: password,
+                authProvider: 'local'
             };
 
             showMessage('Creating your account...', 'info');
@@ -2847,8 +2968,13 @@
         function showMainApp() {
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('headerSubtitle').textContent = `Welcome back, ${currentUser.email}!`;
-            checkServiceStatus();
+            document.getElementById('headerSubtitle').textContent = `Welcome back, ${currentUser.displayName || currentUser.firstName || currentUser.email}!`;
+
+            // Initialize dashboard components
+            initDashboard();
+
+            // Check admin access
+            checkAdminAccess();
         }
 
         function logout() {
@@ -2857,72 +2983,6 @@
             document.getElementById('authSection').style.display = 'block';
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('headerSubtitle').textContent = 'Beta Platform - AI-Powered Recovery Companion';
-        }
-
-        // Service Status Check
-        async function checkServiceStatus() {
-            const statusContainer = document.getElementById('serviceStatus');
-
-            // Show demo mode status
-            if (config.demoMode) {
-                statusContainer.innerHTML = `
-                    <div class="service-card service-healthy">
-                        <strong>Auth Service</strong><br>
-                        <small>🎭 Demo Mode</small>
-                    </div>
-                    <div class="service-card service-healthy">
-                        <strong>Literature Service</strong><br>
-                        <small>🎭 Demo Mode</small>
-                    </div>
-                    <div class="service-card service-healthy">
-                        <strong>Chat Service</strong><br>
-                        <small>🎭 Demo Mode</small>
-                    </div>
-                `;
-                console.log('Running in demo mode (HTTPS frontend with HTTP backends)');
-                return;
-            }
-
-            statusContainer.innerHTML = '<div class="service-card">Checking services...</div>';
-
-            const services = [
-                {name: 'Auth Service', url: config.authService + '/health'},
-                {name: 'Literature Service', url: config.literatureService + '/health'},
-                {name: 'Chat Service', url: config.chatService + '/health'}
-            ];
-
-            let statusHtml = '';
-
-            for (const service of services) {
-                try {
-                    const response = await fetch(service.url);
-                    if (response.ok) {
-                        const data = await response.json();
-                        statusHtml += `
-                            <div class="service-card service-healthy">
-                                <strong>${service.name}</strong><br>
-                                <small>✅ ${data.status || 'Healthy'}</small>
-                            </div>
-                        `;
-                    } else {
-                        statusHtml += `
-                            <div class="service-card service-error">
-                                <strong>${service.name}</strong><br>
-                                <small>❌ Error ${response.status}</small>
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    statusHtml += `
-                        <div class="service-card service-error">
-                            <strong>${service.name}</strong><br>
-                            <small>❌ Connection failed</small>
-                        </div>
-                    `;
-                }
-            }
-
-            statusContainer.innerHTML = statusHtml;
         }
 
         // =====================================================================

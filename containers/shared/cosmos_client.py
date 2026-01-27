@@ -227,18 +227,26 @@ class UserRepository:
 
     def create_user(self, email: str, first_name: str, last_name: str = '',
                     password_hash: str = '', roles: List[str] = None,
-                    invitation_type: str = 'general', auth_provider: str = 'local') -> Dict[str, Any]:
+                    invitation_type: str = 'general', auth_provider: str = 'local',
+                    display_name: str = '', phone: str = '', encryption_salt: str = '') -> Dict[str, Any]:
         """Create a new user"""
         user_id = f"user_{uuid.uuid4()}"
+
+        # Generate encryption salt if not provided
+        if not encryption_salt:
+            encryption_salt = uuid.uuid4().hex
 
         user = {
             'id': user_id,
             'docType': 'user',
             'userId': user_id,  # Partition key
             'email': email.lower(),
+            'displayName': display_name or first_name,
             'firstName': first_name,
             'lastName': last_name,
+            'phone': phone,
             'passwordHash': password_hash,
+            'encryptionSalt': encryption_salt,
             'roles': roles or ['user'],
             'invitationType': invitation_type,
             'authProvider': auth_provider,
@@ -247,6 +255,7 @@ class UserRepository:
                 'isAdmin': 'admin' in (roles or []),
                 'sobrietyDate': None,
                 'homeGroup': None,
+                'sponsorName': None,
                 'preferences': {}
             },
             'searchHistory': [],
