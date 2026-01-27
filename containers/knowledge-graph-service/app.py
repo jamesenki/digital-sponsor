@@ -8,6 +8,12 @@ Phase 1: Static literature graph (read-only)
 - 12 Traditions
 - Concepts (character defects, spiritual principles)
 - Literature passages with cross-references
+
+Phase 2: User Journey Graph (read-write)
+- Sync user step work to graph
+- Track resentments → amends flow
+- Generate personalized insights
+- Suggest sponsor discussion topics
 """
 
 import http.server
@@ -17,6 +23,16 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
+
+# Import user journey handlers
+from user_journey import (
+    handle_sync_step_work,
+    handle_sync_resentment,
+    handle_get_insights,
+    handle_get_sponsor_topics,
+    handle_get_dashboard,
+    USER_JOURNEY
+)
 
 # Neo4j Configuration
 NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
@@ -436,10 +452,12 @@ class KnowledgeGraphHandler(http.server.BaseHTTPRequestHandler):
                 'status': 'healthy',
                 'service': 'Digital Sponsor Knowledge Graph Service',
                 'neo4jConnected': KNOWLEDGE_GRAPH.is_connected,
+                'userJourneyConnected': USER_JOURNEY.is_connected,
                 'mode': 'live' if KNOWLEDGE_GRAPH.is_connected else 'mock',
                 'region': 'Central US',
                 'timestamp': datetime.now().isoformat(),
-                'version': '1.0.0'
+                'version': '2.0.0',
+                'phases': ['literature-graph', 'user-journey']
             })
 
         elif path == '/api/graph/stats':
@@ -481,6 +499,40 @@ class KnowledgeGraphHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({'success': True, 'remedy': remedy})
             else:
                 self.send_json({'success': False, 'error': 'Defect not found'}, 404)
+
+        # =================================================================
+        # USER JOURNEY ENDPOINTS (Phase 2)
+        # =================================================================
+
+        elif path.startswith('/api/user/') and path.endswith('/insights'):
+            # GET /api/user/{userId}/insights
+            parts = path.split('/')
+            user_id = parts[3] if len(parts) >= 5 else None
+            if user_id:
+                result = handle_get_insights(user_id)
+                self.send_json(result)
+            else:
+                self.send_json({'success': False, 'error': 'User ID required'}, 400)
+
+        elif path.startswith('/api/user/') and path.endswith('/sponsor-topics'):
+            # GET /api/user/{userId}/sponsor-topics
+            parts = path.split('/')
+            user_id = parts[3] if len(parts) >= 5 else None
+            if user_id:
+                result = handle_get_sponsor_topics(user_id)
+                self.send_json(result)
+            else:
+                self.send_json({'success': False, 'error': 'User ID required'}, 400)
+
+        elif path.startswith('/api/user/') and path.endswith('/dashboard'):
+            # GET /api/user/{userId}/dashboard
+            parts = path.split('/')
+            user_id = parts[3] if len(parts) >= 5 else None
+            if user_id:
+                result = handle_get_dashboard(user_id)
+                self.send_json(result)
+            else:
+                self.send_json({'success': False, 'error': 'User ID required'}, 400)
 
         else:
             self.send_json({'success': False, 'error': 'Not found'}, 404)
@@ -525,6 +577,22 @@ class KnowledgeGraphHandler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self.send_json({'success': False, 'error': str(e)}, 500)
 
+        # =================================================================
+        # USER JOURNEY SYNC ENDPOINTS (Phase 2)
+        # =================================================================
+
+        elif path == '/api/user/sync/step-work':
+            # POST /api/user/sync/step-work
+            result = handle_sync_step_work(data)
+            status = 200 if result.get('success') else 400
+            self.send_json(result, status)
+
+        elif path == '/api/user/sync/resentment':
+            # POST /api/user/sync/resentment
+            result = handle_sync_resentment(data)
+            status = 200 if result.get('success') else 400
+            self.send_json(result, status)
+
         else:
             self.send_json({'success': False, 'error': 'Not found'}, 404)
 
@@ -537,12 +605,13 @@ PORT = int(os.environ.get('PORT', 3005))
 
 if __name__ == '__main__':
     with socketserver.TCPServer(('', PORT), KnowledgeGraphHandler) as httpd:
-        print(f'🔗 Digital Sponsor Knowledge Graph Service running on port {PORT}')
+        print(f'🔗 Digital Sponsor Knowledge Graph Service v2.0 running on port {PORT}')
         print(f'📊 Neo4j connected: {KNOWLEDGE_GRAPH.is_connected}')
+        print(f'👤 User Journey service: {USER_JOURNEY.is_connected}')
         print(f'🔄 Mode: {"live" if KNOWLEDGE_GRAPH.is_connected else "mock (Neo4j not available)"}')
         print('🌍 Region: Central US')
         print('')
-        print('📚 API Endpoints:')
+        print('📚 Phase 1 - Literature Graph Endpoints:')
         print(f'   GET  /health - Service health')
         print(f'   GET  /api/graph/stats - Graph statistics')
         print(f'   GET  /api/steps/relationships - Step relationships')
@@ -551,4 +620,11 @@ if __name__ == '__main__':
         print(f'   GET  /api/concept-trace/{{name}} - Trace concept across literature')
         print(f'   GET  /api/defect-remedy/{{name}} - Get remedy for character defect')
         print(f'   POST /api/search/passages - Search passages')
+        print('')
+        print('👤 Phase 2 - User Journey Endpoints:')
+        print(f'   POST /api/user/sync/step-work - Sync step work session')
+        print(f'   POST /api/user/sync/resentment - Sync resentment from Step 4')
+        print(f'   GET  /api/user/{{userId}}/insights - Get personalized insights')
+        print(f'   GET  /api/user/{{userId}}/sponsor-topics - Get sponsor discussion topics')
+        print(f'   GET  /api/user/{{userId}}/dashboard - Get recovery dashboard')
         httpd.serve_forever()

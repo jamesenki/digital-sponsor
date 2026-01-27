@@ -1449,6 +1449,158 @@
                 font-size: 0.85rem;
             }
         }
+
+        /* User Insights Styles (Phase 5) */
+        .user-insights {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-insights h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .insight-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+        }
+
+        .insight-card.high {
+            border-left-color: #e53e3e;
+            background: #fff5f5;
+        }
+
+        .insight-card.medium {
+            border-left-color: #ecc94b;
+            background: #fffff0;
+        }
+
+        .insight-card.low {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .insight-content h5 {
+            margin: 0 0 5px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .insight-content p {
+            margin: 0 0 8px 0;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .insight-refs {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .no-insights, .no-topics {
+            color: #718096;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Sponsor Topics Styles */
+        .sponsor-topics {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sponsor-topics h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .sponsor-topic-card {
+            padding: 15px;
+            border-radius: 8px;
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+        }
+
+        .sponsor-topic-card h5 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .sponsor-topic-card ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .sponsor-topic-card li {
+            margin-bottom: 5px;
+        }
+
+        /* Step Relationships Visualization */
+        .step-relationships-viz h4 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+        }
+
+        .step-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-connection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .step-connection.follows {
+            border-left: 3px solid #48bb78;
+        }
+
+        .step-connection.prepares-for {
+            border-left: 3px solid #667eea;
+        }
+
+        .step-connection.provides-input-to {
+            border-left: 3px solid #ecc94b;
+        }
+
+        .step-num {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .connection-arrow {
+            color: #718096;
+        }
+
+        .connection-label {
+            color: #718096;
+            font-size: 0.85rem;
+            margin-left: auto;
+        }
     </style>
 
     <!-- Google AdSense - Auto Ads Enabled -->
@@ -2280,6 +2432,192 @@
                 console.log('Knowledge graph unavailable for concept trace');
                 return [];
             }
+        }
+
+        // =====================================================================
+        // USER JOURNEY API FUNCTIONS (Phase 5)
+        // =====================================================================
+
+        /**
+         * Sync a step work session to the knowledge graph
+         * @param {number} stepNumber - step number (1-12)
+         * @param {string} sessionId - unique session identifier
+         * @param {string} status - 'in_progress' or 'completed'
+         * @param {number} version - version number of the step work
+         */
+        async function syncStepWorkToGraph(stepNumber, sessionId, status, version = 1) {
+            if (!currentUser?.token) return { success: false };
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/user/sync/step-work`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        stepNumber,
+                        sessionId,
+                        status,
+                        version
+                    })
+                });
+                return await response.json();
+            } catch (error) {
+                console.log('Failed to sync step work to graph:', error);
+                return { success: false };
+            }
+        }
+
+        /**
+         * Sync a resentment to the knowledge graph for pattern analysis
+         * @param {string} sessionId - step work session ID
+         * @param {string} resentmentId - unique resentment ID
+         * @param {string} who - who or what the resentment is about
+         * @param {string} cause - what they did
+         * @param {string} myPart - my part in it
+         * @param {Array} affects - what it affects (self-esteem, security, etc.)
+         */
+        async function syncResentmentToGraph(sessionId, resentmentId, who, cause, myPart, affects) {
+            if (!currentUser?.token) return { success: false };
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/user/sync/resentment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        sessionId,
+                        resentmentId,
+                        who,
+                        cause,
+                        myPart,
+                        affects
+                    })
+                });
+                return await response.json();
+            } catch (error) {
+                console.log('Failed to sync resentment to graph:', error);
+                return { success: false };
+            }
+        }
+
+        /**
+         * Get personalized insights based on user's recovery journey
+         * @returns {Promise<Array>} Array of insight objects
+         */
+        async function getUserInsights() {
+            if (!currentUser?.token) return [];
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/user/${currentUser.userId}/insights`);
+                const data = await response.json();
+                return data.success ? data.insights : [];
+            } catch (error) {
+                console.log('Failed to get user insights:', error);
+                return [];
+            }
+        }
+
+        /**
+         * Get suggested sponsor discussion topics based on step work
+         * @returns {Promise<Array>} Array of topic objects
+         */
+        async function getSponsorDiscussionTopics() {
+            if (!currentUser?.token) return [];
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/user/${currentUser.userId}/sponsor-topics`);
+                const data = await response.json();
+                return data.success ? data.topics : [];
+            } catch (error) {
+                console.log('Failed to get sponsor topics:', error);
+                return [];
+            }
+        }
+
+        /**
+         * Get comprehensive recovery dashboard data from knowledge graph
+         * @returns {Promise<Object>} Dashboard data including progress, patterns, etc.
+         */
+        async function getRecoveryDashboard() {
+            if (!currentUser?.token) return null;
+            try {
+                const response = await fetch(`${config.knowledgeGraphService}/api/user/${currentUser.userId}/dashboard`);
+                const data = await response.json();
+                return data.success ? data.dashboard : null;
+            } catch (error) {
+                console.log('Failed to get recovery dashboard:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Display personalized insights in a container
+         * @param {string} containerId - ID of container element
+         */
+        async function displayUserInsights(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const insights = await getUserInsights();
+
+            if (insights.length === 0) {
+                container.innerHTML = '<p class="no-insights">Complete more step work to see personalized insights.</p>';
+                return;
+            }
+
+            let html = '<div class="user-insights">';
+            html += '<h4>Personalized Insights</h4>';
+
+            insights.forEach(insight => {
+                const priorityClass = insight.priority === 1 ? 'high' : insight.priority === 2 ? 'medium' : 'low';
+                const typeIcon = insight.type === 'pattern' ? '🔍' :
+                                 insight.type === 'suggestion' ? '💡' :
+                                 insight.type === 'milestone' ? '🎉' : '⚠️';
+
+                html += `
+                    <div class="insight-card ${priorityClass}">
+                        <span class="insight-icon">${typeIcon}</span>
+                        <div class="insight-content">
+                            <h5>${insight.title}</h5>
+                            <p>${insight.description}</p>
+                            ${insight.literatureReferences.length > 0 ?
+                                `<span class="insight-refs">📖 ${insight.literatureReferences.join(', ')}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        /**
+         * Display sponsor discussion topics in a container
+         * @param {string} containerId - ID of container element
+         */
+        async function displaySponsorTopics(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const topics = await getSponsorDiscussionTopics();
+
+            if (topics.length === 0) {
+                container.innerHTML = '<p class="no-topics">No specific topics to discuss with your sponsor at this time.</p>';
+                return;
+            }
+
+            let html = '<div class="sponsor-topics">';
+            html += '<h4>Suggested Topics for Sponsor Discussion</h4>';
+
+            topics.forEach(topic => {
+                html += `
+                    <div class="sponsor-topic-card">
+                        <h5>${topic.topic}</h5>
+                        <ul>
+                            ${topic.discussion_points.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         /**

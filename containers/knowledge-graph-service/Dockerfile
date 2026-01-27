@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY app.py .
 COPY import_data.py .
+COPY user_journey.py .
 
 # Expose port
 EXPOSE 3005
