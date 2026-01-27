@@ -574,6 +574,97 @@
             margin-bottom: 12px;
         }
 
+        .literature-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .literature-results-header h3 {
+            margin: 0;
+        }
+
+        .results-count {
+            color: #718096;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .literature-source-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .source-citation {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .source-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .source-text {
+            color: #4a5568;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .source-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .source-link:hover {
+            color: #553c9a;
+        }
+
+        .load-more-container {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .load-more-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .load-more-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .load-more-btn:active {
+            transform: translateY(0);
+        }
+
         .step-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -2288,26 +2379,151 @@
 
             let cleaned = content
                 // Remove PDF file references like "Alco_1893007162_6p_01_r5.qxd 4/4/03 11:17 AM Page 517"
-                .replace(/Alco_[\d_]+[a-z]*\.qxd\s+\d+\/\d+\/\d+\s+\d+:\d+\s+[AP]M\s+Page\s+\d+/gi, '')
-                // Remove standalone page numbers with headers like "EMPTY ON THE INSIDE 517"
-                .replace(/^[A-Z][A-Z\s]+\d{1,3}\s*$/gm, '')
+                .replace(/Alco_[\d_]+[a-z_]*\.qxd\s+\d+\/\d+\/\d+\s+\d+:\d+\s+[AP]M\s+Page\s+\d+/gi, '')
+                // Also catch variations without full path
+                .replace(/\d+\/\d+\/\d+\s+\d+:\d+\s+[AP]M\s+Page\s+\d+/gi, '')
+                // Remove standalone page numbers with headers like "EMPTY ON THE INSIDE 517" or "HOW IT WORKS 58"
+                .replace(/^[A-Z][A-Z\s,']+\d{1,3}\s*$/gm, '')
+                // Remove inline page markers
+                .replace(/\s+\d{2,3}\s+[A-Z][A-Z\s]+$/gm, '')
                 // Remove page numbers at end of lines
                 .replace(/\s+\d{3}\s*$/gm, '')
+                // Remove hyphenation at line breaks
+                .replace(/(\w)­\s*\n\s*(\w)/g, '$1$2')
+                .replace(/(\w)-\s*\n\s*(\w)/g, '$1$2')
                 // Remove multiple consecutive spaces
                 .replace(/\s{3,}/g, '  ')
                 // Fix common OCR issues
                 .replace(/ﬁ/g, 'fi')
                 .replace(/ﬂ/g, 'fl')
                 .replace(/'/g, "'")
+                .replace(/'/g, "'")
                 .replace(/"/g, '"')
                 .replace(/"/g, '"')
                 .replace(/—/g, '—')
+                .replace(/–/g, '-')
                 // Clean up excessive line breaks
                 .replace(/\n{3,}/g, '\n\n')
                 .trim();
 
             return cleaned;
         }
+
+        // AA Literature source links and bibliographic info
+        const aaLiteratureSources = {
+            'big_book': {
+                name: 'Alcoholics Anonymous (Big Book)',
+                publisher: 'Alcoholics Anonymous World Services, Inc.',
+                year: '4th Edition, 2001',
+                baseUrl: 'https://www.aa.org/the-big-book',
+                chapters: {
+                    'doctors_opinion': { name: "The Doctor's Opinion", pages: 'xxiii-xxxii' },
+                    'bills_story': { name: "Bill's Story", pages: '1-16' },
+                    'there_is_a_solution': { name: 'There Is a Solution', pages: '17-29' },
+                    'more_about_alcoholism': { name: 'More About Alcoholism', pages: '30-43' },
+                    'we_agnostics': { name: 'We Agnostics', pages: '44-57' },
+                    'how_it_works': { name: 'How It Works', pages: '58-71' },
+                    'into_action': { name: 'Into Action', pages: '72-88' },
+                    'working_with_others': { name: 'Working With Others', pages: '89-103' },
+                    'to_wives': { name: 'To Wives', pages: '104-121' },
+                    'the_family_afterward': { name: 'The Family Afterward', pages: '122-135' },
+                    'to_employers': { name: 'To Employers', pages: '136-150' },
+                    'a_vision_for_you': { name: 'A Vision for You', pages: '151-164' },
+                    'personal_stories': { name: 'Personal Stories', pages: '165-end' }
+                }
+            },
+            'twelve_and_twelve': {
+                name: 'Twelve Steps and Twelve Traditions',
+                publisher: 'Alcoholics Anonymous World Services, Inc.',
+                year: '1981',
+                baseUrl: 'https://www.aa.org/twelve-steps-twelve-traditions'
+            },
+            'daily_reflections': {
+                name: 'Daily Reflections',
+                publisher: 'Alcoholics Anonymous World Services, Inc.',
+                year: '1990',
+                baseUrl: 'https://www.aa.org/daily-reflections'
+            },
+            'grapevine': {
+                name: 'AA Grapevine',
+                publisher: 'The AA Grapevine, Inc.',
+                baseUrl: 'https://www.aagrapevine.org'
+            },
+            'as_bill_sees_it': {
+                name: 'As Bill Sees It',
+                publisher: 'Alcoholics Anonymous World Services, Inc.',
+                year: '1967',
+                baseUrl: 'https://www.aa.org/as-bill-sees-it'
+            }
+        };
+
+        // Format source name and get link
+        function formatSourceInfo(result) {
+            const title = result.title || '';
+            const id = result.id || '';
+            const section = result.section || '';
+
+            // Detect source type from title or content
+            let sourceType = 'big_book';
+            let sourceName = 'Alcoholics Anonymous (Big Book)';
+            let sourceLink = 'https://www.aa.org/the-big-book';
+            let citation = '';
+
+            if (title.toLowerCase().includes('grapevine') || section.includes('grapevine')) {
+                sourceType = 'grapevine';
+                const source = aaLiteratureSources.grapevine;
+                sourceName = source.name;
+                sourceLink = source.baseUrl;
+                // Extract date if available
+                const dateMatch = title.match(/(\w+)\s+(\d{4})/);
+                if (dateMatch) {
+                    citation = `${source.name}, ${dateMatch[1]} ${dateMatch[2]}`;
+                } else {
+                    citation = source.name;
+                }
+            } else if (title.toLowerCase().includes('twelve steps') || title.toLowerCase().includes('12&12')) {
+                sourceType = 'twelve_and_twelve';
+                const source = aaLiteratureSources.twelve_and_twelve;
+                sourceName = source.name;
+                sourceLink = source.baseUrl;
+                citation = `${source.name}. ${source.publisher}, ${source.year}`;
+            } else if (title.toLowerCase().includes('daily reflection')) {
+                sourceType = 'daily_reflections';
+                const source = aaLiteratureSources.daily_reflections;
+                sourceName = source.name;
+                sourceLink = source.baseUrl;
+                citation = `${source.name}. ${source.publisher}, ${source.year}`;
+            } else if (title.toLowerCase().includes('as bill sees it')) {
+                sourceType = 'as_bill_sees_it';
+                const source = aaLiteratureSources.as_bill_sees_it;
+                sourceName = source.name;
+                sourceLink = source.baseUrl;
+                citation = `${source.name}. ${source.publisher}, ${source.year}`;
+            } else {
+                // Default to Big Book
+                const source = aaLiteratureSources.big_book;
+                sourceName = source.name;
+                sourceLink = source.baseUrl;
+
+                // Try to extract page numbers from title
+                const pageMatch = title.match(/pp?\.\s*(\d+[-–]\d+|\d+)/i);
+                if (pageMatch) {
+                    citation = `${source.name}, ${pageMatch[0]}. ${source.publisher}, ${source.year}`;
+                } else {
+                    citation = `${source.name}. ${source.publisher}, ${source.year}`;
+                }
+            }
+
+            return { sourceName, sourceLink, citation, sourceType };
+        }
+
+        // Track current search state for pagination
+        let currentSearchState = {
+            query: '',
+            offset: 0,
+            totalCount: 0,
+            results: []
+        };
 
         // Format literature content for display with truncation
         function formatLiteratureContent(content, maxLength = 800) {
@@ -2342,17 +2558,28 @@
         }
 
         // Literature search
-        async function searchLiterature() {
+        async function searchLiterature(loadMore = false) {
             const query = document.getElementById('literatureSearch').value.trim();
             if (!query) return;
 
             const resultsContainer = document.getElementById('literatureResults');
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px; color: #667eea;">
-                    <div style="font-size: 2rem; margin-bottom: 12px;">📚</div>
-                    <div style="font-weight: 500;">Searching AA literature...</div>
-                </div>
-            `;
+            const resultsPerPage = 5;
+
+            // Reset state for new search
+            if (!loadMore) {
+                currentSearchState = {
+                    query: query,
+                    offset: 0,
+                    totalCount: 0,
+                    results: []
+                };
+                resultsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #667eea;">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">📚</div>
+                        <div style="font-weight: 500;">Searching AA literature...</div>
+                    </div>
+                `;
+            }
 
             // Use live literature service (HTTPS enabled)
             if (config.useLiveLiterature) {
@@ -2362,25 +2589,34 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             query: query,
-                            maxResults: 5
+                            maxResults: resultsPerPage,
+                            offset: currentSearchState.offset
                         })
                     });
 
                     const data = await response.json();
 
                     if (data.results && data.results.length > 0) {
-                        let resultsHtml = `<h3>📚 Found ${data.totalCount || data.results.length} results from AA Literature</h3>`;
+                        currentSearchState.totalCount = data.totalCount || data.results.length;
+                        currentSearchState.results = loadMore
+                            ? [...currentSearchState.results, ...data.results]
+                            : data.results;
+                        currentSearchState.offset += data.results.length;
 
-                        data.results.forEach((result, index) => {
-                            // Build source info
-                            const section = result.section ? result.section.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+                        const showingCount = currentSearchState.results.length;
+                        const totalCount = currentSearchState.totalCount;
+
+                        let resultsHtml = `
+                            <div class="literature-results-header">
+                                <h3>📚 AA Literature Results</h3>
+                                <p class="results-count">Showing ${showingCount} of ${totalCount} results</p>
+                            </div>
+                        `;
+
+                        currentSearchState.results.forEach((result, index) => {
+                            // Get formatted source info
+                            const sourceInfo = formatSourceInfo(result);
                             const stepInfo = result.step_number ? `Step ${result.step_number}` : '';
-                            const contentType = result.content_type ? result.content_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
-
-                            // Get page numbers from mapping
-                            const bookInfo = bigBookPages[result.id] || {};
-                            const pageRef = bookInfo.pages ? `pp. ${bookInfo.pages}` : (result.page_number ? `p. ${result.page_number}` : '');
-                            const aaLink = bookInfo.url || 'https://www.aa.org/the-big-book';
 
                             // Build keywords/themes display
                             const themes = result.themes ? result.themes.slice(0, 3).join(', ') : '';
@@ -2394,11 +2630,15 @@
                             const hasContent = result.content && result.content.length > 50;
                             const formattedContent = hasContent ? formatLiteratureContent(result.content) : null;
 
+                            // Clean up the title - remove page refs if we're showing them separately
+                            let displayTitle = result.title || 'AA Literature';
+                            displayTitle = displayTitle.replace(/\s*-\s*pp?\.\s*\d+[-–]\d+/i, '').trim();
+
                             resultsHtml += `
                                 <div class="literature-result-card">
                                     <div class="literature-result-header">
-                                        <h4 class="literature-result-title">${index + 1}. ${result.title}</h4>
-                                        <span class="relevance-badge" style="background: ${relevanceColor};">${relevance}% match</span>
+                                        <h4 class="literature-result-title">${index + 1}. ${displayTitle}</h4>
+                                        <span class="relevance-badge" style="background: ${relevanceColor};">${relevance}%</span>
                                     </div>
                                     ${formattedContent ? `
                                         <div class="literature-content-box">
@@ -2407,24 +2647,30 @@
                                     ` : `
                                         <p style="color: #4a5568; margin: 12px 0; line-height: 1.7;">${result.description || 'AA literature content related to your search.'}</p>
                                     `}
-                                    <div class="literature-tags">
-                                        ${section ? `<span class="literature-tag section">📖 ${section}</span>` : ''}
-                                        ${stepInfo ? `<span class="literature-tag step">🔢 ${stepInfo}</span>` : ''}
-                                        ${contentType ? `<span class="literature-tag type">📝 ${contentType}</span>` : ''}
-                                        ${pageRef ? `<span class="literature-tag page">📄 ${pageRef}</span>` : ''}
-                                        ${hasContent ? `<span class="literature-tag full-text">✅ Full Text</span>` : ''}
-                                    </div>
-                                    ${themes ? `<p class="literature-topics"><strong>Topics:</strong> ${themes}</p>` : ''}
-                                    ${!hasContent ? `
-                                        <div class="literature-link">
-                                            <a href="${aaLink}" target="_blank" rel="noopener noreferrer">
-                                                📚 Read full text at AA.org →
-                                            </a>
+                                    <div class="literature-source-info">
+                                        <div class="source-citation">
+                                            <span class="source-icon">📖</span>
+                                            <span class="source-text">${sourceInfo.citation}</span>
                                         </div>
-                                    ` : ''}
+                                        <a href="${sourceInfo.sourceLink}" target="_blank" rel="noopener noreferrer" class="source-link">
+                                            Read at AA.org →
+                                        </a>
+                                    </div>
+                                    ${themes ? `<p class="literature-topics"><strong>Related topics:</strong> ${themes}</p>` : ''}
                                 </div>
                             `;
                         });
+
+                        // Add Load More button if there are more results
+                        if (showingCount < totalCount) {
+                            resultsHtml += `
+                                <div class="load-more-container">
+                                    <button onclick="searchLiterature(true)" class="load-more-btn">
+                                        Load More Results (${totalCount - showingCount} remaining)
+                                    </button>
+                                </div>
+                            `;
+                        }
 
                         resultsContainer.innerHTML = resultsHtml;
                         return;
