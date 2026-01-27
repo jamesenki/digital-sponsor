@@ -302,6 +302,44 @@ STEP_8_REFLECTIONS = [
 ]
 
 # ================================
+# STEP 9 - Made Direct Amends
+# ================================
+STEP_9_REFLECTIONS = [
+    ReflectionQuestion(
+        step_number=9,
+        question_id="s9_amends_progress",
+        question_text="How has your amends list changed since you last worked this step?",
+        references_previous=True,
+        prompt_template="In your previous Step 9 work, you identified these amends: \"{previous_response}\"\n\nWhich of these have you completed? Which remain?",
+        category="change"
+    ),
+    ReflectionQuestion(
+        step_number=9,
+        question_id="s9_new_amends",
+        question_text="Are there new amends that have come to light since your last Step 9?",
+        references_previous=False,
+        prompt_template="Are there new amends that have come to light since your last Step 9? New people you've harmed or new awareness of past harms?",
+        category="new_awareness"
+    ),
+    ReflectionQuestion(
+        step_number=9,
+        question_id="s9_living_amends",
+        question_text="How have you practiced 'living amends' since your last Step 9?",
+        references_previous=True,
+        prompt_template="Previously you wrote about living amends: \"{previous_response}\"\n\nHow has your practice of living amends evolved?",
+        category="growth"
+    ),
+    ReflectionQuestion(
+        step_number=9,
+        question_id="s9_freedom",
+        question_text="How has the freedom from making amends grown in your life?",
+        references_previous=False,
+        prompt_template="The Big Book promises 'a new freedom and a new happiness.' How has making amends contributed to your freedom and happiness since your last Step 9?",
+        category="deepening"
+    ),
+]
+
+# ================================
 # STEP 10 - Daily Inventory
 # ================================
 STEP_10_REFLECTIONS = [
@@ -388,12 +426,13 @@ REFLECTION_QUESTIONS = {
     6: STEP_6_REFLECTIONS,
     7: STEP_7_REFLECTIONS,
     8: STEP_8_REFLECTIONS,
+    9: STEP_9_REFLECTIONS,
     10: STEP_10_REFLECTIONS,
     12: STEP_12_REFLECTIONS,
 }
 
 # Steps that have reflection questions for repeat work
-STEPS_WITH_REFLECTIONS = [1, 2, 3, 5, 6, 7, 8, 10, 12]
+STEPS_WITH_REFLECTIONS = [1, 2, 3, 5, 6, 7, 8, 9, 10, 12]
 
 
 def get_reflection_questions(step_number: int) -> List[ReflectionQuestion]:

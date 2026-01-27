@@ -368,6 +368,502 @@
         .site-footer a:hover {
             text-decoration: underline;
         }
+
+        /* Step Workbook Modal Styles */
+        .step-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .step-modal-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .step-modal {
+            background: white;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .step-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 16px 16px 0 0;
+            position: relative;
+        }
+        .step-modal-header h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.8rem;
+        }
+        .step-modal-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .step-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .step-modal-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .step-modal-tabs {
+            display: flex;
+            background: #f7f8fa;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .step-modal-tab {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #718096;
+            transition: all 0.2s;
+        }
+        .step-modal-tab:hover {
+            background: #edf2f7;
+        }
+        .step-modal-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        .step-modal-content {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .step-section {
+            display: none;
+        }
+        .step-section.active {
+            display: block;
+        }
+
+        /* Prayer Section */
+        .prayer-box {
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+            border-left: 4px solid #667eea;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .prayer-box h4 {
+            color: #667eea;
+            margin: 0 0 15px 0;
+            font-size: 1.1rem;
+        }
+        .prayer-text {
+            font-style: italic;
+            line-height: 1.8;
+            color: #2d3748;
+            font-size: 1.05rem;
+        }
+        .prayer-source {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        /* Meditation Section */
+        .meditation-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .meditation-card h4 {
+            color: #2d3748;
+            margin: 0 0 10px 0;
+        }
+        .meditation-card .source-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+        .meditation-card blockquote {
+            margin: 0;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-style: italic;
+            line-height: 1.7;
+            color: #4a5568;
+        }
+
+        /* Questions Section */
+        .question-item {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .question-item:last-child {
+            border-bottom: none;
+        }
+        .question-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+        .question-text {
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+        .question-hint {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        .question-answer {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        .question-answer:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Step 4 Worksheet Styles */
+        .worksheet-section {
+            margin-bottom: 30px;
+        }
+        .worksheet-section h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .worksheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .worksheet-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        .worksheet-table td {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        .worksheet-table input,
+        .worksheet-table textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .worksheet-table textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .worksheet-checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .worksheet-checkbox-group label {
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .add-row-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .add-row-btn:hover {
+            background: #38a169;
+        }
+        .delete-row-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .delete-row-btn:hover {
+            background: #f56565;
+        }
+
+        /* Step 11 Meditation Timer Styles */
+        .meditation-timer-container {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 300;
+            color: #667eea;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .duration-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .duration-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .duration-btn:hover,
+        .duration-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .timer-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .timer-btn.start {
+            background: #48bb78;
+            color: white;
+        }
+        .timer-btn.start:hover {
+            background: #38a169;
+        }
+        .timer-btn.pause {
+            background: #ed8936;
+            color: white;
+        }
+        .timer-btn.stop {
+            background: #fc8181;
+            color: white;
+        }
+        .streak-display {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .streak-item {
+            text-align: center;
+        }
+        .streak-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .streak-label {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        /* Step 12 Service Tracker Styles */
+        .service-log-form {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .service-log-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .service-log-form select,
+        .service-log-form input,
+        .service-log-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .service-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .service-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .service-type-badge.meeting { background: #bee3f8; color: #2b6cb0; }
+        .service-type-badge.sponsorship { background: #c6f6d5; color: #276749; }
+        .service-type-badge.twelfth-step { background: #feebc8; color: #c05621; }
+        .service-type-badge.general { background: #e9d8fd; color: #6b46c1; }
+        .service-hours {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .responsibility-prayer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .responsibility-prayer p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            font-style: italic;
+        }
+        .service-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .summary-card .label {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        /* Save indicator */
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1100;
+        }
+        .save-indicator.show {
+            display: block;
+            animation: fadeInOut 2s ease;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        @media (max-width: 768px) {
+            .step-modal {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            .step-modal-header {
+                padding: 20px;
+                border-radius: 12px 12px 0 0;
+            }
+            .step-modal-header h2 {
+                font-size: 1.4rem;
+            }
+            .step-modal-content {
+                padding: 20px;
+            }
+            .timer-display {
+                font-size: 3rem;
+            }
+            .service-log-form .form-row {
+                grid-template-columns: 1fr;
+            }
+            .service-summary {
+                grid-template-columns: 1fr;
+            }
+            .worksheet-table {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 
     <!-- Google AdSense -->
@@ -558,6 +1054,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Step Workbook Modal -->
+            <div class="step-modal-overlay" id="stepModal">
+                <div class="step-modal">
+                    <div class="step-modal-header">
+                        <h2 id="stepModalTitle">Step 1</h2>
+                        <p id="stepModalSubtitle">Powerlessness & Unmanageability</p>
+                        <button class="step-modal-close" onclick="closeStepModal()">&times;</button>
+                    </div>
+                    <div class="step-modal-tabs" id="stepModalTabs">
+                        <!-- Tabs will be dynamically populated -->
+                    </div>
+                    <div class="step-modal-content" id="stepModalContent">
+                        <!-- Content will be dynamically populated -->
+                    </div>
+                    <div style="padding: 20px 30px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn" onclick="saveStepProgress()" style="background: #48bb78;">Save Progress</button>
+                        <button class="btn" onclick="closeStepModal()" style="background: #718096;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Indicator -->
+            <div class="save-indicator" id="saveIndicator">Saved successfully!</div>
 
             <!-- Resources Tab -->
             <div class="tab-content" id="resourcesTab">
@@ -1514,9 +2034,1253 @@
             }
         }
 
-        // Step work functions
-        function openStep(stepNumber) {
-            alert(`Step ${stepNumber} workbook will open here. This would show prayers, worksheets, and guided questions for Step ${stepNumber}.`);
+        // =====================================================================
+        // STEP WORKBOOK SYSTEM
+        // =====================================================================
+
+        // Step Work Service URL
+        const stepWorkServiceUrl = 'http://digitalsponsor-stepwork.centralus.azurecontainer.io:3003';
+
+        // Current step state
+        let currentStepNumber = null;
+        let currentStepData = null;
+        let step4Data = { resentments: [], fears: [], sexConduct: [], harms: [] };
+        let step11Timer = { interval: null, remaining: 0, duration: 0, running: false };
+        let step12ServiceLog = [];
+
+        // Step names for display
+        const stepNames = {
+            1: 'Powerlessness & Unmanageability',
+            2: 'Came to Believe',
+            3: 'Made a Decision',
+            4: 'Moral Inventory',
+            5: 'Admitted to God, Self, Another',
+            6: 'Entirely Ready',
+            7: 'Humbly Asked',
+            8: 'Made a List',
+            9: 'Made Direct Amends',
+            10: 'Continued Inventory',
+            11: 'Prayer & Meditation',
+            12: 'Spiritual Awakening & Service'
+        };
+
+        async function openStep(stepNumber) {
+            currentStepNumber = stepNumber;
+
+            const modal = document.getElementById('stepModal');
+            const title = document.getElementById('stepModalTitle');
+            const subtitle = document.getElementById('stepModalSubtitle');
+
+            title.textContent = `Step ${stepNumber}`;
+            subtitle.textContent = stepNames[stepNumber];
+
+            // Show loading state
+            document.getElementById('stepModalContent').innerHTML = '<div style="text-align: center; padding: 40px;"><p>Loading step content...</p></div>';
+            modal.classList.add('active');
+
+            // Load step-specific content
+            if (stepNumber === 4) {
+                await loadStep4Workbook();
+            } else if (stepNumber === 11) {
+                await loadStep11Meditation();
+            } else if (stepNumber === 12) {
+                await loadStep12ServiceTracker();
+            } else {
+                await loadStandardStepWorkbook(stepNumber);
+            }
+        }
+
+        function closeStepModal() {
+            const modal = document.getElementById('stepModal');
+            modal.classList.remove('active');
+
+            // Stop Step 11 timer if running
+            if (step11Timer.interval) {
+                clearInterval(step11Timer.interval);
+                step11Timer.interval = null;
+                step11Timer.running = false;
+            }
+        }
+
+        // =====================================================================
+        // STANDARD STEP WORKBOOK (Steps 1-3, 5-10)
+        // =====================================================================
+
+        async function loadStandardStepWorkbook(stepNumber) {
+            let workbookData = null;
+
+            try {
+                const response = await fetch(`${stepWorkServiceUrl}/api/workbook/step/${stepNumber}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        workbookData = data.workbook;
+                    }
+                }
+            } catch (error) {
+                console.log('Using demo content for step', stepNumber);
+            }
+
+            // Use demo content if API not available
+            if (!workbookData) {
+                workbookData = getDemoStepContent(stepNumber);
+            }
+
+            currentStepData = workbookData;
+
+            // Build tabs
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStepSection('prayer')">Prayer</button>
+                <button class="step-modal-tab" onclick="showStepSection('meditate')">Meditate</button>
+                <button class="step-modal-tab" onclick="showStepSection('questions')">Questions</button>
+                <button class="step-modal-tab" onclick="showStepSection('reflections')">Reflections</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            // Build content
+            const contentHtml = `
+                <div class="step-section active" id="section-prayer">
+                    ${buildPrayerSection(workbookData)}
+                </div>
+                <div class="step-section" id="section-meditate">
+                    ${buildMeditationSection(workbookData)}
+                </div>
+                <div class="step-section" id="section-questions">
+                    ${buildQuestionsSection(workbookData)}
+                </div>
+                <div class="step-section" id="section-reflections">
+                    ${buildReflectionsSection(stepNumber)}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStepSection(sectionName) {
+            // Update tabs
+            document.querySelectorAll('.step-modal-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update sections
+            document.querySelectorAll('.step-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`section-${sectionName}`).classList.add('active');
+        }
+
+        function buildPrayerSection(data) {
+            const prayer = data.prayer || { title: 'Step Prayer', text: 'Prayer content loading...', source: '' };
+            return `
+                <div class="prayer-box">
+                    <h4>${prayer.title || 'Step Prayer'}</h4>
+                    <p class="prayer-text">"${prayer.text}"</p>
+                    ${prayer.source ? `<p class="prayer-source">— ${prayer.source}</p>` : ''}
+                </div>
+                <p style="color: #718096; font-size: 0.9rem; margin-top: 20px;">
+                    Take a moment to read this prayer slowly. Consider saying it aloud or writing it in your own words.
+                </p>
+            `;
+        }
+
+        function buildMeditationSection(data) {
+            const meditations = data.meditation_texts || [];
+            if (meditations.length === 0) {
+                return '<p>Meditation texts loading...</p>';
+            }
+
+            let html = '<h4 style="margin-bottom: 20px;">Texts to Meditate On</h4>';
+            meditations.forEach(med => {
+                html += `
+                    <div class="meditation-card">
+                        <span class="source-tag">${med.source}${med.page_reference ? ` - ${med.page_reference}` : ''}</span>
+                        <blockquote>"${med.text}"</blockquote>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function buildQuestionsSection(data) {
+            const questions = data.questions || [];
+            if (questions.length === 0) {
+                return '<p>Questions loading...</p>';
+            }
+
+            let html = '<h4 style="margin-bottom: 20px;">Journal Questions</h4>';
+            questions.forEach((q, idx) => {
+                const savedAnswer = localStorage.getItem(`step${currentStepNumber}_q${idx}`) || '';
+                html += `
+                    <div class="question-item">
+                        <p class="question-text">
+                            <span class="question-number">${idx + 1}</span>
+                            ${q.question_text || q.text || q}
+                        </p>
+                        ${q.hint ? `<p class="question-hint">${q.hint}</p>` : ''}
+                        <textarea class="question-answer"
+                                  id="answer_${idx}"
+                                  placeholder="Write your answer here..."
+                                  onchange="autoSaveAnswer(${currentStepNumber}, ${idx}, this.value)">${savedAnswer}</textarea>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function buildReflectionsSection(stepNumber) {
+            return `
+                <h4 style="margin-bottom: 20px;">Reflection Questions (For Repeat Work)</h4>
+                <p style="color: #718096; margin-bottom: 20px;">
+                    These questions help you reflect on your growth since you last worked this step.
+                </p>
+                <div class="question-item">
+                    <p class="question-text">
+                        <span class="question-number">1</span>
+                        How has your understanding of this step changed since you first worked it?
+                    </p>
+                    <textarea class="question-answer" id="reflection_1" placeholder="Reflect on your growth..."></textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">
+                        <span class="question-number">2</span>
+                        What new insights have you gained about this step through your experience?
+                    </p>
+                    <textarea class="question-answer" id="reflection_2" placeholder="Share your insights..."></textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">
+                        <span class="question-number">3</span>
+                        How has practicing this step affected your daily life and relationships?
+                    </p>
+                    <textarea class="question-answer" id="reflection_3" placeholder="Describe the impact..."></textarea>
+                </div>
+            `;
+        }
+
+        function autoSaveAnswer(stepNumber, questionIndex, answer) {
+            localStorage.setItem(`step${stepNumber}_q${questionIndex}`, answer);
+            showSaveIndicator();
+        }
+
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        function saveStepProgress() {
+            // Save all answers for current step
+            document.querySelectorAll('.question-answer').forEach((textarea, idx) => {
+                if (textarea.value) {
+                    localStorage.setItem(`step${currentStepNumber}_q${idx}`, textarea.value);
+                }
+            });
+            showSaveIndicator();
+        }
+
+        // =====================================================================
+        // STEP 4: MORAL INVENTORY WORKBOOK
+        // =====================================================================
+
+        async function loadStep4Workbook() {
+            // Load saved data from localStorage
+            const savedData = localStorage.getItem('step4_inventory');
+            if (savedData) {
+                step4Data = JSON.parse(savedData);
+            }
+
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStep4Section('intro')">Introduction</button>
+                <button class="step-modal-tab" onclick="showStep4Section('resentments')">Resentments</button>
+                <button class="step-modal-tab" onclick="showStep4Section('fears')">Fears</button>
+                <button class="step-modal-tab" onclick="showStep4Section('sexconduct')">Sex Conduct</button>
+                <button class="step-modal-tab" onclick="showStep4Section('harms')">Harms Done</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            const contentHtml = `
+                <div class="step-section active" id="section-intro">
+                    ${buildStep4Intro()}
+                </div>
+                <div class="step-section" id="section-resentments">
+                    ${buildResentmentWorksheet()}
+                </div>
+                <div class="step-section" id="section-fears">
+                    ${buildFearWorksheet()}
+                </div>
+                <div class="step-section" id="section-sexconduct">
+                    ${buildSexConductWorksheet()}
+                </div>
+                <div class="step-section" id="section-harms">
+                    ${buildHarmsWorksheet()}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStep4Section(sectionName) {
+            document.querySelectorAll('.step-modal-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.step-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`section-${sectionName}`).classList.add('active');
+        }
+
+        function buildStep4Intro() {
+            return `
+                <div class="prayer-box">
+                    <h4>Fourth Step Prayer</h4>
+                    <p class="prayer-text">"Dear God, it is I who has made my life a mess. I have done it, but I cannot undo it. My mistakes are mine and I will begin a searching and fearless moral inventory. I will write down my wrongs, but I will also include that which is good. I pray for the strength to complete the task."</p>
+                </div>
+                <h4 style="margin: 20px 0 15px;">About the Fourth Step Inventory</h4>
+                <p style="line-height: 1.7; margin-bottom: 15px;">
+                    The Big Book describes the Fourth Step inventory as "a searching and fearless moral inventory."
+                    This workbook follows the Big Book format with four-column worksheets for:
+                </p>
+                <ul style="line-height: 2; margin-left: 20px;">
+                    <li><strong>Resentments</strong> - Who/what we resent, why, what it affects, and our part</li>
+                    <li><strong>Fears</strong> - What we fear, why, and how it affects us</li>
+                    <li><strong>Sex Conduct</strong> - Where we were selfish, dishonest, or inconsiderate</li>
+                    <li><strong>Harms Done</strong> - Who we harmed and how</li>
+                </ul>
+                <p style="line-height: 1.7; margin-top: 15px; color: #718096;">
+                    Take your time with this inventory. It's designed to be thorough and honest.
+                    Your data is saved locally and never shared.
+                </p>
+            `;
+        }
+
+        function buildResentmentWorksheet() {
+            let rowsHtml = '';
+            step4Data.resentments.forEach((row, idx) => {
+                rowsHtml += buildResentmentRow(row, idx);
+            });
+
+            return `
+                <div class="worksheet-section">
+                    <h4>
+                        Resentment Inventory
+                        <button class="add-row-btn" onclick="addResentmentRow()">+ Add Row</button>
+                    </h4>
+                    <p style="color: #718096; margin-bottom: 15px; font-size: 0.9rem;">
+                        "Resentment is the number one offender. It destroys more alcoholics than anything else." - Big Book p. 64
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table class="worksheet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 18%;">I'm Resentful At</th>
+                                    <th style="width: 25%;">The Cause</th>
+                                    <th style="width: 20%;">Affects My</th>
+                                    <th style="width: 30%;">What Was My Part?</th>
+                                    <th style="width: 7%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="resentmentRows">
+                                ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your resentment inventory</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildResentmentRow(data = {}, idx) {
+            const affects = data.affects_my || [];
+            return `
+                <tr data-index="${idx}">
+                    <td><input type="text" value="${data.person_institution || ''}" onchange="updateResentment(${idx}, 'person_institution', this.value)" placeholder="Person/Institution"></td>
+                    <td><textarea onchange="updateResentment(${idx}, 'the_cause', this.value)" placeholder="What happened?">${data.the_cause || ''}</textarea></td>
+                    <td>
+                        <div class="worksheet-checkbox-group">
+                            <label><input type="checkbox" ${affects.includes('self_esteem') ? 'checked' : ''} onchange="toggleResentmentAffect(${idx}, 'self_esteem')"> Self-esteem</label>
+                            <label><input type="checkbox" ${affects.includes('security') ? 'checked' : ''} onchange="toggleResentmentAffect(${idx}, 'security')"> Security</label>
+                            <label><input type="checkbox" ${affects.includes('ambitions') ? 'checked' : ''} onchange="toggleResentmentAffect(${idx}, 'ambitions')"> Ambitions</label>
+                            <label><input type="checkbox" ${affects.includes('personal_relations') ? 'checked' : ''} onchange="toggleResentmentAffect(${idx}, 'personal_relations')"> Personal Relations</label>
+                            <label><input type="checkbox" ${affects.includes('sex_relations') ? 'checked' : ''} onchange="toggleResentmentAffect(${idx}, 'sex_relations')"> Sex Relations</label>
+                        </div>
+                    </td>
+                    <td><textarea onchange="updateResentment(${idx}, 'my_part', this.value)" placeholder="Where was I selfish, dishonest, self-seeking, frightened?">${data.my_part || ''}</textarea></td>
+                    <td><button class="delete-row-btn" onclick="deleteResentment(${idx})">Delete</button></td>
+                </tr>
+            `;
+        }
+
+        function addResentmentRow() {
+            step4Data.resentments.push({ person_institution: '', the_cause: '', affects_my: [], my_part: '' });
+            saveStep4Data();
+            refreshResentmentTable();
+        }
+
+        function updateResentment(idx, field, value) {
+            step4Data.resentments[idx][field] = value;
+            saveStep4Data();
+        }
+
+        function toggleResentmentAffect(idx, affect) {
+            const affects = step4Data.resentments[idx].affects_my || [];
+            const index = affects.indexOf(affect);
+            if (index > -1) {
+                affects.splice(index, 1);
+            } else {
+                affects.push(affect);
+            }
+            step4Data.resentments[idx].affects_my = affects;
+            saveStep4Data();
+        }
+
+        function deleteResentment(idx) {
+            if (confirm('Delete this resentment entry?')) {
+                step4Data.resentments.splice(idx, 1);
+                saveStep4Data();
+                refreshResentmentTable();
+            }
+        }
+
+        function refreshResentmentTable() {
+            let rowsHtml = '';
+            step4Data.resentments.forEach((row, idx) => {
+                rowsHtml += buildResentmentRow(row, idx);
+            });
+            document.getElementById('resentmentRows').innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your resentment inventory</td></tr>';
+        }
+
+        function buildFearWorksheet() {
+            let rowsHtml = '';
+            step4Data.fears.forEach((row, idx) => {
+                rowsHtml += buildFearRow(row, idx);
+            });
+
+            return `
+                <div class="worksheet-section">
+                    <h4>
+                        Fear Inventory
+                        <button class="add-row-btn" onclick="addFearRow()">+ Add Row</button>
+                    </h4>
+                    <p style="color: #718096; margin-bottom: 15px; font-size: 0.9rem;">
+                        "We ask Him to remove our fear and direct our attention to what He would have us be." - Big Book p. 68
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table class="worksheet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 22%;">The Fear</th>
+                                    <th style="width: 26%;">Why Do I Have It?</th>
+                                    <th style="width: 26%;">How Does It Affect Me?</th>
+                                    <th style="width: 20%;">What's the Solution?</th>
+                                    <th style="width: 6%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="fearRows">
+                                ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your fear inventory</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildFearRow(data = {}, idx) {
+            return `
+                <tr data-index="${idx}">
+                    <td><input type="text" value="${data.fear_description || ''}" onchange="updateFear(${idx}, 'fear_description', this.value)" placeholder="What am I afraid of?"></td>
+                    <td><textarea onchange="updateFear(${idx}, 'why_i_have_this_fear', this.value)" placeholder="Root cause or origin">${data.why_i_have_this_fear || ''}</textarea></td>
+                    <td><textarea onchange="updateFear(${idx}, 'how_it_affects_me', this.value)" placeholder="Behavior it drives">${data.how_it_affects_me || ''}</textarea></td>
+                    <td><textarea onchange="updateFear(${idx}, 'solution', this.value)" placeholder="Trust God, clean house, help others">${data.solution || ''}</textarea></td>
+                    <td><button class="delete-row-btn" onclick="deleteFear(${idx})">Delete</button></td>
+                </tr>
+            `;
+        }
+
+        function addFearRow() {
+            step4Data.fears.push({ fear_description: '', why_i_have_this_fear: '', how_it_affects_me: '', solution: '' });
+            saveStep4Data();
+            refreshFearTable();
+        }
+
+        function updateFear(idx, field, value) {
+            step4Data.fears[idx][field] = value;
+            saveStep4Data();
+        }
+
+        function deleteFear(idx) {
+            if (confirm('Delete this fear entry?')) {
+                step4Data.fears.splice(idx, 1);
+                saveStep4Data();
+                refreshFearTable();
+            }
+        }
+
+        function refreshFearTable() {
+            let rowsHtml = '';
+            step4Data.fears.forEach((row, idx) => {
+                rowsHtml += buildFearRow(row, idx);
+            });
+            document.getElementById('fearRows').innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your fear inventory</td></tr>';
+        }
+
+        function buildSexConductWorksheet() {
+            let rowsHtml = '';
+            step4Data.sexConduct.forEach((row, idx) => {
+                rowsHtml += buildSexConductRow(row, idx);
+            });
+
+            return `
+                <div class="worksheet-section">
+                    <h4>
+                        Sex Conduct Inventory
+                        <button class="add-row-btn" onclick="addSexConductRow()">+ Add Row</button>
+                    </h4>
+                    <p style="color: #718096; margin-bottom: 15px; font-size: 0.9rem;">
+                        "We reviewed our own conduct over the years past." - Big Book p. 69
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table class="worksheet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 23%;">Where Was I Selfish?</th>
+                                    <th style="width: 23%;">Where Was I Dishonest?</th>
+                                    <th style="width: 23%;">Where Was I Inconsiderate?</th>
+                                    <th style="width: 25%;">Whom Did I Hurt?</th>
+                                    <th style="width: 6%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="sexConductRows">
+                                ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your sex conduct inventory</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildSexConductRow(data = {}, idx) {
+            return `
+                <tr data-index="${idx}">
+                    <td><textarea onchange="updateSexConduct(${idx}, 'selfish', this.value)" placeholder="How I put myself first">${data.selfish || ''}</textarea></td>
+                    <td><textarea onchange="updateSexConduct(${idx}, 'dishonest', this.value)" placeholder="Lies told or truth hidden">${data.dishonest || ''}</textarea></td>
+                    <td><textarea onchange="updateSexConduct(${idx}, 'inconsiderate', this.value)" placeholder="Disregard for others' feelings">${data.inconsiderate || ''}</textarea></td>
+                    <td><textarea onchange="updateSexConduct(${idx}, 'whom_hurt', this.value)" placeholder="People affected">${data.whom_hurt || ''}</textarea></td>
+                    <td><button class="delete-row-btn" onclick="deleteSexConduct(${idx})">Delete</button></td>
+                </tr>
+            `;
+        }
+
+        function addSexConductRow() {
+            step4Data.sexConduct.push({ selfish: '', dishonest: '', inconsiderate: '', whom_hurt: '' });
+            saveStep4Data();
+            refreshSexConductTable();
+        }
+
+        function updateSexConduct(idx, field, value) {
+            step4Data.sexConduct[idx][field] = value;
+            saveStep4Data();
+        }
+
+        function deleteSexConduct(idx) {
+            if (confirm('Delete this entry?')) {
+                step4Data.sexConduct.splice(idx, 1);
+                saveStep4Data();
+                refreshSexConductTable();
+            }
+        }
+
+        function refreshSexConductTable() {
+            let rowsHtml = '';
+            step4Data.sexConduct.forEach((row, idx) => {
+                rowsHtml += buildSexConductRow(row, idx);
+            });
+            document.getElementById('sexConductRows').innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your sex conduct inventory</td></tr>';
+        }
+
+        function buildHarmsWorksheet() {
+            let rowsHtml = '';
+            step4Data.harms.forEach((row, idx) => {
+                rowsHtml += buildHarmsRow(row, idx);
+            });
+
+            return `
+                <div class="worksheet-section">
+                    <h4>
+                        Harms Done Inventory
+                        <button class="add-row-btn" onclick="addHarmsRow()">+ Add Row</button>
+                    </h4>
+                    <p style="color: #718096; margin-bottom: 15px; font-size: 0.9rem;">
+                        This inventory will help prepare your Step 8 list of people to make amends to.
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table class="worksheet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Who Did I Harm?</th>
+                                    <th style="width: 28%;">What Did I Do?</th>
+                                    <th style="width: 22%;">What Was My Motive?</th>
+                                    <th style="width: 24%;">What Should I Have Done?</th>
+                                    <th style="width: 6%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="harmsRows">
+                                ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your harms inventory</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildHarmsRow(data = {}, idx) {
+            return `
+                <tr data-index="${idx}">
+                    <td><input type="text" value="${data.who_harmed || ''}" onchange="updateHarms(${idx}, 'who_harmed', this.value)" placeholder="Person harmed"></td>
+                    <td><textarea onchange="updateHarms(${idx}, 'what_did', this.value)" placeholder="The specific harm">${data.what_did || ''}</textarea></td>
+                    <td><textarea onchange="updateHarms(${idx}, 'motive', this.value)" placeholder="Selfish motive behind it">${data.motive || ''}</textarea></td>
+                    <td><textarea onchange="updateHarms(${idx}, 'should_have_done', this.value)" placeholder="Ideal behavior">${data.should_have_done || ''}</textarea></td>
+                    <td><button class="delete-row-btn" onclick="deleteHarms(${idx})">Delete</button></td>
+                </tr>
+            `;
+        }
+
+        function addHarmsRow() {
+            step4Data.harms.push({ who_harmed: '', what_did: '', motive: '', should_have_done: '' });
+            saveStep4Data();
+            refreshHarmsTable();
+        }
+
+        function updateHarms(idx, field, value) {
+            step4Data.harms[idx][field] = value;
+            saveStep4Data();
+        }
+
+        function deleteHarms(idx) {
+            if (confirm('Delete this entry?')) {
+                step4Data.harms.splice(idx, 1);
+                saveStep4Data();
+                refreshHarmsTable();
+            }
+        }
+
+        function refreshHarmsTable() {
+            let rowsHtml = '';
+            step4Data.harms.forEach((row, idx) => {
+                rowsHtml += buildHarmsRow(row, idx);
+            });
+            document.getElementById('harmsRows').innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #718096;">Click "Add Row" to begin your harms inventory</td></tr>';
+        }
+
+        function saveStep4Data() {
+            localStorage.setItem('step4_inventory', JSON.stringify(step4Data));
+            showSaveIndicator();
+        }
+
+        // =====================================================================
+        // STEP 11: GUIDED MEDITATION
+        // =====================================================================
+
+        async function loadStep11Meditation() {
+            // Load streak data
+            const meditationStats = JSON.parse(localStorage.getItem('step11_stats') || '{"streak": 0, "totalSessions": 0, "totalMinutes": 0}');
+
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStep11Section('morning')">Morning Prayer</button>
+                <button class="step-modal-tab" onclick="showStep11Section('meditation')">Guided Meditation</button>
+                <button class="step-modal-tab" onclick="showStep11Section('evening')">Evening Review</button>
+                <button class="step-modal-tab" onclick="showStep11Section('journal')">Journal</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            const contentHtml = `
+                <div class="step-section active" id="section-morning">
+                    ${buildMorningPrayerSection()}
+                </div>
+                <div class="step-section" id="section-meditation">
+                    ${buildMeditationTimerSection(meditationStats)}
+                </div>
+                <div class="step-section" id="section-evening">
+                    ${buildEveningReviewSection()}
+                </div>
+                <div class="step-section" id="section-journal">
+                    ${buildStep11JournalSection()}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStep11Section(sectionName) {
+            document.querySelectorAll('.step-modal-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.step-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`section-${sectionName}`).classList.add('active');
+        }
+
+        function buildMorningPrayerSection() {
+            return `
+                <div class="prayer-box">
+                    <h4>Eleventh Step Morning Prayer (Big Book p. 86)</h4>
+                    <p class="prayer-text">
+                        "God, direct my thinking today. Let it be divorced from self-pity, dishonest, or self-seeking motives.
+                        Show me what to do for each person I encounter today. Grant me inspiration, an intuitive thought,
+                        or a decision. Help me relax and take it easy. I pray I may find Your will for me today."
+                    </p>
+                    <p class="prayer-source">— Alcoholics Anonymous, p. 86-88</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 15px;">Morning Intention</h4>
+                    <p style="color: #718096; margin-bottom: 10px;">What do you want to focus on today?</p>
+                    <textarea class="question-answer" id="morning_intention" placeholder="Set your intention for today..."
+                              onchange="localStorage.setItem('step11_morning_' + new Date().toDateString(), this.value)">${localStorage.getItem('step11_morning_' + new Date().toDateString()) || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function buildMeditationTimerSection(stats) {
+            return `
+                <div class="meditation-timer-container">
+                    <h4 style="margin-bottom: 20px;">Guided Meditation Timer</h4>
+                    <div class="duration-selector">
+                        <button class="duration-btn" onclick="setMeditationDuration(5)">5 min</button>
+                        <button class="duration-btn active" onclick="setMeditationDuration(10)">10 min</button>
+                        <button class="duration-btn" onclick="setMeditationDuration(15)">15 min</button>
+                        <button class="duration-btn" onclick="setMeditationDuration(20)">20 min</button>
+                        <button class="duration-btn" onclick="setMeditationDuration(30)">30 min</button>
+                    </div>
+                    <div class="timer-display" id="timerDisplay">10:00</div>
+                    <div class="timer-controls">
+                        <button class="timer-btn start" id="timerStartBtn" onclick="toggleMeditationTimer()">Start</button>
+                        <button class="timer-btn stop" onclick="resetMeditationTimer()">Reset</button>
+                    </div>
+                    <div class="streak-display">
+                        <div class="streak-item">
+                            <div class="streak-number" id="streakCount">${stats.streak}</div>
+                            <div class="streak-label">Day Streak</div>
+                        </div>
+                        <div class="streak-item">
+                            <div class="streak-number" id="totalSessions">${stats.totalSessions}</div>
+                            <div class="streak-label">Total Sessions</div>
+                        </div>
+                        <div class="streak-item">
+                            <div class="streak-number" id="totalMinutes">${stats.totalMinutes}</div>
+                            <div class="streak-label">Total Minutes</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="meditation-card">
+                    <h4>Today's Meditation Focus</h4>
+                    <blockquote>
+                        "We ask God to direct our thinking, especially asking that it be divorced from self-pity,
+                        dishonest or self-seeking motives."
+                    </blockquote>
+                    <p class="prayer-source">— Big Book, p. 86</p>
+                </div>
+            `;
+        }
+
+        function setMeditationDuration(minutes) {
+            step11Timer.duration = minutes * 60;
+            step11Timer.remaining = minutes * 60;
+            updateTimerDisplay();
+
+            // Update button states
+            document.querySelectorAll('.duration-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(step11Timer.remaining / 60);
+            const seconds = step11Timer.remaining % 60;
+            document.getElementById('timerDisplay').textContent =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function toggleMeditationTimer() {
+            const btn = document.getElementById('timerStartBtn');
+
+            if (step11Timer.running) {
+                // Pause
+                clearInterval(step11Timer.interval);
+                step11Timer.running = false;
+                btn.textContent = 'Resume';
+                btn.classList.remove('pause');
+                btn.classList.add('start');
+            } else {
+                // Start/Resume
+                if (step11Timer.remaining === 0) {
+                    step11Timer.remaining = step11Timer.duration || 600; // Default 10 min
+                }
+
+                step11Timer.running = true;
+                btn.textContent = 'Pause';
+                btn.classList.remove('start');
+                btn.classList.add('pause');
+
+                step11Timer.interval = setInterval(() => {
+                    step11Timer.remaining--;
+                    updateTimerDisplay();
+
+                    if (step11Timer.remaining <= 0) {
+                        completeMeditation();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetMeditationTimer() {
+            clearInterval(step11Timer.interval);
+            step11Timer.running = false;
+            step11Timer.remaining = step11Timer.duration || 600;
+            updateTimerDisplay();
+
+            const btn = document.getElementById('timerStartBtn');
+            btn.textContent = 'Start';
+            btn.classList.remove('pause');
+            btn.classList.add('start');
+        }
+
+        function completeMeditation() {
+            clearInterval(step11Timer.interval);
+            step11Timer.running = false;
+
+            // Update stats
+            const stats = JSON.parse(localStorage.getItem('step11_stats') || '{"streak": 0, "totalSessions": 0, "totalMinutes": 0, "lastDate": null}');
+            const today = new Date().toDateString();
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+            // Update streak
+            if (stats.lastDate === yesterday) {
+                stats.streak++;
+            } else if (stats.lastDate !== today) {
+                stats.streak = 1;
+            }
+
+            stats.totalSessions++;
+            stats.totalMinutes += Math.round(step11Timer.duration / 60);
+            stats.lastDate = today;
+
+            localStorage.setItem('step11_stats', JSON.stringify(stats));
+
+            // Update display
+            document.getElementById('streakCount').textContent = stats.streak;
+            document.getElementById('totalSessions').textContent = stats.totalSessions;
+            document.getElementById('totalMinutes').textContent = stats.totalMinutes;
+
+            // Reset timer
+            const btn = document.getElementById('timerStartBtn');
+            btn.textContent = 'Start';
+            btn.classList.remove('pause');
+            btn.classList.add('start');
+            step11Timer.remaining = step11Timer.duration;
+            updateTimerDisplay();
+
+            alert('Meditation complete! Great job maintaining your practice.');
+        }
+
+        function buildEveningReviewSection() {
+            const today = new Date().toDateString();
+            const savedReview = JSON.parse(localStorage.getItem('step11_evening_' + today) || '{}');
+
+            return `
+                <div class="prayer-box">
+                    <h4>Eleventh Step Evening Prayer (Big Book p. 86)</h4>
+                    <p class="prayer-text">
+                        "God, was I resentful, selfish, dishonest, or afraid today? Do I owe an apology?
+                        Have I kept something to myself which should be discussed with another person at once?
+                        Was I kind and loving toward all? What could I have done better?
+                        Was I thinking of myself most of the time, or was I thinking of what I could do for others?"
+                    </p>
+                </div>
+                <h4 style="margin: 20px 0 15px;">Evening Review Questions</h4>
+                <div class="question-item">
+                    <p class="question-text">Was I resentful today? About what?</p>
+                    <textarea class="question-answer" id="evening_resentful" onchange="saveEveningReview()" placeholder="Reflect on any resentments...">${savedReview.resentful || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">Was I selfish today? In what ways?</p>
+                    <textarea class="question-answer" id="evening_selfish" onchange="saveEveningReview()" placeholder="Consider where you put yourself first...">${savedReview.selfish || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">Was I dishonest today? How?</p>
+                    <textarea class="question-answer" id="evening_dishonest" onchange="saveEveningReview()" placeholder="Any lies or omissions...">${savedReview.dishonest || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">Was I afraid today? Of what?</p>
+                    <textarea class="question-answer" id="evening_afraid" onchange="saveEveningReview()" placeholder="What fears came up...">${savedReview.afraid || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">Do I owe anyone an apology?</p>
+                    <textarea class="question-answer" id="evening_apology" onchange="saveEveningReview()" placeholder="Who do you need to make amends to...">${savedReview.apology || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">What am I grateful for today?</p>
+                    <textarea class="question-answer" id="evening_gratitude" onchange="saveEveningReview()" placeholder="List your gratitudes...">${savedReview.gratitude || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function saveEveningReview() {
+            const today = new Date().toDateString();
+            const review = {
+                resentful: document.getElementById('evening_resentful')?.value || '',
+                selfish: document.getElementById('evening_selfish')?.value || '',
+                dishonest: document.getElementById('evening_dishonest')?.value || '',
+                afraid: document.getElementById('evening_afraid')?.value || '',
+                apology: document.getElementById('evening_apology')?.value || '',
+                gratitude: document.getElementById('evening_gratitude')?.value || ''
+            };
+            localStorage.setItem('step11_evening_' + today, JSON.stringify(review));
+            showSaveIndicator();
+        }
+
+        function buildStep11JournalSection() {
+            return `
+                <h4 style="margin-bottom: 20px;">Prayer & Meditation Journal</h4>
+                <p style="color: #718096; margin-bottom: 15px;">
+                    Record your conscious contact experiences, intuitive thoughts, and guidance received.
+                </p>
+                <div class="question-item">
+                    <p class="question-text">What intuitive thoughts or guidance did you receive today?</p>
+                    <textarea class="question-answer" id="step11_intuition" placeholder="Document any insights..."
+                              onchange="localStorage.setItem('step11_journal_' + new Date().toDateString(), this.value)">${localStorage.getItem('step11_journal_' + new Date().toDateString()) || ''}</textarea>
+                </div>
+            `;
+        }
+
+        // Initialize timer duration
+        step11Timer.duration = 600; // 10 minutes default
+        step11Timer.remaining = 600;
+
+        // =====================================================================
+        // STEP 12: SERVICE TRACKER
+        // =====================================================================
+
+        async function loadStep12ServiceTracker() {
+            // Load saved service log
+            step12ServiceLog = JSON.parse(localStorage.getItem('step12_service_log') || '[]');
+
+            const tabsHtml = `
+                <button class="step-modal-tab active" onclick="showStep12Section('prayer')">Responsibility</button>
+                <button class="step-modal-tab" onclick="showStep12Section('log')">Log Service</button>
+                <button class="step-modal-tab" onclick="showStep12Section('history')">History</button>
+                <button class="step-modal-tab" onclick="showStep12Section('sponsorship')">Sponsorship</button>
+            `;
+            document.getElementById('stepModalTabs').innerHTML = tabsHtml;
+
+            const contentHtml = `
+                <div class="step-section active" id="section-prayer">
+                    ${buildStep12PrayerSection()}
+                </div>
+                <div class="step-section" id="section-log">
+                    ${buildServiceLogSection()}
+                </div>
+                <div class="step-section" id="section-history">
+                    ${buildServiceHistorySection()}
+                </div>
+                <div class="step-section" id="section-sponsorship">
+                    ${buildSponsorshipSection()}
+                </div>
+            `;
+            document.getElementById('stepModalContent').innerHTML = contentHtml;
+        }
+
+        function showStep12Section(sectionName) {
+            document.querySelectorAll('.step-modal-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.step-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`section-${sectionName}`).classList.add('active');
+
+            // Refresh history when switching to that tab
+            if (sectionName === 'history') {
+                refreshServiceHistory();
+            }
+        }
+
+        function buildStep12PrayerSection() {
+            return `
+                <div class="responsibility-prayer">
+                    <h4 style="margin-bottom: 15px;">AA Responsibility Declaration</h4>
+                    <p>
+                        "I am responsible. When anyone, anywhere, reaches out for help,
+                        I want the hand of A.A. always to be there. And for that: I am responsible."
+                    </p>
+                </div>
+                <div class="prayer-box">
+                    <h4>Step 12 Prayer</h4>
+                    <p class="prayer-text">
+                        "Lord, help me to practice these principles in all my affairs.
+                        Let me be a channel of Thy peace. Where there is hatred, let me sow love;
+                        where there is injury, pardon; where there is doubt, faith; where there is despair, hope;
+                        where there is darkness, light; and where there is sadness, joy."
+                    </p>
+                    <p class="prayer-source">— St. Francis Prayer (commonly used in AA)</p>
+                </div>
+                ${buildServiceSummary()}
+            `;
+        }
+
+        function buildServiceSummary() {
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+
+            let monthlyHours = 0;
+            let yearlyHours = 0;
+            let totalEntries = step12ServiceLog.length;
+
+            step12ServiceLog.forEach(entry => {
+                const entryDate = new Date(entry.date);
+                const hours = (entry.duration_minutes || 0) / 60;
+
+                if (entryDate.getFullYear() === thisYear) {
+                    yearlyHours += hours;
+                    if (entryDate.getMonth() === thisMonth) {
+                        monthlyHours += hours;
+                    }
+                }
+            });
+
+            return `
+                <div class="service-summary">
+                    <div class="summary-card">
+                        <div class="value">${monthlyHours.toFixed(1)}</div>
+                        <div class="label">Hours This Month</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="value">${yearlyHours.toFixed(1)}</div>
+                        <div class="label">Hours This Year</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="value">${totalEntries}</div>
+                        <div class="label">Total Service Acts</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildServiceLogSection() {
+            return `
+                <h4 style="margin-bottom: 20px;">Log Service Activity</h4>
+                <div class="service-log-form">
+                    <div class="form-row">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Service Type</label>
+                            <select id="serviceType">
+                                <option value="">Select type...</option>
+                                <option value="meeting_service">Meeting Service (chair, coffee, greeter)</option>
+                                <option value="sponsorship">Sponsorship</option>
+                                <option value="twelfth_step_call">Twelfth Step Call</option>
+                                <option value="general_service">General Service (GSR, District)</option>
+                                <option value="intergroup">Intergroup/Central Office</option>
+                                <option value="hospital_institution">Hospital/Institution Panel</option>
+                                <option value="phone_list">Phone List Calls</option>
+                                <option value="other">Other Service</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Date</label>
+                            <input type="date" id="serviceDate" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Duration (minutes)</label>
+                            <input type="number" id="serviceDuration" placeholder="60" min="0">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Description</label>
+                            <input type="text" id="serviceDescription" placeholder="Brief description...">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Notes</label>
+                        <textarea id="serviceNotes" style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;" placeholder="Additional notes or reflections..."></textarea>
+                    </div>
+                    <button class="btn" onclick="logServiceEntry()" style="background: #48bb78;">Log Service</button>
+                </div>
+            `;
+        }
+
+        function logServiceEntry() {
+            const serviceType = document.getElementById('serviceType').value;
+            const serviceDate = document.getElementById('serviceDate').value;
+            const duration = parseInt(document.getElementById('serviceDuration').value) || 0;
+            const description = document.getElementById('serviceDescription').value;
+            const notes = document.getElementById('serviceNotes').value;
+
+            if (!serviceType) {
+                alert('Please select a service type.');
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                type: serviceType,
+                date: serviceDate,
+                duration_minutes: duration,
+                description: description,
+                notes: notes
+            };
+
+            step12ServiceLog.unshift(entry);
+            localStorage.setItem('step12_service_log', JSON.stringify(step12ServiceLog));
+
+            // Clear form
+            document.getElementById('serviceType').value = '';
+            document.getElementById('serviceDuration').value = '';
+            document.getElementById('serviceDescription').value = '';
+            document.getElementById('serviceNotes').value = '';
+
+            showSaveIndicator();
+            alert('Service logged successfully!');
+        }
+
+        function buildServiceHistorySection() {
+            return `
+                <h4 style="margin-bottom: 20px;">Service History</h4>
+                <div id="serviceHistoryList">
+                    ${renderServiceHistory()}
+                </div>
+            `;
+        }
+
+        function renderServiceHistory() {
+            if (step12ServiceLog.length === 0) {
+                return '<p style="color: #718096; text-align: center;">No service entries yet. Start logging your service!</p>';
+            }
+
+            const typeLabels = {
+                'meeting_service': 'Meeting Service',
+                'sponsorship': 'Sponsorship',
+                'twelfth_step_call': 'Twelfth Step Call',
+                'general_service': 'General Service',
+                'intergroup': 'Intergroup',
+                'hospital_institution': 'H&I Panel',
+                'phone_list': 'Phone List',
+                'other': 'Other'
+            };
+
+            const typeClasses = {
+                'meeting_service': 'meeting',
+                'sponsorship': 'sponsorship',
+                'twelfth_step_call': 'twelfth-step',
+                'general_service': 'general'
+            };
+
+            return step12ServiceLog.slice(0, 20).map(entry => `
+                <div class="service-history-item">
+                    <div>
+                        <span class="service-type-badge ${typeClasses[entry.type] || 'general'}">${typeLabels[entry.type] || entry.type}</span>
+                        <span style="color: #718096;">${new Date(entry.date).toLocaleDateString()}</span>
+                        ${entry.description ? `<p style="margin: 5px 0 0; color: #4a5568;">${entry.description}</p>` : ''}
+                    </div>
+                    <div class="service-hours">${(entry.duration_minutes / 60).toFixed(1)} hrs</div>
+                </div>
+            `).join('');
+        }
+
+        function refreshServiceHistory() {
+            const historyList = document.getElementById('serviceHistoryList');
+            if (historyList) {
+                historyList.innerHTML = renderServiceHistory();
+            }
+        }
+
+        function buildSponsorshipSection() {
+            return `
+                <h4 style="margin-bottom: 20px;">Sponsorship Journal</h4>
+                <p style="color: #718096; margin-bottom: 15px;">
+                    Record your sponsorship experiences and reflections on carrying the message.
+                </p>
+                <div class="question-item">
+                    <p class="question-text">How have you carried the message this week?</p>
+                    <textarea class="question-answer" id="sponsorship_message"
+                              placeholder="Describe how you've shared your experience, strength, and hope..."
+                              onchange="localStorage.setItem('step12_sponsorship', this.value)">${localStorage.getItem('step12_sponsorship') || ''}</textarea>
+                </div>
+                <div class="question-item">
+                    <p class="question-text">What have you learned from working with others?</p>
+                    <textarea class="question-answer" id="sponsorship_learned"
+                              placeholder="Reflect on what sponsoring others has taught you..."
+                              onchange="localStorage.setItem('step12_learned', this.value)">${localStorage.getItem('step12_learned') || ''}</textarea>
+                </div>
+            `;
+        }
+
+        // =====================================================================
+        // DEMO CONTENT (fallback when API unavailable)
+        // =====================================================================
+
+        function getDemoStepContent(stepNumber) {
+            const demoContent = {
+                1: {
+                    step_number: 1,
+                    step_name: 'Powerlessness & Unmanageability',
+                    prayer: {
+                        title: 'Step 1 Prayer',
+                        text: 'God, I admit that I am powerless over alcohol - that my life has become unmanageable. I need Your help.',
+                        source: 'Traditional'
+                    },
+                    meditation_texts: [
+                        { source: 'Big Book', page_reference: 'p. 30', text: 'We learned that we had to fully concede to our innermost selves that we were alcoholics. This is the first step in recovery.' },
+                        { source: 'Big Book', page_reference: 'p. 1', text: 'The body of the alcoholic is quite as abnormal as his mind. It did not satisfy us to be told that we could not control our drinking just because we were maladjusted to life.' }
+                    ],
+                    questions: [
+                        { question_text: 'Describe the last time you tried to control your drinking. What happened?', hint: 'Be specific about your intentions vs. what actually occurred.' },
+                        { question_text: 'List 5 examples of how your life has become unmanageable.', hint: 'Consider relationships, work, health, finances, and spirituality.' },
+                        { question_text: 'What does "powerlessness" mean to you in your own words?', hint: 'How is this different from weakness?' },
+                        { question_text: 'What reservations do you still have about being an alcoholic?', hint: 'Be completely honest about any doubts.' }
+                    ]
+                },
+                2: {
+                    step_number: 2,
+                    step_name: 'Came to Believe',
+                    prayer: {
+                        title: 'Step 2 Prayer',
+                        text: 'God, I know in my heart that only You can restore me to sanity. I humbly ask that You remove the fears and prejudices that block me from finding faith. Help me to believe.',
+                        source: 'Traditional'
+                    },
+                    meditation_texts: [
+                        { source: 'Big Book', page_reference: 'p. 46-47', text: 'As soon as we admitted the possible existence of a Creative Intelligence, a Spirit of the Universe underlying the totality of things, we began to be possessed of a new sense of power and direction.' },
+                        { source: 'Big Book', page_reference: 'p. 55', text: 'We found that God does not make too hard terms with those who seek Him.' }
+                    ],
+                    questions: [
+                        { question_text: 'What is your current understanding of a "Power greater than yourself"?', hint: 'This can be anything that works for you.' },
+                        { question_text: 'Describe times when you acted "insanely" around alcohol.', hint: 'Doing the same thing and expecting different results.' },
+                        { question_text: 'What barriers do you have to believing in a Higher Power?', hint: 'Past experiences, intellectual objections, etc.' },
+                        { question_text: 'What would "restoration to sanity" look like in your life?', hint: 'Paint a picture of your recovered self.' }
+                    ]
+                },
+                3: {
+                    step_number: 3,
+                    step_name: 'Made a Decision',
+                    prayer: {
+                        title: 'Third Step Prayer',
+                        text: 'God, I offer myself to Thee—to build with me and to do with me as Thou wilt. Relieve me of the bondage of self, that I may better do Thy will. Take away my difficulties, that victory over them may bear witness to those I would help of Thy Power, Thy Love, and Thy Way of life. May I do Thy will always!',
+                        source: 'Big Book, p. 63'
+                    },
+                    meditation_texts: [
+                        { source: 'Big Book', page_reference: 'p. 62-63', text: 'Selfishness—self-centeredness! That, we think, is the root of our troubles.' },
+                        { source: 'Big Book', page_reference: 'p. 60', text: 'Our actor tries to arrange the lights, the ballet, the scenery and the rest of the players in his own way.' }
+                    ],
+                    questions: [
+                        { question_text: 'What does "turning your will and life over to the care of God" mean to you?', hint: 'Consider this as a decision, not a feeling.' },
+                        { question_text: 'In what areas of your life do you struggle with self-will?', hint: 'Work, relationships, money, etc.' },
+                        { question_text: 'Describe the "actor" running the show in your life.', hint: 'How do you try to control everything?' },
+                        { question_text: 'Have you said the Third Step Prayer with your sponsor? What was that like?', hint: 'If not, consider doing so.' }
+                    ]
+                }
+            };
+
+            // Return demo content or generic content
+            return demoContent[stepNumber] || {
+                step_number: stepNumber,
+                step_name: stepNames[stepNumber],
+                prayer: {
+                    title: `Step ${stepNumber} Prayer`,
+                    text: 'Higher Power, guide me through this step. Give me the willingness, honesty, and courage I need.',
+                    source: 'Traditional'
+                },
+                meditation_texts: [
+                    { source: '12 Steps & 12 Traditions', page_reference: `Step ${stepNumber}`, text: 'Take time to read the chapter on this step in the 12&12 for deeper understanding.' }
+                ],
+                questions: [
+                    { question_text: `What does Step ${stepNumber} mean to you personally?`, hint: 'Write in your own words.' },
+                    { question_text: 'How will you apply this step in your daily life?', hint: 'Be specific and practical.' },
+                    { question_text: 'What challenges do you anticipate with this step?', hint: 'Being honest helps you prepare.' },
+                    { question_text: 'What spiritual growth do you hope to achieve through this step?', hint: 'Focus on the internal changes.' }
+                ]
+            };
         }
 
         // Emergency functions

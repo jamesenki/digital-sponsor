@@ -20,6 +20,15 @@ from reflection_questions import (
     should_show_reflections,
     STEPS_WITH_REFLECTIONS
 )
+from step_workbook_content import (
+    get_step_workbook,
+    get_step_prayer,
+    get_step_meditations,
+    get_step_questions,
+    STEP_WORKBOOKS
+)
+from step11_meditation import Step11MeditationGuide
+from step12_service_tracker import Step12ServiceTracker, ServiceCategory
 
 
 class StepWorkHandler(http.server.BaseHTTPRequestHandler):
@@ -83,6 +92,58 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
             user_id = path.split('/')[-1]
             self.handle_get_user_progress(user_id)
 
+        # ========================================
+        # Step Workbook Content endpoints
+        # ========================================
+        elif path.startswith('/api/workbook/step/'):
+            self.handle_workbook_content(path, query_params)
+
+        # ========================================
+        # Step 11 Meditation endpoints
+        # ========================================
+        elif path == '/api/step11/prayers':
+            self.handle_step11_prayers()
+
+        elif path == '/api/step11/meditation/prompts':
+            self.handle_step11_meditation_prompts()
+
+        elif path.startswith('/api/step11/meditation/history/'):
+            user_id = path.split('/')[-1]
+            self.handle_step11_meditation_history(user_id)
+
+        elif path.startswith('/api/step11/intentions/'):
+            user_id = path.split('/')[-1]
+            self.handle_step11_intentions(user_id, query_params)
+
+        elif path.startswith('/api/step11/reviews/'):
+            user_id = path.split('/')[-1]
+            self.handle_step11_reviews(user_id, query_params)
+
+        # ========================================
+        # Step 12 Service Tracker endpoints
+        # ========================================
+        elif path == '/api/step12/prayer':
+            self.handle_step12_prayer()
+
+        elif path == '/api/step12/service/categories':
+            self.handle_step12_service_categories()
+
+        elif path.startswith('/api/step12/service/history/'):
+            user_id = path.split('/')[-1]
+            self.handle_step12_service_history(user_id, query_params)
+
+        elif path.startswith('/api/step12/service/summary/'):
+            user_id = path.split('/')[-1]
+            self.handle_step12_service_summary(user_id)
+
+        elif path.startswith('/api/step12/sponsees/'):
+            user_id = path.split('/')[-1]
+            self.handle_step12_sponsees(user_id)
+
+        elif path.startswith('/api/step12/experiences/'):
+            user_id = path.split('/')[-1]
+            self.handle_step12_experiences(user_id, query_params)
+
         else:
             self.send_error(404)
 
@@ -127,6 +188,42 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         elif path == '/api/stepwork/complete':
             self.handle_complete_step_work(data)
 
+        # ========================================
+        # Step Workbook Response endpoints
+        # ========================================
+        elif path == '/api/workbook/response':
+            self.handle_workbook_response(data)
+
+        # ========================================
+        # Step 11 Meditation POST endpoints
+        # ========================================
+        elif path == '/api/step11/meditation/start':
+            self.handle_step11_meditation_start(data)
+
+        elif path == '/api/step11/meditation/complete':
+            self.handle_step11_meditation_complete(data)
+
+        elif path == '/api/step11/intention':
+            self.handle_step11_save_intention(data)
+
+        elif path == '/api/step11/review':
+            self.handle_step11_save_review(data)
+
+        # ========================================
+        # Step 12 Service Tracker POST endpoints
+        # ========================================
+        elif path == '/api/step12/service/log':
+            self.handle_step12_log_service(data)
+
+        elif path == '/api/step12/sponsee':
+            self.handle_step12_add_sponsee(data)
+
+        elif path == '/api/step12/experience':
+            self.handle_step12_add_experience(data)
+
+        elif path == '/api/step12/commitment':
+            self.handle_step12_add_commitment(data)
+
         else:
             self.send_error(404)
 
@@ -169,7 +266,7 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
             'version': '3.0.0 - Cosmos DB + Versioning',
             'region': 'Central US',
             'features': [
-                'Interactive Step Work Workbooks',
+                'Interactive Step Work Workbooks (All 12 Steps)',
                 'Step 4 Moral Inventory System',
                 'Privacy-First Data Management',
                 'Step-Specific Prayers and Meditations',
@@ -178,7 +275,11 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
                 'RAG-Enhanced Step Guidance',
                 'Cosmos DB Persistence',
                 'Step Work Version Control',
-                'Reflection Questions for Repeat Work'
+                'Reflection Questions for Repeat Work',
+                'Step 11 Guided Meditation with Timer & Streak Tracking',
+                'Step 12 Service Tracker with Categories',
+                'Sponsorship Management',
+                'Twelfth Step Experience Journal'
             ],
             'database': db_health,
             'rag_integration': {
@@ -591,6 +692,489 @@ class StepWorkHandler(http.server.BaseHTTPRequestHandler):
         }
         self.send_json_response(response)
 
+    # ========================================
+    # Step Workbook Content endpoints
+    # ========================================
+
+    def handle_workbook_content(self, path, query_params):
+        """Handle workbook content requests"""
+        parts = path.split('/')
+        # /api/workbook/step/{N} or /api/workbook/step/{N}/prayer etc.
+        if len(parts) < 5:
+            self.send_error(400, 'Invalid workbook path')
+            return
+
+        try:
+            step_number = int(parts[4])
+        except (ValueError, IndexError):
+            self.send_error(400, 'Invalid step number')
+            return
+
+        # Check for sub-resource
+        sub_resource = parts[5] if len(parts) > 5 else None
+
+        if sub_resource == 'prayer':
+            prayer = get_step_prayer(step_number)
+            if prayer:
+                response = {
+                    'success': True,
+                    'step_number': step_number,
+                    'prayer': prayer.to_dict()
+                }
+            else:
+                response = {
+                    'success': False,
+                    'message': f'No prayer found for step {step_number}'
+                }
+            self.send_json_response(response)
+
+        elif sub_resource == 'meditations':
+            meditations = get_step_meditations(step_number)
+            response = {
+                'success': True,
+                'step_number': step_number,
+                'meditations': [m.to_dict() for m in meditations],
+                'count': len(meditations)
+            }
+            self.send_json_response(response)
+
+        elif sub_resource == 'questions':
+            questions = get_step_questions(step_number)
+            response = {
+                'success': True,
+                'step_number': step_number,
+                'questions': [q.to_dict() for q in questions],
+                'count': len(questions)
+            }
+            self.send_json_response(response)
+
+        else:
+            # Return full workbook
+            workbook = get_step_workbook(step_number)
+            if workbook:
+                response = {
+                    'success': True,
+                    'workbook': workbook.to_dict()
+                }
+            else:
+                response = {
+                    'success': False,
+                    'message': f'No workbook found for step {step_number}'
+                }
+            self.send_json_response(response)
+
+    def handle_workbook_response(self, data):
+        """Save a workbook question response"""
+        user_id = data.get('user_id')
+        step_number = data.get('step_number')
+        question_id = data.get('question_id')
+        response_text = data.get('response')
+
+        if not all([step_number, question_id, response_text]):
+            self.send_error(400, 'step_number, question_id, and response required')
+            return
+
+        # Save to Cosmos DB
+        result = self.cosmos_data_manager.save_response(
+            session_id=f"workbook_{user_id}_{step_number}",
+            user_id=user_id,
+            prompt=question_id,
+            response=response_text,
+            section=f"step{step_number}_workbook"
+        )
+
+        response = {
+            'success': True,
+            **result,
+            'message': 'Workbook response saved successfully'
+        }
+        self.send_json_response(response)
+
+    # ========================================
+    # Step 11 Meditation endpoints
+    # ========================================
+
+    def handle_step11_prayers(self):
+        """Get Step 11 morning and evening prayers"""
+        prayers = self.step11_meditation.get_prayers()
+        response = {
+            'success': True,
+            'morning_prayer': prayers['morning'].to_dict(),
+            'evening_prayer': prayers['evening'].to_dict()
+        }
+        self.send_json_response(response)
+
+    def handle_step11_meditation_prompts(self):
+        """Get available meditation prompts"""
+        prompts = self.step11_meditation.get_meditation_prompts()
+        response = {
+            'success': True,
+            'prompts': [p.to_dict() for p in prompts],
+            'count': len(prompts)
+        }
+        self.send_json_response(response)
+
+    def handle_step11_meditation_start(self, data):
+        """Start a new meditation session"""
+        user_id = data.get('user_id')
+        duration_minutes = data.get('duration_minutes', 10)
+        meditation_type = data.get('meditation_type', 'custom')
+
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        session = self.step11_meditation.start_meditation(user_id, duration_minutes, meditation_type)
+
+        # Get today's prompt
+        daily_prompt = self.step11_meditation.get_daily_prompt()
+
+        response = {
+            'success': True,
+            'session': session.to_dict(),
+            'daily_prompt': daily_prompt.to_dict() if daily_prompt else None,
+            'message': f'Meditation session started ({duration_minutes} minutes)'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step11_meditation_complete(self, data):
+        """Complete a meditation session"""
+        session_id = data.get('session_id')
+        user_id = data.get('user_id')
+        notes = data.get('notes', '')
+
+        if not session_id:
+            self.send_error(400, 'session_id required')
+            return
+
+        result = self.step11_meditation.complete_meditation(session_id, notes)
+
+        if result:
+            streak = self.step11_meditation.get_streak(user_id)
+            response = {
+                'success': True,
+                'session': result.to_dict(),
+                'streak': streak,
+                'message': 'Meditation session completed'
+            }
+        else:
+            response = {
+                'success': False,
+                'message': 'Session not found'
+            }
+
+        self.send_json_response(response)
+
+    def handle_step11_meditation_history(self, user_id):
+        """Get meditation history for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        history = self.step11_meditation.get_meditation_history(user_id)
+        streak = self.step11_meditation.get_streak(user_id)
+        stats = self.step11_meditation.get_meditation_stats(user_id)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'history': [s.to_dict() for s in history],
+            'streak': streak,
+            'stats': stats,
+            'count': len(history)
+        }
+        self.send_json_response(response)
+
+    def handle_step11_save_intention(self, data):
+        """Save morning intention"""
+        user_id = data.get('user_id')
+        intention_text = data.get('intention')
+
+        if not user_id or not intention_text:
+            self.send_error(400, 'user_id and intention required')
+            return
+
+        intention = self.step11_meditation.save_morning_intention(user_id, intention_text)
+
+        response = {
+            'success': True,
+            'intention': intention.to_dict(),
+            'message': 'Morning intention saved'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step11_save_review(self, data):
+        """Save evening review"""
+        user_id = data.get('user_id')
+        review_data = {
+            'resentful': data.get('resentful', ''),
+            'selfish': data.get('selfish', ''),
+            'dishonest': data.get('dishonest', ''),
+            'afraid': data.get('afraid', ''),
+            'owe_apology': data.get('owe_apology', ''),
+            'kept_secret': data.get('kept_secret', ''),
+            'kind_loving': data.get('kind_loving', ''),
+            'could_have_done_better': data.get('could_have_done_better', ''),
+            'gratitude': data.get('gratitude', ''),
+            'notes': data.get('notes', '')
+        }
+
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        review = self.step11_meditation.save_evening_review(user_id, review_data)
+
+        response = {
+            'success': True,
+            'review': review.to_dict(),
+            'message': 'Evening review saved'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step11_intentions(self, user_id, query_params):
+        """Get morning intentions for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        limit = int(query_params.get('limit', [30])[0])
+        intentions = self.step11_meditation.get_morning_intentions(user_id, limit)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'intentions': [i.to_dict() for i in intentions],
+            'count': len(intentions)
+        }
+        self.send_json_response(response)
+
+    def handle_step11_reviews(self, user_id, query_params):
+        """Get evening reviews for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        limit = int(query_params.get('limit', [30])[0])
+        reviews = self.step11_meditation.get_evening_reviews(user_id, limit)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'reviews': [r.to_dict() for r in reviews],
+            'count': len(reviews)
+        }
+        self.send_json_response(response)
+
+    # ========================================
+    # Step 12 Service Tracker endpoints
+    # ========================================
+
+    def handle_step12_prayer(self):
+        """Get the AA Responsibility Declaration"""
+        prayer = self.step12_service_tracker.get_responsibility_declaration()
+        response = {
+            'success': True,
+            'prayer': prayer
+        }
+        self.send_json_response(response)
+
+    def handle_step12_service_categories(self):
+        """Get available service categories"""
+        categories = self.step12_service_tracker.get_service_categories()
+        response = {
+            'success': True,
+            'categories': categories
+        }
+        self.send_json_response(response)
+
+    def handle_step12_log_service(self, data):
+        """Log a service activity"""
+        user_id = data.get('user_id')
+        service_type = data.get('service_type')
+        description = data.get('description', '')
+        duration_minutes = data.get('duration_minutes', 0)
+        notes = data.get('notes', '')
+        date_str = data.get('date')
+
+        if not user_id or not service_type:
+            self.send_error(400, 'user_id and service_type required')
+            return
+
+        # Parse date if provided
+        service_date = None
+        if date_str:
+            try:
+                service_date = datetime.fromisoformat(date_str)
+            except ValueError:
+                pass
+
+        entry = self.step12_service_tracker.log_service(
+            user_id=user_id,
+            service_type=service_type,
+            description=description,
+            duration_minutes=duration_minutes,
+            notes=notes,
+            date=service_date
+        )
+
+        response = {
+            'success': True,
+            'entry': entry.to_dict(),
+            'message': 'Service logged successfully'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step12_service_history(self, user_id, query_params):
+        """Get service history for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        category = query_params.get('category', [None])[0]
+        limit = int(query_params.get('limit', [50])[0])
+
+        history = self.step12_service_tracker.get_service_history(user_id, category, limit)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'history': [e.to_dict() for e in history],
+            'count': len(history)
+        }
+        self.send_json_response(response)
+
+    def handle_step12_service_summary(self, user_id):
+        """Get service summary stats for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        summary = self.step12_service_tracker.get_service_summary(user_id)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'summary': summary
+        }
+        self.send_json_response(response)
+
+    def handle_step12_add_sponsee(self, data):
+        """Add a sponsee"""
+        user_id = data.get('user_id')
+        name = data.get('name')
+        sobriety_date = data.get('sobriety_date')
+        current_step = data.get('current_step', 1)
+        notes = data.get('notes', '')
+
+        if not user_id or not name:
+            self.send_error(400, 'user_id and name required')
+            return
+
+        sponsee = self.step12_service_tracker.add_sponsee(
+            user_id=user_id,
+            name=name,
+            sobriety_date=sobriety_date,
+            current_step=current_step,
+            notes=notes
+        )
+
+        response = {
+            'success': True,
+            'sponsee': sponsee.to_dict(),
+            'message': 'Sponsee added successfully'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step12_sponsees(self, user_id):
+        """Get sponsees for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        sponsees = self.step12_service_tracker.get_sponsees(user_id)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'sponsees': [s.to_dict() for s in sponsees],
+            'count': len(sponsees)
+        }
+        self.send_json_response(response)
+
+    def handle_step12_add_experience(self, data):
+        """Add a 12th step experience"""
+        user_id = data.get('user_id')
+        description = data.get('description')
+        outcome = data.get('outcome', '')
+        what_i_shared = data.get('what_i_shared', '')
+        what_i_learned = data.get('what_i_learned', '')
+
+        if not user_id or not description:
+            self.send_error(400, 'user_id and description required')
+            return
+
+        experience = self.step12_service_tracker.add_twelfth_step_experience(
+            user_id=user_id,
+            description=description,
+            outcome=outcome,
+            what_i_shared=what_i_shared,
+            what_i_learned=what_i_learned
+        )
+
+        response = {
+            'success': True,
+            'experience': experience.to_dict(),
+            'message': 'Experience recorded successfully'
+        }
+        self.send_json_response(response, status=201)
+
+    def handle_step12_experiences(self, user_id, query_params):
+        """Get 12th step experiences for a user"""
+        if not user_id:
+            self.send_error(400, 'user_id required')
+            return
+
+        limit = int(query_params.get('limit', [50])[0])
+        experiences = self.step12_service_tracker.get_twelfth_step_experiences(user_id, limit)
+
+        response = {
+            'success': True,
+            'user_id': user_id,
+            'experiences': [e.to_dict() for e in experiences],
+            'count': len(experiences)
+        }
+        self.send_json_response(response)
+
+    def handle_step12_add_commitment(self, data):
+        """Add a service commitment"""
+        user_id = data.get('user_id')
+        commitment_type = data.get('commitment_type')
+        description = data.get('description', '')
+        frequency = data.get('frequency', 'weekly')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if not user_id or not commitment_type:
+            self.send_error(400, 'user_id and commitment_type required')
+            return
+
+        commitment = self.step12_service_tracker.add_service_commitment(
+            user_id=user_id,
+            commitment_type=commitment_type,
+            description=description,
+            frequency=frequency,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        response = {
+            'success': True,
+            'commitment': commitment.to_dict(),
+            'message': 'Commitment added successfully'
+        }
+        self.send_json_response(response, status=201)
+
 
 # ========================================
 # Global services to persist across requests
@@ -605,6 +1189,10 @@ LITERATURE_SERVICE_URL = os.environ.get('LITERATURE_SERVICE_URL', 'http://digita
 CHAT_SERVICE_URL = os.environ.get('CHAT_SERVICE_URL', 'http://digitalsponsor-chat-v2.centralus.azurecontainer.io:3003')
 GLOBAL_RAG_INTEGRATION = StepWorkRAGIntegration(LITERATURE_SERVICE_URL, CHAT_SERVICE_URL)
 
+# Step 11 Meditation Guide and Step 12 Service Tracker
+GLOBAL_STEP11_MEDITATION = Step11MeditationGuide()
+GLOBAL_STEP12_SERVICE_TRACKER = Step12ServiceTracker()
+
 
 class PersistentStepWorkHandler(StepWorkHandler):
     """Handler that uses global data managers for persistence"""
@@ -615,6 +1203,8 @@ class PersistentStepWorkHandler(StepWorkHandler):
         self.cosmos_data_manager = GLOBAL_COSMOS_DATA_MANAGER
         self.step4_guide = GLOBAL_STEP4_GUIDE
         self.rag_integration = GLOBAL_RAG_INTEGRATION
+        self.step11_meditation = GLOBAL_STEP11_MEDITATION
+        self.step12_service_tracker = GLOBAL_STEP12_SERVICE_TRACKER
         # Don't call StepWorkHandler.__init__ to avoid creating new instances
         http.server.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
@@ -626,7 +1216,7 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
 
     print(f'Digital Sponsor Step Work Service running on port {PORT}')
     print(f'Features:')
-    print(f'   - Interactive Step Work Workbooks')
+    print(f'   - Interactive Step Work Workbooks (All 12 Steps)')
     print(f'   - Complete Step 4 Moral Inventory System')
     print(f'   - Privacy-First Data Management')
     print(f'   - Step-Specific Prayers and Meditations')
@@ -635,6 +1225,10 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   - Cosmos DB Persistence ({db_mode})')
     print(f'   - Step Work Version Control')
     print(f'   - Reflection Questions for Repeat Work')
+    print(f'   - Step 11 Guided Meditation with Timer & Streak Tracking')
+    print(f'   - Step 12 Service Tracker with Categories')
+    print(f'   - Sponsorship Management')
+    print(f'   - Twelfth Step Experience Journal')
     print(f'Region: Central US')
     print(f'Reflection Steps: {STEPS_WITH_REFLECTIONS}')
     print()
@@ -663,6 +1257,36 @@ with socketserver.TCPServer(('', PORT), PersistentStepWorkHandler) as httpd:
     print(f'   GET  /api/guidance/step/{{N}}?challenge=text - AI guidance for step work')
     print(f'   GET  /api/guidance/resentment?description=text - Resentment analysis')
     print(f'   GET  /api/guidance/fear?description=text - Fear transformation help')
+    print()
+    print(f'Step Workbook Content Endpoints:')
+    print(f'   GET  /api/workbook/step/{{N}} - Get complete workbook for step')
+    print(f'   GET  /api/workbook/step/{{N}}/prayer - Get step prayer')
+    print(f'   GET  /api/workbook/step/{{N}}/meditations - Get meditation texts')
+    print(f'   GET  /api/workbook/step/{{N}}/questions - Get step questions')
+    print(f'   POST /api/workbook/response - Save workbook response')
+    print()
+    print(f'Step 11 Meditation Endpoints:')
+    print(f'   GET  /api/step11/prayers - Get morning and evening prayers')
+    print(f'   GET  /api/step11/meditation/prompts - Get meditation prompts')
+    print(f'   GET  /api/step11/meditation/history/{{user_id}} - Get meditation history')
+    print(f'   POST /api/step11/meditation/start - Start meditation session')
+    print(f'   POST /api/step11/meditation/complete - Complete meditation session')
+    print(f'   POST /api/step11/intention - Save morning intention')
+    print(f'   POST /api/step11/review - Save evening review')
+    print(f'   GET  /api/step11/intentions/{{user_id}} - Get morning intentions')
+    print(f'   GET  /api/step11/reviews/{{user_id}} - Get evening reviews')
+    print()
+    print(f'Step 12 Service Tracker Endpoints:')
+    print(f'   GET  /api/step12/prayer - Get AA Responsibility Declaration')
+    print(f'   GET  /api/step12/service/categories - Get service categories')
+    print(f'   POST /api/step12/service/log - Log service activity')
+    print(f'   GET  /api/step12/service/history/{{user_id}} - Get service history')
+    print(f'   GET  /api/step12/service/summary/{{user_id}} - Get service summary')
+    print(f'   POST /api/step12/sponsee - Add sponsee')
+    print(f'   GET  /api/step12/sponsees/{{user_id}} - Get sponsees')
+    print(f'   POST /api/step12/experience - Log 12th step experience')
+    print(f'   GET  /api/step12/experiences/{{user_id}} - Get 12th step experiences')
+    print(f'   POST /api/step12/commitment - Add service commitment')
     print()
 
     httpd.serve_forever()
