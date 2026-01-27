@@ -2484,27 +2484,31 @@
                     }
                 });
 
-                // Step 10 daily inventories (dated)
+                // Collect ALL step-related data from localStorage
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('step10_')) {
-                        try {
-                            data[key] = JSON.parse(localStorage.getItem(key));
-                        } catch {
-                            data[key] = localStorage.getItem(key);
-                        }
-                    }
-                }
+                    if (!key) continue;
 
-                // Step completion status
-                for (let i = 1; i <= 12; i++) {
-                    const completedKey = `step${i}_completed`;
-                    const progressKey = `step${i}_in_progress`;
-                    if (localStorage.getItem(completedKey)) {
-                        data[completedKey] = localStorage.getItem(completedKey);
-                    }
-                    if (localStorage.getItem(progressKey)) {
-                        data[progressKey] = localStorage.getItem(progressKey);
+                    // Skip if already collected
+                    if (data[key]) continue;
+
+                    // Collect step workbook data (step1_q0, step2_q1, step3_versions, etc.)
+                    const isStepData = /^step\d+_(q\d+|versions|v\d+_answers|completed|in_progress|completed_date)$/.test(key);
+                    // Collect step 10 daily inventories (step10_2026-01-27)
+                    const isStep10Daily = key.startsWith('step10_');
+
+                    if (isStepData || isStep10Daily) {
+                        try {
+                            const val = localStorage.getItem(key);
+                            // Try to parse as JSON, otherwise store as string
+                            try {
+                                data[key] = JSON.parse(val);
+                            } catch {
+                                data[key] = val;
+                            }
+                        } catch {
+                            // Skip if can't read
+                        }
                     }
                 }
 
