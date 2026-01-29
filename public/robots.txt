@@ -1,0 +1,10 @@
+# Digital Sponsor - Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://commonsolution.org/sitemap.xml
+
+# Allow Google AdSense crawler
+User-agent: Mediapartners-Google
+Allow: /
