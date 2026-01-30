@@ -219,8 +219,8 @@ didn't exist before • The satisfaction of service
 
 **Title:** Your Anonymity is Sacred
 
-• No account required to try it • No personal data stored or sold • Conversations aren't tied to
-your identity • Delete everything anytime • Crisis resources always available
+• All data encrypted in transit and at rest • Conversations are anonymized — not tied to your real
+identity • You control your data — manage or delete it anytime • Crisis resources always available
 
 **I take the 12th Tradition seriously.**
 
