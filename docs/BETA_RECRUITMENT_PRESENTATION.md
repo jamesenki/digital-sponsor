@@ -2,192 +2,281 @@
 
 ## Content for Gamma Presentation
 
+**URL:** commonsolution.org
+
 ---
 
 ### Slide 1: Opening
 
-**Title:** Digital Sponsor **Subtitle:** A Recovery Tool Built for the Fellowship, By the Fellowship
+**Title:** Digital Sponsor
+
+**Subtitle:** Recovery Support for Everyone — Even Those Who Struggle with People
+
 **Tagline:** Help me prove its value so I can give it to AA
 
 ---
 
-### Slide 2: The Problem
+### Slide 2: Why I Built This
 
-**When You Need Support But Can't Reach Anyone**
+**Some of Us Need a Different Path In**
 
-- It's 2am and you're struggling
-- Your sponsor isn't available
-- You're traveling and don't know local meetings
-- You're new and don't have a sponsor yet
-- You're isolated (rural, homebound, pandemic)
+I'm an AA member. I'm also neurodivergent.
 
-**AA works because we help each other. But sometimes, there's a gap.**
+I've met countless people in recovery who:
 
----
+- Have social anxiety that makes meetings terrifying
+- Are on the autism spectrum and struggle with unwritten social rules
+- Have trauma that makes trusting strangers feel impossible
+- Need time to understand the program before they can open up to a human
 
-### Slide 3: What I Built
+**These people deserve recovery too.**
 
-**Digital Sponsor: Your 24/7 Recovery Companion**
-
-- AI-powered support grounded in AA principles
-- Step work guidance with Big Book and 12&12 references
-- Literature search across AA publications
-- Crisis detection with real resources
-- Available anytime, anywhere
-
-**This doesn't replace your sponsor. It fills the gaps between meetings and calls.**
+They're not less committed. They just need a safe way to learn before they can connect.
 
 ---
 
-### Slide 4: Built on AA Principles
+### Slide 3: The Gap
+
+**AA Works Through Human Connection. But What If Connection Feels Unsafe?**
+
+For some of us:
+
+- Walking into a meeting takes enormous courage
+- Asking a stranger to be our sponsor feels impossible
+- We need to understand what we're getting into first
+- We need practice before we can be vulnerable with humans
+
+**Digital Sponsor is the safe first step — not the final destination.**
+
+---
+
+### Slide 4: What Digital Sponsor Does
+
+**A Safe Space to Learn the Program**
+
+📱 **[SCREENSHOT: Chat Interface]**
+
+- 24/7 AI companion grounded in AA principles
+- Ask any question without judgment
+- Work through the Steps at your own pace
+- Search AA literature for guidance
+- Get comfortable with recovery concepts before sharing with humans
+
+**It's like reading the Big Book with a patient guide who never judges.**
+
+---
+
+### Slide 5: Who It Helps Most
+
+**Primary:** People Who Need a Safe On-Ramp
+
+- Neurodivergent members (autism, ADHD)
+- Those with social anxiety or agoraphobia
+- Trauma survivors who need to build trust slowly
+- Introverts who process internally first
+
+**Also Helps:**
+
+- Newcomers without a sponsor yet
+- Anyone at 2am when their sponsor is asleep
+- People in rural areas with few meetings
+- Those traveling away from their home group
+- Members who want to deepen their step work between sponsor calls
+
+---
+
+### Slide 6: Step Work — At Your Own Pace
+
+📱 **[SCREENSHOT: Step Work Grid showing all 12 Steps]**
+
+**Work the Steps Without Pressure**
+
+- All 12 Steps with guidance from the Big Book and 12&12
+- Journaling prompts and worksheets
+- Official AA prayers for each step
+- Page references so you can read the original source
+
+**Go as slow as you need. No one's watching.**
+
+---
+
+### Slide 7: Literature at Your Fingertips
+
+📱 **[SCREENSHOT: Literature Search with results]**
+
+**2,382 Pieces of AA Literature — Searchable**
+
+- Big Book chapters and stories
+- Twelve Steps and Twelve Traditions
+- AA pamphlets on every topic
+- Grapevine articles
+
+**Ask "What does the Big Book say about resentment?" and get actual page references.**
+
+---
+
+### Slide 8: Crisis Support — Always There
+
+📱 **[SCREENSHOT: Crisis Support screen with red alert and hotline numbers]**
+
+**When Things Get Serious**
+
+- Automatic crisis detection
+- Direct links to hotlines (988, AA GSO, SAMHSA)
+- Meeting finder
+- Never left alone in a dark moment
+
+**Safety first. Always.**
+
+---
+
+### Slide 9: Built on AA Principles
 
 **Traditions-Compliant by Design**
 
-- No endorsement of outside enterprises (Tradition 6)
-- Self-supporting - no corporate sponsors (Tradition 7)
-- Anonymity protected - no personal data stored (Tradition 12)
-- Attraction, not promotion (Tradition 11)
+- **Tradition 6:** No outside endorsements
+- **Tradition 7:** Self-supporting, no corporate sponsors
+- **Tradition 11:** Attraction, not promotion
+- **Tradition 12:** Anonymity protected — no personal data stored
 
-**Every response points you back to the literature, meetings, and human connection.**
+**Every response points you back to literature, meetings, and human connection.**
 
----
-
-### Slide 5: My Story
-
-**Why I Built This**
-
-- I'm a member of Alcoholics Anonymous
-- I've seen people struggle when help wasn't available
-- I have the technical skills to build something useful
-- I built this as an act of service, not for profit
-
-**I believe this tool can help people. But I need to prove it.**
+This supplements your program. It never replaces it.
 
 ---
 
-### Slide 6: The Vision
+### Slide 10: My Vision
 
-**A Gift for AA**
+**A Gift for the Fellowship**
 
-My goal is to give this to Alcoholics Anonymous - the General Service Office - so they can:
+My goal is to give this to AA — the General Service Office — so they can:
 
-- Make it available to all members
-- Ensure it stays true to AA principles
-- Integrate it with their other digital tools
-- Keep it free and accessible forever
+- Make it available to every member
+- Ensure it stays true to the program
+- Keep it free forever
 
-**But first, I need to prove it works and that people want it.**
+**But first, I need to prove it works.**
+
+That's where you come in.
 
 ---
 
-### Slide 7: Why I Need You
+### Slide 11: Why I Need You
 
-**Help Me Build the Case**
+**Help Me Build the Case for AA**
 
-Before I approach AA, I need evidence that this serves the fellowship:
+Before I approach the General Service Office, I need:
 
 - Real members using it
-- Feedback on what works (and what doesn't)
+- Honest feedback on what works
 - Testimonials about how it helped
 - Ideas to make it better
 
-**Your experience becomes part of the proof.**
+**Your experience becomes the proof that this serves the fellowship.**
 
 ---
 
-### Slide 8: What I'm Asking
+### Slide 12: What I'm Asking
 
 **Be a Beta Tester**
 
-1. **Try it** - Use Digital Sponsor when you need support
-2. **Give feedback** - Tell me what's helpful and what's not
-3. **Share your experience** - A brief anonymous testimonial
-4. **Spread the word** - Know someone who might benefit?
+1. **Try it** — Use Digital Sponsor when you need support
+2. **Give feedback** — Tell me what helps and what doesn't
+3. **Share your experience** — A brief anonymous testimonial
+4. **Spread the word** — Know someone who might benefit?
 
-**Time commitment:** Use it naturally, 5-minute feedback survey later
+**Time commitment:** Just use it naturally. 5-minute survey later.
 
 ---
 
-### Slide 9: What You Get
+### Slide 13: What You Get
 
-**Early Access to Something New**
+**You're Part of Something Meaningful**
 
-- Free access to the tool (always will be free)
-- Direct line to shape how it develops
-- Be part of bringing something meaningful to AA
+- Free access (always will be)
+- Direct input on how it develops
+- Help bring something to AA that didn't exist before
 - The satisfaction of service
 
-**You're not just a user - you're helping build something for the fellowship.**
+**You're not just a user. You're helping build this for the fellowship.**
 
 ---
 
-### Slide 10: Privacy & Safety
+### Slide 14: Privacy Promise
 
 **Your Anonymity is Sacred**
 
-- No account required (optional for saved progress)
-- No personal data stored or shared
-- Conversations are not tied to your identity
-- Crisis resources always provided when needed
-- You can delete everything at any time
+- No account required to try it
+- No personal data stored or sold
+- Conversations aren't tied to your identity
+- Delete everything anytime
+- Crisis resources always available
 
 **I take the 12th Tradition seriously.**
 
 ---
 
-### Slide 11: What This Is NOT
+### Slide 15: Try It Now
 
-**Setting Clear Expectations**
+📱 **[SCREENSHOT: Dashboard showing all features]**
 
-- NOT a replacement for your sponsor
-- NOT a replacement for meetings
-- NOT professional therapy or medical advice
-- NOT affiliated with AA (yet)
-- NOT going to tell you what to do
+**commonsolution.org**
 
-**It's a tool to supplement your program, not replace it.**
-
----
-
-### Slide 12: Try It Now
-
-**Get Started**
-
-[URL to Digital Sponsor]
-
-- No signup required to try it
-- Start a conversation about where you are in recovery
+- Start a conversation about where you are
 - Ask about a Step you're working on
-- Search for literature on a topic
+- Search for literature on any topic
 
-**Questions? Feedback? Reach out: [contact method]**
+**Questions or feedback? [Your contact method]**
 
 ---
 
-### Slide 13: Closing
+### Slide 16: Closing
 
-**Together, We Can Build Something Lasting**
+**"I am responsible. When anyone, anywhere, reaches out for help, I want the hand of AA always to be
+there. And for that: I am responsible."**
 
-"I am responsible. When anyone, anywhere, reaches out for help, I want the hand of AA always to be
-there. And for that: I am responsible."
+Some hands need to reach out differently.
 
-**Help me make the hand of AA available 24/7.**
+Let's make sure there's something there for them too.
+
+**commonsolution.org**
+
+---
+
+## Screenshots to Capture
+
+Take these screenshots from commonsolution.org for the presentation:
+
+| Slide | Screenshot        | What to Show                                                                     |
+| ----- | ----------------- | -------------------------------------------------------------------------------- |
+| 4     | Chat Interface    | A conversation showing warm, non-judgmental AI response about a Step or struggle |
+| 6     | Step Work Grid    | The colorful 12-step grid with icons                                             |
+| 7     | Literature Search | Search results for a common topic (e.g., "resentment" or "fear")                 |
+| 8     | Crisis Support    | The red alert box with hotline numbers                                           |
+| 15    | Dashboard         | Full dashboard showing all feature cards                                         |
+
+**Tip:** Use incognito/private browsing for clean screenshots without personal data.
 
 ---
 
 ## Gamma Instructions
 
-When pasting into Gamma, use these settings:
+**Paste this content into Gamma with these settings:**
 
-- **Style:** Clean, minimal, professional
-- **Tone:** Warm but not cheesy, sincere
-- **Colors:** Consider AA's traditional blue/white or neutral tones
-- **Images:** Recovery-themed (sunrise, hands, paths, etc.) - nothing identifying people
+- **Style:** Clean, minimal, warm
+- **Tone:** Personal, authentic, not corporate
+- **Colors:** Soft purples/blues (matches the app) or calming neutrals
+- **Images:**
+  - Recovery-themed (paths, light, hands reaching)
+  - Neurodiversity-positive imagery
+  - Nothing showing faces/identifying people
 
-## Key Messages to Emphasize
+---
 
-1. **Service motivation** - This is about giving, not taking
-2. **You matter** - Beta users are partners, not subjects
-3. **AA-aligned** - Built on and for the program
-4. **Temporary independence** - The goal is to hand this to AA
-5. **Low ask** - Just try it and share your honest experience
+## Key Messages
+
+1. **Accessibility** — This is for people who struggle with the human parts of AA
+2. **Safe on-ramp** — A bridge to human connection, not a replacement
+3. **Service** — Built to give away, not to profit
+4. **You matter** — Beta testers are partners building something for the fellowship
+5. **No pressure** — Use it naturally, honest feedback welcome
