@@ -130,22 +130,58 @@ For some of us:
 
 ---
 
-### Slide 9: Built on AA Principles
+### Slide 9: What This is NOT
+
+**Setting Clear Expectations**
+
+Digital Sponsor is **NOT**:
+
+- A replacement for meetings
+- A substitute for a human sponsor
+- Professional therapy or medical advice
+- A way to work the program alone forever
+
+**It IS:**
+
+- A safe way to ease in and learn the basics
+- A place to get answers when your sponsor isn't available
+- A bridge to human connection, not a wall around it
+- A supplement to your recovery, never a replacement
+
+**The goal is always to connect you with real people.**
+
+---
+
+### Slide 10: Built on AA Principles
 
 **Traditions-Compliant by Design**
 
 - **Tradition 6:** No outside endorsements
 - **Tradition 7:** Self-supporting, no corporate sponsors
 - **Tradition 11:** Attraction, not promotion
-- **Tradition 12:** Anonymity protected — no personal data stored
+- **Tradition 12:** Anonymity protected — data encrypted and anonymized
 
 **Every response points you back to literature, meetings, and human connection.**
 
-This supplements your program. It never replaces it.
+---
+
+### Slide 11: What's Coming Next
+
+**Roadmap: Building Toward Human Connection**
+
+**Coming Soon:**
+
+- **Sponsor Matching** — Help you find a human sponsor who's a good fit for you
+- **Meeting Finder Integration** — Find local and online meetings that match your comfort level
+- **Progress Sharing** — Optionally share your step work with your human sponsor
+
+**The Vision:** Digital Sponsor helps you get ready. Then it helps you find your people.
+
+**This is a bridge — not a destination.**
 
 ---
 
-### Slide 10: My Vision
+### Slide 12: My Vision
 
 **A Gift for the Fellowship**
 
@@ -161,7 +197,7 @@ That's where you come in.
 
 ---
 
-### Slide 11: Why I Need You
+### Slide 13: Why I Need You
 
 **Help Me Build the Case for AA**
 
@@ -176,7 +212,7 @@ Before I approach the General Service Office, I need:
 
 ---
 
-### Slide 12: What I'm Asking
+### Slide 14: What I'm Asking
 
 **Be a Beta Tester**
 
@@ -189,7 +225,7 @@ Before I approach the General Service Office, I need:
 
 ---
 
-### Slide 13: What You Get
+### Slide 15: What You Get
 
 **You're Part of Something Meaningful**
 
@@ -202,7 +238,7 @@ Before I approach the General Service Office, I need:
 
 ---
 
-### Slide 14: Privacy Promise
+### Slide 16: Privacy Promise
 
 **Your Anonymity is Sacred**
 
@@ -215,7 +251,7 @@ Before I approach the General Service Office, I need:
 
 ---
 
-### Slide 15: Try It Now
+### Slide 17: Try It Now
 
 📱 **[SCREENSHOT: Dashboard showing all features]**
 
@@ -229,7 +265,7 @@ Before I approach the General Service Office, I need:
 
 ---
 
-### Slide 16: Closing
+### Slide 18: Closing
 
 **"I am responsible. When anyone, anywhere, reaches out for help, I want the hand of AA always to be
 there. And for that: I am responsible."**
