@@ -44,7 +44,7 @@ jobs:
           VITE_API_URL: https://api-staging.digitalsponsor.commonsolution.org
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_STAGING }}
 
