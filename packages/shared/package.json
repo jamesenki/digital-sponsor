@@ -19,7 +19,7 @@
     "@azure/keyvault-secrets": "^4.8.0",
     "@azure/msal-browser": "^3.7.1",
     "joi": "^17.11.0",
-    "uuid": "^9.0.1"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
