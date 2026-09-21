@@ -142,7 +142,7 @@ security: 'Azure Security Center + Azure Sentinel'
     ],
     "secrets": {
       "OpenAI-API-Key": {
-        "value": "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",
+        "value": "OPEN_AI_KEY",
         "contentType": "OpenAI API Key for Digital Sponsor",
         "attributes": {
           "enabled": true,
